@@ -34,11 +34,15 @@ The UI SHALL display terminal voltage (Vₜ) and active power (P) as SVG arc gau
 - **THEN** the Q readout is labelled "absorbing"; when Q is positive it is labelled "supplying"
 
 ### Requirement: SVG arc gauge with zones
-Each gauge SHALL be a hand-rolled SVG arc with a 270° sweep and three coloured zones relative to rated value: green (normal), amber (±15 % of rated), and red (±25 % of rated). No external charting or gauge library SHALL be used.
+Each gauge SHALL be a hand-rolled SVG semicircular arc (~180° sweep) inside a square black-bezel frame, following the visual design in design.md D8. The arc SHALL have a dark base track and coloured zone arcs drawn on top at the same radius (no gap). Zone colours for Vₜ: amber / green / amber / red from low to high. Zone colours for P: green / red. No external charting or gauge library SHALL be used.
 
 #### Scenario: Zone colour reflects deviation from rated
-- **WHEN** a gauge value moves beyond ±15 % of rated
-- **THEN** the fill enters the amber zone, and beyond ±25 % it enters the red zone
+- **WHEN** a gauge value moves beyond the green zone boundary
+- **THEN** the needle position enters the amber or red zone arc as appropriate
+
+#### Scenario: No gap between zone arcs and track
+- **WHEN** the gauge is rendered
+- **THEN** coloured zone arcs are flush with the base track (same SVG radius), with no visible gap between the coloured band and the dark arc
 
 ### Requirement: Load-angle stability warning
 The UI SHALL show a stability warning as the load angle δ approaches 90°, and SHALL surface the collapsed/unstable state reported by the core when load exceeds maximum loadability.

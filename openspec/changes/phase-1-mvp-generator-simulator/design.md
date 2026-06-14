@@ -21,7 +21,7 @@ Stack: Vite + React + TypeScript, pnpm, hand-rolled CSS (no UI/charting library 
 **Non-Goals:**
 - Rotor speed / frequency variation (no speed slider, no `freqFactor` in core — Phase 2).
 - Magnetic saturation, transient/sub-transient reactances, faults, grid connection, parallel machines, harmonics.
-- Polished theming. Industrial look is desirable but not a Phase 1 acceptance gate.
+- Decorative polish beyond the locked visual design (D8).
 
 ## Decisions
 
@@ -62,6 +62,20 @@ Field current chases its target through a first-order lag: `iField += (target �
 
 ### D6 — Exciter chain as cascaded constant gains
 `fieldVoltage → (τ lag) → iField → [×k_ac] exciter AC → [×k_rect] rectified DC → [×k_field] field current`. The lag is applied **once** at the input; the readouts are pure functions of the single lagged signal, so they cannot diverge from the EMF-driving current.
+
+### D8 — Visual design: gray-steel switchboard (wireframe-b)
+The UI SHALL follow the gray-steel switchboard aesthetic established in `wireframe-b.html`. Key elements:
+
+- **Panel**: light gray steel (`#d9dadb`) with subtle gradient, thin border, inset shadow — mimics a painted-steel genset switchboard face.
+- **Meters**: square black-bezel frames (not round). Inside each: a cream dial face with a hand-rolled SVG semicircular arc (~180° sweep). The arc uses a thick dark base track (r=78, stroke-width=10) with coloured zone arcs (stroke-width=8) drawn on top at the **same radius** — no gap between zones and track.
+- **Zone arc geometry**: all arcs at r=78, center (65, 104) in a 130×120 viewBox. Zone boundary coordinates computed on that circle; the five major tick marks straddle the band edge (outer point on arc, inner 8px inside) in semi-transparent dark ink so they read on any zone colour. No external charting or gauge library.
+- **Colours**: Vₜ meter: amber (0–25%) / green (25–85%) / amber (85–92%) / red (92–100%). P meter: green (0–90%) / red (90–100%). Exciter-chain meters: green band (0–75%), dark track beyond.
+- **Indicators**: small 3D bulbs (30px, A-style) with inset shadow + outer glow — not large chrome-ring buttons. States: lit green (run/AVR), unlit amber (δ warn), unlit red (collapse).
+- **Controls**: rotary knobs with white pointer and chrome rings. The field-DC knob goes greyed/desaturated when AVR is commanding it. AVR ON/OFF as a compact green/red pushbutton pair (54px domes with chrome rings), distinct from indicator bulbs.
+- **LCD + keypad module**: dark bezel, green STN screen showing secondary readouts (δ, Q, f, PF), M/C/▲/▼ keys. Legend table below with 9px LEDs.
+- **Layout**: all meters in a single top row in signal-chain order (Exciter AC → Rectified DC → Field Current → Vₜ → P), then middle band (LCD module left, indicator bulbs right), then rotary controls row at the bottom.
+
+*Why this over the round-meter cream cabinet (wireframe-a):* both were prototyped and A/B evaluated; the switchboard style was chosen. The square meters are visually cleaner at small sizes and the label-card-above-meter convention reads better on screen. The physics components (Gauge.tsx etc.) remain SVG-based; only the bezel shape and sweep angle change.
 
 ### D7 — Architecture: pure core / thin hook / pure components
 `components → hooks → core`, dependency arrow one-way; `core/` imports no React.

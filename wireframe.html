@@ -1,0 +1,324 @@
+<!doctype html>
+<!--
+  STATIC WIREFRAME — non-functional analog control-panel mockup of the Phase 1 MVP.
+  No JS, no simulation. Needles, lamps and knobs are frozen in plausible positions
+  to convey the *look*: a cream-steel genset panel with round needle meters,
+  rectangular panel meters, indicator lamps and rotary selector knobs.
+  Design aid only — not the application.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generator Simulator — Analog Panel Wireframe</title>
+    <style>
+      :root {
+        --steel: #e7e3d6;
+        --steel-d: #d6d1c0;
+        --steel-edge: #b9b3a0;
+        --engrave: #3c3a32;
+        --engrave-soft: #6b685c;
+        --bezel: #14130f;
+        --bezel-2: #2a2823;
+        --dial: #f3f1e7;
+        --needle: #c0392b;
+        --green: #3fae54;
+        --amber: #e8a02a;
+        --red: #cf3b2f;
+        --lampoff: #41463f;
+        --mono: "DSEG7", "SF Mono", "Roboto Mono", ui-monospace, Menlo, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; padding: 28px;
+        background: #4a4f4d url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='6' height='6'><rect width='6' height='6' fill='%234a4f4d'/><circle cx='1' cy='1' r='0.5' fill='%23434846'/></svg>");
+        font-family: "Helvetica Neue", Arial, sans-serif;
+        color: var(--engrave);
+      }
+      .cabinet {
+        max-width: 980px; margin: 0 auto;
+        background: linear-gradient(160deg, var(--steel) 0%, var(--steel-d) 100%);
+        border: 2px solid var(--steel-edge);
+        border-radius: 8px;
+        box-shadow: inset 0 2px 0 #fff8, inset 0 -3px 8px #0002, 0 12px 40px #0007;
+        padding: 22px;
+        position: relative;
+      }
+      /* corner screws */
+      .screw { position: absolute; width: 16px; height: 16px; border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, #fafaf2, #8d8775 70%, #5b5648);
+        box-shadow: inset 0 0 0 1px #0003, 0 1px 1px #fff8; }
+      .screw::after { content:""; position:absolute; inset:5px; border-top:2px solid #5b564880; transform: rotate(35deg); }
+      .screw.tl{top:10px;left:10px}.screw.tr{top:10px;right:10px}
+      .screw.bl{bottom:10px;left:10px}.screw.br{bottom:10px;right:10px}
+
+      .nameplate {
+        text-align: center; margin: 4px auto 20px; padding: 8px 18px; width: max-content;
+        background: linear-gradient(180deg, #2c2a24, #1a1915);
+        color: #d8d3c2; border-radius: 4px; border: 1px solid #000;
+        box-shadow: inset 0 1px 0 #fff2, 0 2px 4px #0004;
+        letter-spacing: 3px; font-size: 13px;
+      }
+      .nameplate small { display:block; letter-spacing:1px; color:#9a9482; font-size:10px; margin-top:3px; }
+
+      .subpanel {
+        border: 1px solid var(--steel-edge);
+        border-radius: 6px; padding: 16px 16px 10px;
+        background: linear-gradient(180deg, #efece1, #e1ddcf);
+        box-shadow: inset 0 1px 0 #fff9, inset 0 -2px 5px #0001;
+        margin-bottom: 18px;
+      }
+      .subpanel > .cap {
+        font-size: 10px; letter-spacing: 2px; color: var(--engrave-soft);
+        text-shadow: 0 1px 0 #fff8; margin-bottom: 12px;
+      }
+      .row { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
+
+      /* engraved label under any instrument */
+      .ilabel { text-align:center; font-size:10px; letter-spacing:1.5px; color:var(--engrave);
+        text-shadow: 0 1px 0 #fff9; margin-top:6px; }
+
+      /* round meter bezel */
+      .meter { width: 200px; }
+      .bezel-round {
+        background: radial-gradient(circle at 50% 38%, #3a382f, #111 80%);
+        border-radius: 50%; padding: 9px; box-shadow: 0 3px 6px #0005, inset 0 2px 3px #fff2;
+      }
+      .meter svg { display:block; width:100%; height:auto; background:transparent; }
+
+      /* rectangular panel meter */
+      .pmeter { width: 150px; }
+      .bezel-rect {
+        background: linear-gradient(180deg, #2a2823, #100f0c);
+        border-radius: 6px; padding: 8px; box-shadow: 0 2px 5px #0005, inset 0 1px 2px #fff2;
+      }
+      .bezel-rect .face { background: var(--dial); border-radius: 3px; }
+
+      /* digital cluster (black bezel) */
+      .digital { width: 220px; background: linear-gradient(180deg,#26241f,#0c0b09);
+        border-radius:6px; padding:12px; box-shadow:0 2px 6px #0005, inset 0 1px 2px #fff2; }
+      .digital .seg { font-family: var(--mono); color: #ff5a3c; font-size: 30px; letter-spacing:2px;
+        text-shadow: 0 0 8px #ff5a3c80; background:#1a0f0c; border-radius:4px; padding:6px 8px; text-align:right; }
+      .digital .seg.grn { color:#46ff8c; text-shadow:0 0 8px #46ff8c70; }
+      .digital .dk { color:#7d7a70; font-size:9px; letter-spacing:1.5px; margin:10px 2px 4px; }
+      .digital .two { display:flex; gap:8px; }
+      .digital .two > div { flex:1; }
+
+      /* indicator lamps */
+      .lamps { display:flex; gap:22px; justify-content:center; align-items:flex-start; }
+      .lamp { text-align:center; }
+      .bulb { width:30px; height:30px; border-radius:50%; margin:0 auto;
+        background: radial-gradient(circle at 35% 30%, #fff6, var(--lampoff));
+        box-shadow: inset 0 -3px 6px #0008, inset 0 2px 3px #fff3, 0 1px 2px #0006;
+        border: 2px solid #1d1c18; }
+      .bulb.green { background: radial-gradient(circle at 35% 30%, #c9ffd8, var(--green)); box-shadow: 0 0 14px #3fae54aa, inset 0 -2px 5px #0a5a1f, inset 0 2px 3px #fff7; }
+      .bulb.amber { background: radial-gradient(circle at 35% 30%, #c9ffd8, var(--lampoff)); }
+      .bulb.amber.on { background: radial-gradient(circle at 35% 30%, #fff0c2, var(--amber)); box-shadow: 0 0 14px #e8a02aaa, inset 0 -2px 5px #7a5208, inset 0 2px 3px #fff7; }
+      .bulb.red.on { background: radial-gradient(circle at 35% 30%, #ffd2cc, var(--red)); box-shadow: 0 0 14px #cf3b2faa, inset 0 -2px 5px #6e120c, inset 0 2px 3px #fff7; }
+
+      /* AVR toggle */
+      .toggle-stack { text-align:center; }
+      .tgl { width:46px; height:74px; border-radius:8px; margin:0 auto;
+        background: linear-gradient(180deg,#cfcabb,#b6b1a1); border:1px solid #8d8775;
+        box-shadow: inset 0 1px 0 #fff8, inset 0 -2px 4px #0002; position:relative; }
+      .tgl .lever { position:absolute; left:11px; width:22px; height:30px; border-radius:5px;
+        background: linear-gradient(180deg,#5a5750,#2b2a25); box-shadow:0 2px 3px #0006, inset 0 1px 0 #fff3; }
+      .tgl.on .lever { top:8px; } .tgl.off .lever { bottom:8px; }
+      .tgl .mk { position:absolute; right:6px; font-size:9px; color:#5b564a; }
+      .tgl .mk.t{top:4px}.tgl .mk.b{bottom:4px}
+
+      /* emergency / reset mushroom */
+      .estop { width:74px; height:74px; border-radius:50%;
+        background: radial-gradient(circle at 40% 30%, #ff8a7a, #b62318 75%, #7c130c);
+        box-shadow: 0 5px 10px #0006, inset 0 3px 6px #fff4, inset 0 -5px 10px #00000060;
+        border:3px solid #f1c40f; }
+
+      /* rotary knob */
+      .knob-wrap { text-align:center; width:130px; }
+      .knob { width:84px; height:84px; border-radius:50%; margin:0 auto; position:relative;
+        background: radial-gradient(circle at 40% 32%, #5b5750, #2a2924 80%);
+        box-shadow: 0 3px 6px #0006, inset 0 2px 3px #fff2; border:3px solid #16150f; }
+      .knob .ptr { position:absolute; top:6px; left:50%; width:4px; height:30px; margin-left:-2px;
+        background:linear-gradient(#f3f1e7,#bdb9aa); border-radius:2px; transform-origin:50% 36px; }
+      .knob .cap-dot { position:absolute; inset:30px; border-radius:50%;
+        background: radial-gradient(circle at 40% 35%, #6a665e, #34322c); box-shadow: inset 0 1px 2px #fff2; }
+      .scale { display:flex; justify-content:space-between; font-size:9px; color:var(--engrave-soft);
+        width:104px; margin:5px auto 0; text-shadow:0 1px 0 #fff8; }
+      .valtag { font-family: var(--mono); font-size:13px; color:#1a1915; background:#cfcabb;
+        border:1px solid #8d8775; border-radius:3px; padding:2px 8px; margin-top:6px; display:inline-block;
+        box-shadow: inset 0 1px 0 #fff8; }
+      .locked-knob .knob { filter: grayscale(.5) brightness(.78); }
+      .locktag { font-size:9px; color:#9a5; color:var(--amber); letter-spacing:1px; margin-top:3px; }
+
+      .footer { text-align:center; font-size:10px; color:#cfcabb; margin-top:14px; letter-spacing:1px; }
+    </style>
+  </head>
+  <body>
+    <div class="cabinet">
+      <span class="screw tl"></span><span class="screw tr"></span>
+      <span class="screw bl"></span><span class="screw br"></span>
+
+      <div class="nameplate">SYNCHRONOUS GENERATOR CONTROL
+        <small>400 V · 50 Hz · 1 MVA · ISLANDED — WIREFRAME, NON-FUNCTIONAL</small></div>
+
+      <!-- ============ TOP: PRIMARY METERS ============ -->
+      <div class="subpanel">
+        <div class="cap">GENERATOR OUTPUT</div>
+        <div class="row">
+          <!-- Vt round meter -->
+          <div class="meter">
+            <div class="bezel-round">
+              <svg viewBox="0 0 200 185">
+                <circle cx="100" cy="110" r="92" fill="#f3f1e7" stroke="#d8d3c2" stroke-width="2"/>
+                <!-- zones -->
+                <path d="M44.9,165.2 A78,78 0 0 1 44.9,54.9" fill="none" stroke="#e8a02a" stroke-width="7"/>
+                <path d="M44.9,54.9 A78,78 0 0 1 178,110"   fill="none" stroke="#3fae54" stroke-width="7"/>
+                <path d="M178,110 A78,78 0 0 1 173.3,136.7"  fill="none" stroke="#e8a02a" stroke-width="7"/>
+                <path d="M173.3,136.7 A78,78 0 0 1 155.2,165.2" fill="none" stroke="#cf3b2f" stroke-width="7"/>
+                <!-- ticks -->
+                <g stroke="#3c3a32" stroke-width="2">
+                  <line x1="44.9" y1="165.2" x2="50" y2="158"/><line x1="22" y1="110" x2="31" y2="110"/>
+                  <line x1="44.9" y1="54.9" x2="50" y2="62"/><line x1="100" y1="32" x2="100" y2="41"/>
+                  <line x1="155.2" y1="54.9" x2="150" y2="62"/><line x1="178" y1="110" x2="169" y2="110"/>
+                  <line x1="155.2" y1="165.2" x2="150" y2="158"/>
+                </g>
+                <text x="100" y="78" text-anchor="middle" font-size="11" fill="#6b685c">VOLTS</text>
+                <text x="100" y="93" text-anchor="middle" font-size="9" fill="#9a9482">0 — 500</text>
+                <!-- needle to ~398V -->
+                <line x1="100" y1="110" x2="161.2" y2="100.3" stroke="#c0392b" stroke-width="3"/>
+                <line x1="100" y1="110" x2="93" y2="121" stroke="#c0392b" stroke-width="3"/>
+                <circle cx="100" cy="110" r="7" fill="#2a2823" stroke="#000"/>
+              </svg>
+            </div>
+            <div class="ilabel">TERMINAL VOLTAGE&nbsp; Vₜ ≈ 398 V</div>
+          </div>
+
+          <!-- P round meter -->
+          <div class="meter">
+            <div class="bezel-round">
+              <svg viewBox="0 0 200 185">
+                <circle cx="100" cy="110" r="92" fill="#f3f1e7" stroke="#d8d3c2" stroke-width="2"/>
+                <path d="M44.9,165.2 A78,78 0 0 1 44.9,54.9" fill="none" stroke="#3fae54" stroke-width="7"/>
+                <path d="M44.9,54.9 A78,78 0 0 1 173.3,136.7" fill="none" stroke="#3fae54" stroke-width="7"/>
+                <path d="M173.3,136.7 A78,78 0 0 1 155.2,165.2" fill="none" stroke="#cf3b2f" stroke-width="7"/>
+                <g stroke="#3c3a32" stroke-width="2">
+                  <line x1="44.9" y1="165.2" x2="50" y2="158"/><line x1="22" y1="110" x2="31" y2="110"/>
+                  <line x1="44.9" y1="54.9" x2="50" y2="62"/><line x1="100" y1="32" x2="100" y2="41"/>
+                  <line x1="155.2" y1="54.9" x2="150" y2="62"/><line x1="178" y1="110" x2="169" y2="110"/>
+                </g>
+                <text x="100" y="78" text-anchor="middle" font-size="11" fill="#6b685c">kW</text>
+                <text x="100" y="93" text-anchor="middle" font-size="9" fill="#9a9482">0 — 1000</text>
+                <!-- needle to ~500kW (straight up) -->
+                <line x1="100" y1="110" x2="100" y2="48" stroke="#c0392b" stroke-width="3"/>
+                <line x1="100" y1="110" x2="100" y2="123" stroke="#c0392b" stroke-width="3"/>
+                <circle cx="100" cy="110" r="7" fill="#2a2823" stroke="#000"/>
+              </svg>
+            </div>
+            <div class="ilabel">ACTIVE POWER&nbsp; P ≈ 500 kW</div>
+          </div>
+
+          <!-- digital cluster: Q, delta, PF -->
+          <div class="digital">
+            <div class="dk">LOAD ANGLE  δ  (deg)</div>
+            <div class="seg grn">22.0</div>
+            <div class="dk">REACTIVE  Q (kVAR) &nbsp;·&nbsp; PF</div>
+            <div class="two">
+              <div class="seg" style="font-size:20px">+310</div>
+              <div class="seg" style="font-size:20px">0.85</div>
+            </div>
+            <div class="dk" style="color:#46ff8c">▮ SUPPLYING / LAG &nbsp; ▮ STABLE</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ EXCITER CHAIN: RECT PANEL METERS ============ -->
+      <div class="subpanel">
+        <div class="cap">EXCITER CHAIN</div>
+        <div class="row">
+          <div class="pmeter">
+            <div class="bezel-rect"><div class="face">
+              <svg viewBox="0 0 120 80"><path d="M11.5,50 A56,56 0 0 1 108.5,50" fill="none" stroke="#3fae54" stroke-width="4"/>
+                <g stroke="#3c3a32" stroke-width="1.5"><line x1="11.5" y1="50" x2="16" y2="45"/><line x1="60" y1="22" x2="60" y2="28"/><line x1="108.5" y1="50" x2="104" y2="45"/></g>
+                <line x1="60" y1="78" x2="82.7" y2="38" stroke="#c0392b" stroke-width="2.5"/><circle cx="60" cy="78" r="4" fill="#2a2823"/>
+                <text x="60" y="68" text-anchor="middle" font-size="9" fill="#6b685c">VAC</text></svg>
+            </div></div>
+            <div class="ilabel">EXCITER AC&nbsp; 112 V</div>
+          </div>
+          <div class="pmeter">
+            <div class="bezel-rect"><div class="face">
+              <svg viewBox="0 0 120 80"><path d="M11.5,50 A56,56 0 0 1 108.5,50" fill="none" stroke="#3fae54" stroke-width="4"/>
+                <g stroke="#3c3a32" stroke-width="1.5"><line x1="11.5" y1="50" x2="16" y2="45"/><line x1="60" y1="22" x2="60" y2="28"/><line x1="108.5" y1="50" x2="104" y2="45"/></g>
+                <line x1="60" y1="78" x2="74.5" y2="34.4" stroke="#c0392b" stroke-width="2.5"/><circle cx="60" cy="78" r="4" fill="#2a2823"/>
+                <text x="60" y="68" text-anchor="middle" font-size="9" fill="#6b685c">VDC</text></svg>
+            </div></div>
+            <div class="ilabel">RECTIFIED DC&nbsp; 98 V</div>
+          </div>
+          <div class="pmeter">
+            <div class="bezel-rect"><div class="face">
+              <svg viewBox="0 0 120 80"><path d="M11.5,50 A56,56 0 0 1 108.5,50" fill="none" stroke="#3fae54" stroke-width="4"/>
+                <g stroke="#3c3a32" stroke-width="1.5"><line x1="11.5" y1="50" x2="16" y2="45"/><line x1="60" y1="22" x2="60" y2="28"/><line x1="108.5" y1="50" x2="104" y2="45"/></g>
+                <line x1="60" y1="78" x2="73.3" y2="34" stroke="#c0392b" stroke-width="2.5"/><circle cx="60" cy="78" r="4" fill="#2a2823"/>
+                <text x="60" y="68" text-anchor="middle" font-size="9" fill="#6b685c">AMP</text></svg>
+            </div></div>
+            <div class="ilabel">FIELD CURRENT&nbsp; 6.4 A</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ STATUS LAMPS + AVR + RESET ============ -->
+      <div class="subpanel">
+        <div class="cap">STATUS &amp; REGULATION</div>
+        <div class="row" style="align-items:center; gap:34px;">
+          <div class="lamps">
+            <div class="lamp"><div class="bulb green"></div><div class="ilabel">RUN</div></div>
+            <div class="lamp"><div class="bulb green"></div><div class="ilabel">AVR ACTIVE</div></div>
+            <div class="lamp"><div class="bulb amber"></div><div class="ilabel">δ → 90° WARN</div></div>
+            <div class="lamp"><div class="bulb red"></div><div class="ilabel">COLLAPSE</div></div>
+          </div>
+          <div class="toggle-stack">
+            <div class="tgl on"><span class="mk t">ON</span><span class="mk b">OFF</span><div class="lever"></div></div>
+            <div class="ilabel">AVR</div>
+          </div>
+          <div class="toggle-stack">
+            <div class="estop"></div>
+            <div class="ilabel">RESET</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ CONTROLS: ROTARY KNOBS ============ -->
+      <div class="subpanel">
+        <div class="cap">CONTROLS</div>
+        <div class="row">
+          <div class="knob-wrap locked-knob">
+            <div class="knob"><div class="ptr" style="transform:rotate(81deg)"></div><div class="cap-dot"></div></div>
+            <div class="scale"><span>0.5</span><span>1.5</span></div>
+            <div class="valtag">1.00 pu</div>
+            <div class="ilabel">EXCITER FIELD DC</div>
+            <div class="locktag">🔒 AVR COMMANDING</div>
+          </div>
+          <div class="knob-wrap">
+            <div class="knob"><div class="ptr" style="transform:rotate(0deg)"></div><div class="cap-dot"></div></div>
+            <div class="scale"><span>0</span><span>100</span></div>
+            <div class="valtag">50 %</div>
+            <div class="ilabel">ACTIVE LOAD</div>
+          </div>
+          <div class="knob-wrap">
+            <div class="knob"><div class="ptr" style="transform:rotate(-40deg)"></div><div class="cap-dot"></div></div>
+            <div class="scale"><span>0.6 lag</span><span>0.6 ld</span></div>
+            <div class="valtag">0.85 lag</div>
+            <div class="ilabel">POWER FACTOR</div>
+          </div>
+          <div class="knob-wrap">
+            <div class="knob"><div class="ptr" style="transform:rotate(0deg)"></div><div class="cap-dot"></div></div>
+            <div class="scale"><span>380</span><span>420</span></div>
+            <div class="valtag">400 V</div>
+            <div class="ilabel">AVR Vref</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">STATIC WIREFRAME — needles, lamps &amp; knobs are frozen placeholders; nothing is interactive.</div>
+    </div>
+  </body>
+</html>
