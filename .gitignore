@@ -1,0 +1,14 @@
+# OS
+.DS_Store
+
+# Node / Vite (arrives with Phase 1 implementation)
+node_modules/
+dist/
+*.local
+
+# Test / coverage
+coverage/
+
+# Editor
+.vscode/
+.idea/
