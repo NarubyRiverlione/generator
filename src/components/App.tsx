@@ -81,13 +81,13 @@ export default function App() {
           />
         </div>
 
-        {/* Row 3, col 1: indicator lights (top 4) */}
-        <div style={{ gridColumn: 1, gridRow: 3 }}>
+        {/* Row 3, col 1: indicator lights (top 4) — vertically centered */}
+        <div style={{ gridColumn: 1, gridRow: 3, alignSelf: 'center' }}>
           <IndicatorLights avrOn={inputs.avrOn} outputs={outputs} half="top" />
         </div>
 
-        {/* Row 3, col 2: indicator lights (bottom 4) — next to top group */}
-        <div style={{ gridColumn: 2, gridRow: 3 }}>
+        {/* Row 3, col 2: indicator lights (bottom 4) — vertically centered */}
+        <div style={{ gridColumn: 2, gridRow: 3, alignSelf: 'center' }}>
           <IndicatorLights avrOn={inputs.avrOn} outputs={outputs} half="bottom" />
         </div>
 
@@ -107,8 +107,8 @@ export default function App() {
           />
         </div>
 
-        {/* Row 4: AVR controls full-width */}
-        <div style={{ gridColumn: '1 / 6', gridRow: 4 }}>
+        {/* Row 3, cols 3-4: AVR controls */}
+        <div style={{ gridColumn: '3 / 5', gridRow: 3, alignSelf: 'center' }}>
           <AvrControl inputs={inputs} outputs={outputs} onSetInput={setInput} />
         </div>
       </div>
