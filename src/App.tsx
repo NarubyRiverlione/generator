@@ -7,13 +7,13 @@
  *   Row 5: [AVR controls full-width]
  */
 
-import { AvrControl } from './AvrControl'
+import { AvrControl } from './components/AvrControl'
 import { ExciterChain } from './ExciterChain'
-import { IndicatorLights } from './IndicatorLights'
-import { Knob, clamp } from './Knob'
-import { ReadoutPanel } from './ReadoutPanel'
-import { StatusDisplay } from './StatusDisplay'
-import { useGeneratorSimulation } from '../hooks/useGeneratorSimulation'
+import { IndicatorLights } from './components/IndicatorLights'
+import { Knob, clamp } from './components/Knob'
+import { ReadoutPanel } from './components/ReadoutPanel'
+import { StatusDisplay } from './components/StatusDisplay'
+import { useGeneratorSimulation } from './hooks/useGeneratorSimulation'
 
 export default function App() {
   const { inputs, outputs, setInput } = useGeneratorSimulation()
@@ -33,9 +33,7 @@ export default function App() {
         <b>SYNCHRONOUS GENERATOR</b>&nbsp;·&nbsp;400 V · 50 Hz · 1 MVA · ISLANDED
       </p>
 
-      {outputs.collapsed && (
-        <div className="collapsed-banner">⚠ VOLTAGE COLLAPSE — REDUCE LOAD OR INCREASE FIELD</div>
-      )}
+      {outputs.collapsed && <div className="collapsed-banner">⚠ VOLTAGE COLLAPSE — REDUCE LOAD OR INCREASE FIELD</div>}
 
       <div className="switchboard-grid">
         {/* Row 1: gauges — auto-placed, pinned to row 1 via CSS */}
