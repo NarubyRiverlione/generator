@@ -1,8 +1,6 @@
-/** AVR on/off pushbutton pair, Vref knob, and indicator bulbs (right column of middle band). */
+/** AVR on/off pushbutton pair and Vref knob. */
 
 import type { Inputs, Outputs } from '../core/types'
-
-const DEG = 180 / Math.PI
 
 type Props = {
   inputs: Inputs
@@ -11,31 +9,8 @@ type Props = {
 }
 
 export function AvrControl({ inputs, outputs, onSetInput }: Props) {
-  const deltaDegs = outputs.delta * DEG
-  const deltaWarn = deltaDegs > 70
-
   return (
     <div className="avr-section">
-      {/* Indicator bulbs */}
-      <div className="lamps">
-        <div className="lamp">
-          <div className="bulb green on" />
-          <div className="card">GENERATOR RUN</div>
-        </div>
-        <div className="lamp">
-          <div className={`bulb green${inputs.avrOn ? ' on' : ''}`} />
-          <div className="card">AVR ACTIVE</div>
-        </div>
-        <div className="lamp">
-          <div className={`bulb amber${deltaWarn ? ' on' : ''}`} />
-          <div className="card">δ → 90° WARN</div>
-        </div>
-        <div className="lamp">
-          <div className={`bulb red${outputs.collapsed ? ' on' : ''}`} />
-          <div className="card">VOLT COLLAPSE</div>
-        </div>
-      </div>
-
       {/* AVR pushbuttons */}
       <div className="avr-row">
         <div className="pb">

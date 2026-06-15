@@ -52,14 +52,14 @@ export function Knob({ label, min, max, step, value, display, scaleMin, scaleMax
         aria-disabled={readOnly}
         tabIndex={readOnly ? -1 : 0}
       >
-        <span className="knob-corner tl">−</span>
-        <span className="knob-corner tr">+</span>
+        <span className="knob-corner tl">▼</span>
+        <span className="knob-corner tr">▲</span>
         <div className="knob">
           <div className="ptr" style={{ transform: `rotate(${ptrRotation}deg)` }} />
           <div className="hub" />
         </div>
-        <span className="knob-corner bl">−−</span>
-        <span className="knob-corner br">++</span>
+        <span className="knob-corner bl">▼▼</span>
+        <span className="knob-corner br">▲▲</span>
       </div>
       <div className="scale">
         <span>{scaleMin}</span>
