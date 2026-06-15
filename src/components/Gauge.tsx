@@ -91,21 +91,36 @@ export function Gauge({ value, min, max, unit, label, subLabel, zones, children 
               ))
             })()}
 
-            {/* Tick marks at 0, 25, 50, 75, 100% */}
+            {/* Tick marks and value labels at 0, 25, 50, 75, 100% */}
             {TICK_FRACS.map((f) => {
               const [ox, oy] = fracToXY(f)
               const ix = CX + (ox - CX) * 0.88
               const iy = CY + (oy - CY) * 0.88
+              const lx = CX + (ox - CX) * 0.66
+              const ly = CY + (oy - CY) * 0.66
+              const v = min + f * (max - min)
+              const tickLabel = Number.isInteger(v) ? String(v) : v.toFixed(1)
               return (
-                <line
-                  key={f}
-                  x1={ox.toFixed(2)}
-                  y1={oy.toFixed(2)}
-                  x2={ix.toFixed(2)}
-                  y2={iy.toFixed(2)}
-                  stroke="#0008"
-                  strokeWidth={1.5}
-                />
+                <g key={f}>
+                  <line
+                    x1={ox.toFixed(2)}
+                    y1={oy.toFixed(2)}
+                    x2={ix.toFixed(2)}
+                    y2={iy.toFixed(2)}
+                    stroke="#0008"
+                    strokeWidth={1.5}
+                  />
+                  <text
+                    x={lx.toFixed(2)}
+                    y={ly.toFixed(2)}
+                    fontSize={7}
+                    fill="#333"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                  >
+                    {tickLabel}
+                  </text>
+                </g>
               )
             })}
 
