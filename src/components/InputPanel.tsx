@@ -1,117 +1,56 @@
-/** Rotary-knob-style sliders: field DC, active load, power factor. No rotor-speed control. */
+/** Rotary-knob controls: power factor. Click left half to decrease, right to increase. */
 
 import type { Inputs } from '../core/types'
+import { clamp } from './Knob'
 
 type Props = {
   inputs: Inputs
-  avrCommand: number
   onSetInput: <K extends keyof Inputs>(key: K, value: Inputs[K]) => void
 }
 
-type KnobProps = {
-  label: string
-  min: number
-  max: number
-  step: number
-  value: number
-  display: string
-  scaleMin: string
-  scaleMax: string
-  onChange: (v: number) => void
-  readOnly?: boolean
-  lockLabel?: string
-  ptrRotation: number
-}
-
-function Knob({ label, min, max, step, value, display, scaleMin, scaleMax, onChange, readOnly, lockLabel, ptrRotation }: KnobProps) {
-  return (
-    <div className={`knob-wrap${readOnly ? ' locked' : ''}`}>
-      <div className="card">{label}</div>
-      <div className="knob-hitbox">
-        <div className="knob">
-          <div className="ptr" style={{ transform: `rotate(${ptrRotation}deg)` }} />
-          <div className="hub" />
-        </div>
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          disabled={readOnly}
-          onChange={(e) => onChange(parseFloat(e.target.value))}
-          aria-label={label}
-          className="knob-range"
-          title={display}
-        />
-      </div>
-      <div className="scale">
-        <span>{scaleMin}</span>
-        <span>{scaleMax}</span>
-      </div>
-      <div className="plate">{display}</div>
-      {lockLabel && <div className="locktag">{lockLabel}</div>}
-    </div>
-  )
-}
-
-export function InputPanel({ inputs, avrCommand, onSetInput }: Props) {
-  const fieldValue = inputs.avrOn ? avrCommand : inputs.fieldVoltage
+export function InputPanel({ inputs, onSetInput }: Props) {
   const pfSigned = inputs.pfLag ? inputs.powerFactor : -inputs.powerFactor
   const pfSign = inputs.pfLag ? 'lag' : 'ld'
 
+  function handlePfClick(e: React.MouseEvent<HTMLDivElement>) {
+    const left = e.nativeEvent.offsetX < e.currentTarget.offsetWidth / 2
+    const next = clamp(pfSigned + (left ? -0.01 : 0.01), -1, 1)
+    const abs = Math.abs(next)
+    onSetInput('powerFactor', abs < 0.6 ? 0.6 : parseFloat(abs.toFixed(10)))
+    onSetInput('pfLag', next >= 0)
+  }
+
+  function handlePfKey(e: React.KeyboardEvent) {
+    const delta = e.key === 'ArrowLeft' ? -0.01 : e.key === 'ArrowRight' ? 0.01 : 0
+    if (!delta) return
+    e.preventDefault()
+    const next = clamp(pfSigned + delta, -1, 1)
+    const abs = Math.abs(next)
+    onSetInput('powerFactor', abs < 0.6 ? 0.6 : parseFloat(abs.toFixed(10)))
+    onSetInput('pfLag', next >= 0)
+  }
+
   return (
     <div className="controls">
-      <div className="drag-hint">← drag knobs →</div>
+      <div className="drag-hint">click left ▼ · right ▲</div>
 
-      <Knob
-        label="EXCITER FIELD DC"
-        min={0}
-        max={1.5}
-        step={0.01}
-        value={fieldValue}
-        display={`${fieldValue.toFixed(2)} pu`}
-        scaleMin="0"
-        scaleMax="1.5"
-        readOnly={inputs.avrOn}
-        lockLabel={inputs.avrOn ? 'AVR COMMANDING' : undefined}
-        ptrRotation={-130 + (fieldValue / 1.5) * 260}
-        onChange={(v) => onSetInput('fieldVoltage', v)}
-      />
-      <Knob
-        label="ACTIVE LOAD"
-        min={0}
-        max={1}
-        step={0.01}
-        value={inputs.loadFraction}
-        display={`${Math.round(inputs.loadFraction * 100)} %`}
-        scaleMin="0 %"
-        scaleMax="100 %"
-        ptrRotation={-130 + inputs.loadFraction * 260}
-        onChange={(v) => onSetInput('loadFraction', v)}
-      />
       <div className="knob-wrap">
         <div className="card">POWER FACTOR</div>
-        <div className="knob-hitbox">
+        <div
+          className="knob-hitbox knob-clickable"
+          onClick={handlePfClick}
+          onKeyDown={handlePfKey}
+          role="slider"
+          aria-label="Power factor"
+          aria-valuemin={-1}
+          aria-valuemax={1}
+          aria-valuenow={pfSigned}
+          tabIndex={0}
+        >
           <div className="knob">
             <div className="ptr" style={{ transform: `rotate(${-130 + ((inputs.powerFactor - 0.6) / 0.4) * 260}deg)` }} />
             <div className="hub" />
           </div>
-          <input
-            type="range"
-            min={-1}
-            max={1}
-            step={0.01}
-            value={pfSigned}
-            onChange={(e) => {
-              const v = parseFloat(e.target.value)
-              onSetInput('powerFactor', Math.abs(v) < 0.6 ? 0.6 : Math.abs(v))
-              onSetInput('pfLag', v >= 0)
-            }}
-            aria-label="Power factor"
-            className="knob-range"
-            title={`${inputs.powerFactor.toFixed(2)} ${pfSign}`}
-          />
         </div>
         <div className="scale">
           <span>0.6 lag</span>

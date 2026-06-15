@@ -3,8 +3,13 @@
 import { puToKW, puToVolts } from '../core/units'
 import type { Outputs } from '../core/types'
 import { Gauge } from './Gauge'
+import { Knob } from './Knob'
 
-type Props = { outputs: Outputs }
+type Props = {
+  outputs: Outputs
+  loadFraction: number
+  onLoadChange: (v: number) => void
+}
 
 // Vₜ: amber (0–25%) / green (25–85%) / amber (85–92%) / red (92–100%)
 const VT_ZONES = [
@@ -20,7 +25,7 @@ const P_ZONES = [
   { end: 1.0, color: '#e23b2e' },
 ]
 
-export function ReadoutPanel({ outputs }: Props) {
+export function ReadoutPanel({ outputs, loadFraction, onLoadChange }: Props) {
   const vtV = puToVolts(outputs.vt)
   const pKW = puToKW(outputs.p)
 
@@ -43,7 +48,20 @@ export function ReadoutPanel({ outputs }: Props) {
         label="ACTIVE POWER P"
         subLabel="0 – 1000 kW"
         zones={P_ZONES}
-      />
+      >
+        <Knob
+          label="ACTIVE LOAD"
+          min={0}
+          max={1}
+          step={0.01}
+          value={loadFraction}
+          display={`${Math.round(loadFraction * 100)} %`}
+          scaleMin="0 %"
+          scaleMax="100 %"
+          ptrRotation={-130 + loadFraction * 260}
+          onChange={onLoadChange}
+        />
+      </Gauge>
     </>
   )
 }

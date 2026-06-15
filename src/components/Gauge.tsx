@@ -4,6 +4,8 @@
  * Zone arcs drawn at the same radius as the base track — no gap.
  */
 
+import type { ReactNode } from 'react'
+
 type Zone = { end: number; color: string }
 type GaugeProps = {
   value: number
@@ -13,6 +15,7 @@ type GaugeProps = {
   label: string
   subLabel: string
   zones: Zone[]
+  children?: ReactNode
 }
 
 // Wireframe arc geometry
@@ -50,7 +53,7 @@ function needleTip(f: number): [number, number] {
 // Fixed tick positions matching wireframe
 const TICK_FRACS = [0, 0.25, 0.5, 0.75, 1]
 
-export function Gauge({ value, min, max, unit, label, subLabel, zones }: GaugeProps) {
+export function Gauge({ value, min, max, unit, label, subLabel, zones, children }: GaugeProps) {
   const fraction = max > min ? (value - min) / (max - min) : 0
   const [lx, ly] = fracToXY(0)
   const [rx, ry] = fracToXY(1)
@@ -117,6 +120,7 @@ export function Gauge({ value, min, max, unit, label, subLabel, zones }: GaugePr
           </svg>
         </div>
       </div>
+      {children}
     </div>
   )
 }

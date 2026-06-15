@@ -1,8 +1,9 @@
 /**
  * Two-column desktop / stacked mobile layout.
  * Row 1: all meters in signal-chain order (exciter AC → rectified DC → field current → Vₜ → P).
+ *         EXCITER FIELD DC knob sits below AC OUTPUT; ACTIVE LOAD knob sits below ACTIVE POWER P.
  * Row 2: LCD + indicator bulbs (left) | AVR pushbutton controls (right).
- * Row 3: rotary knob controls.
+ * Row 3: power-factor knob.
  */
 
 import { AvrControl } from './AvrControl'
@@ -14,6 +15,8 @@ import { useGeneratorSimulation } from '../hooks/useGeneratorSimulation'
 
 export default function App() {
   const { inputs, outputs, setInput } = useGeneratorSimulation()
+
+  const fieldValue = inputs.avrOn ? outputs.avrCommand : inputs.fieldVoltage
 
   return (
     <div className="panel">
@@ -27,8 +30,17 @@ export default function App() {
 
       {/* Row 1: all meters in signal-chain order */}
       <div className="meters">
-        <ExciterChain iFieldPu={outputs.avrCommand} />
-        <ReadoutPanel outputs={outputs} />
+        <ExciterChain
+          iFieldPu={outputs.avrCommand}
+          fieldValue={fieldValue}
+          avrOn={inputs.avrOn}
+          onFieldChange={(v) => setInput('fieldVoltage', v)}
+        />
+        <ReadoutPanel
+          outputs={outputs}
+          loadFraction={inputs.loadFraction}
+          onLoadChange={(v) => setInput('loadFraction', v)}
+        />
       </div>
 
       {/* Row 2: LCD + indicators (left), AVR controls (right) */}
@@ -37,8 +49,8 @@ export default function App() {
         <AvrControl inputs={inputs} outputs={outputs} onSetInput={setInput} />
       </div>
 
-      {/* Row 3: rotary knob controls */}
-      <InputPanel inputs={inputs} avrCommand={outputs.avrCommand} onSetInput={setInput} />
+      {/* Row 3: power-factor knob */}
+      <InputPanel inputs={inputs} onSetInput={setInput} />
 
       <div className="footer">PHASE 1 MVP · ISLANDED STEADY-STATE SIMULATOR</div>
     </div>

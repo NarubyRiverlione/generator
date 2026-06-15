@@ -16,6 +16,8 @@
   --chrome1: #e6e8ea;
   --chrome2: #8b9094;
   --mono: 'SF Mono', 'Roboto Mono', ui-monospace, Menlo, monospace;
+  --knob-sz: 88px;
+  --knob-gap: 10px;
 }
 
 *,
@@ -94,6 +96,11 @@ body {
 
 .gauge-col {
   width: 138px;
+}
+
+.gauge-col .knob-wrap {
+  width: 100%;
+  margin-top: 10px;
 }
 
 /* Square switchboard bezel */
@@ -319,22 +326,41 @@ body {
 
 .knob-hitbox {
   position: relative;
-  width: 88px;
-  height: 88px;
+  width: 100%;
+  height: calc(var(--knob-sz) + 2 * var(--knob-gap));
   margin: 6px auto 0;
 }
 
 .knob {
-  width: 88px;
-  height: 88px;
+  width: var(--knob-sz);
+  height: var(--knob-sz);
   border-radius: 50%;
   position: absolute;
-  inset: 0;
+  top: var(--knob-gap);
+  left: 50%;
+  transform: translateX(-50%);
   background: radial-gradient(circle at 40% 32%, #4d4f52, #161719 80%);
   box-shadow: 0 0 0 4px var(--chrome1), 0 0 0 6px var(--chrome2), 0 4px 8px #0005,
     inset 0 2px 3px #fff2;
   pointer-events: none;
 }
+
+/* Corner step indicators inside the hitbox */
+.knob-corner {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-soft);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: -0.5px;
+}
+
+.knob-corner.tl { top: 2px; left:  4px; }
+.knob-corner.tr { top: 2px; right: 4px; }
+.knob-corner.bl { bottom: 2px; left:  4px; }
+.knob-corner.br { bottom: 2px; right: 4px; }
 
 .ptr {
   position: absolute;
@@ -357,20 +383,14 @@ body {
   box-shadow: inset 0 1px 2px #fff2;
 }
 
-/* Invisible range sits inside .knob-hitbox, covers the full knob face */
-.knob-range {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  width: 100%;
-  height: 100%;
+.knob-clickable {
   cursor: pointer;
-  -webkit-appearance: none;
-  margin: 0;
 }
 
-.knob-range:disabled {
-  cursor: not-allowed;
+.knob-clickable:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .drag-hint {
@@ -505,16 +525,15 @@ body {
 }
 
 @media (max-width: 540px) {
+  :root {
+    --knob-sz: 72px;
+  }
+
   .gauge-col {
     width: 90px;
   }
 
   .knob-wrap {
     width: 100px;
-  }
-
-  .knob {
-    width: 72px;
-    height: 72px;
   }
 }
