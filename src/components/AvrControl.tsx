@@ -1,0 +1,90 @@
+/** AVR on/off pushbutton pair, Vref knob, and indicator bulbs (right column of middle band). */
+
+import type { Inputs, Outputs } from '../core/types'
+
+const DEG = 180 / Math.PI
+
+type Props = {
+  inputs: Inputs
+  outputs: Outputs
+  onSetInput: <K extends keyof Inputs>(key: K, value: Inputs[K]) => void
+}
+
+export function AvrControl({ inputs, outputs, onSetInput }: Props) {
+  const deltaDegs = outputs.delta * DEG
+  const deltaWarn = deltaDegs > 70
+
+  return (
+    <div className="avr-section">
+      {/* Indicator bulbs */}
+      <div className="lamps">
+        <div className="lamp">
+          <div className="bulb green on" />
+          <div className="card">GENERATOR RUN</div>
+        </div>
+        <div className="lamp">
+          <div className={`bulb green${inputs.avrOn ? ' on' : ''}`} />
+          <div className="card">AVR ACTIVE</div>
+        </div>
+        <div className="lamp">
+          <div className={`bulb amber${deltaWarn ? ' on' : ''}`} />
+          <div className="card">δ → 90° WARN</div>
+        </div>
+        <div className="lamp">
+          <div className={`bulb red${outputs.collapsed ? ' on' : ''}`} />
+          <div className="card">VOLT COLLAPSE</div>
+        </div>
+      </div>
+
+      {/* AVR pushbuttons */}
+      <div className="avr-row">
+        <div className="pb">
+          <button
+            className={`dome${inputs.avrOn ? ' green active' : ' green'}`}
+            onClick={() => onSetInput('avrOn', true)}
+            aria-pressed={inputs.avrOn}
+            title="AVR ON"
+          />
+          <div className="card">AVR ON</div>
+        </div>
+        <div className="pb">
+          <button
+            className={`dome${!inputs.avrOn ? ' red active' : ' red'}`}
+            onClick={() => onSetInput('avrOn', false)}
+            aria-pressed={!inputs.avrOn}
+            title="AVR OFF"
+          />
+          <div className="card">AVR OFF</div>
+        </div>
+      </div>
+
+      {inputs.avrOn && (
+        <div className="knob-wrap vref-knob">
+          <div className="card">AVR Vref</div>
+          <div className="knob-hitbox">
+            <div className="knob">
+              <div className="ptr" style={{ transform: `rotate(${-130 + ((inputs.vref - 0.95) / 0.1) * 260}deg)` }} />
+              <div className="hub" />
+            </div>
+            <input
+              type="range"
+              min={0.95}
+              max={1.05}
+              step={0.001}
+              value={inputs.vref}
+              onChange={(e) => onSetInput('vref', parseFloat(e.target.value))}
+              aria-label="AVR voltage reference"
+              className="knob-range"
+              title={`${Math.round(inputs.vref * 400)} V`}
+            />
+          </div>
+          <div className="scale">
+            <span>380 V</span>
+            <span>420 V</span>
+          </div>
+          <div className="plate">{Math.round(inputs.vref * 400)} V</div>
+        </div>
+      )}
+    </div>
+  )
+}

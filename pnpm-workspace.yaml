@@ -1,0 +1,9 @@
+allowBuilds:
+  esbuild: false
+minimumReleaseAgeExclude:
+  - esbuild@0.24.3
+  - vite@6.4.2
+  - vitest@3.2.6
+  - esbuild@0.28.1
+onlyBuiltDependencies:
+  - esbuild
