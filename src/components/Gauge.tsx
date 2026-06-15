@@ -26,9 +26,9 @@ const R = 78
 // Angle in standard-math (y-up) terms for left/right endpoints:
 //   left  (3.5,  56): cos = (3.5-65)/78   = -0.7885, sin = (104-56)/78 = 0.6154
 //   right (126.5,56): cos = (126.5-65)/78 = +0.7885, sin = 0.6154
-const A_START = Math.atan2(CY - 56, 3.5 - CX)    // atan2(48, -61.5) ≈ 2.476 rad  (left end, ~141.9°)
-const A_END   = Math.atan2(CY - 56, 126.5 - CX)  // atan2(48, +61.5) ≈ 0.666 rad  (right end,  ~38.1°)
-const A_SPAN  = A_START - A_END                    // ≈ 1.810 rad — arc goes clockwise
+const A_START = Math.atan2(CY - 56, 3.5 - CX) // atan2(48, -61.5) ≈ 2.476 rad  (left end, ~141.9°)
+const A_END = Math.atan2(CY - 56, 126.5 - CX) // atan2(48, +61.5) ≈ 0.666 rad  (right end,  ~38.1°)
+const A_SPAN = A_START - A_END // ≈ 1.810 rad — arc goes clockwise
 
 // Map fraction [0,1] → SVG coordinates on the arc
 function fracToXY(f: number): [number, number] {
@@ -78,18 +78,15 @@ export function Gauge({ value, min, max, unit, label, subLabel, zones, children 
             />
 
             {/* Coloured zone arcs on same radius — no gap */}
-            {(() => {
-              let prev = 0
-              return zones.map((z, i) => (
-                <path
-                  key={i}
-                  d={zonePath(prev, (prev = z.end))}
-                  fill="none"
-                  stroke={z.color}
-                  strokeWidth={8}
-                />
-              ))
-            })()}
+            {zones.map((z, i) => (
+              <path
+                key={i}
+                d={zonePath(i === 0 ? 0 : zones[i - 1].end, z.end)}
+                fill="none"
+                stroke={z.color}
+                strokeWidth={8}
+              />
+            ))}
 
             {/* Tick marks and value labels at 0, 25, 50, 75, 100% */}
             {TICK_FRACS.map((f) => {

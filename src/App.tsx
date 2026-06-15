@@ -36,7 +36,9 @@ export default function App() {
       {relay27Tripped && (
         <div className="collapsed-banner">
           ⚠ 27 RELAY TRIP — UNDER-VOLTAGE — LOAD DISCONNECTED
-          <button className="relay-reset-btn" onClick={resetRelay27}>RESET</button>
+          <button className="relay-reset-btn" onClick={resetRelay27}>
+            RESET
+          </button>
         </div>
       )}
 
@@ -112,7 +114,7 @@ export default function App() {
 
         {/* Row 3, cols 3-4: AVR controls */}
         <div style={{ gridColumn: '3 / 5', gridRow: 3, alignSelf: 'center' }}>
-          <AvrControl inputs={inputs} outputs={outputs} onSetInput={setInput} />
+          <AvrControl inputs={inputs} onSetInput={setInput} />
         </div>
       </div>
 

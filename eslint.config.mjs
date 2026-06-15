@@ -23,7 +23,9 @@ export default [
       parserOptions: {
         ecmaVersion: 2020,
         sourceType: 'module',
-        projectService: true,
+        projectService: {
+          allowDefaultProject: ['src/core/*.test.ts'],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -36,5 +38,9 @@ export default [
         version: 'detect',
       },
     },
+  },
+  {
+    files: ['src/core/*.test.ts'],
+    ...typescriptEslint.configs.disableTypeChecked,
   },
 ]

@@ -1,14 +1,13 @@
 /** AVR on/off pushbutton pair and Vref knob. */
 
-import type { Inputs, Outputs } from '../core/types'
+import type { Inputs } from '../core/types'
 
 type Props = {
   inputs: Inputs
-  outputs: Outputs
   onSetInput: <K extends keyof Inputs>(key: K, value: Inputs[K]) => void
 }
 
-export function AvrControl({ inputs, outputs, onSetInput }: Props) {
+export function AvrControl({ inputs, onSetInput }: Props) {
   return (
     <div className="avr-section">
       {/* AVR pushbuttons */}

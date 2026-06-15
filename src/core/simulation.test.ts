@@ -164,13 +164,27 @@ describe('4.5 power factor sign', () => {
   })
 
   it('lagging load Q > 0 flows through to outputs', () => {
-    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, pfLag: true, powerFactor: 0.85, loadFraction: 0.5, avrOn: false }
+    const inputs: Inputs = {
+      ...DEFAULT_INPUTS,
+      fieldVoltage: 1.0,
+      pfLag: true,
+      powerFactor: 0.85,
+      loadFraction: 0.5,
+      avrOn: false,
+    }
     const { outputs } = advanceTime(inputs, 10 * PARAMS.tau)
     expect(outputs.q).toBeGreaterThan(0)
   })
 
   it('leading load Q < 0 flows through to outputs', () => {
-    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, pfLag: false, powerFactor: 0.85, loadFraction: 0.5, avrOn: false }
+    const inputs: Inputs = {
+      ...DEFAULT_INPUTS,
+      fieldVoltage: 1.0,
+      pfLag: false,
+      powerFactor: 0.85,
+      loadFraction: 0.5,
+      avrOn: false,
+    }
     const { outputs } = advanceTime(inputs, 10 * PARAMS.tau)
     expect(outputs.q).toBeLessThan(0)
   })
@@ -201,14 +215,6 @@ describe('4.6 voltage collapse', () => {
   })
 
   it('at unity PF, 100% load does NOT collapse (below P_max ≈ 1.25)', () => {
-    const inputs: Inputs = {
-      ...DEFAULT_INPUTS,
-      loadFraction: 1.0,
-      powerFactor: 1.0,
-      pfLag: true,
-      avrOn: false,
-      fieldVoltage: 1.0,
-    }
     const result = solveMachine(1.0, 1.0, 0, PARAMS.xs)
     expect(result.collapsed).toBe(false)
   })
@@ -251,7 +257,7 @@ describe('4.7 AVR anti-windup', () => {
 
   it('integral remains bounded (command stays at ceiling, no runaway)', () => {
     const inputs: Inputs = { ...DEFAULT_INPUTS, avrOn: true, vref: 10.0, loadFraction: 0.1 }
-    let { state } = advanceTime(inputs, 60 * PARAMS.tau)
+    const { state } = advanceTime(inputs, 60 * PARAMS.tau)
 
     // After long saturation the integral should not have drifted unboundedly
     // (the clamp should hold avrIntegral in reasonable range)
