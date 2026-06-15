@@ -44,3 +44,23 @@
 - [ ] 7.3 Manually verify: AVR on + governor reduction → exciter field rises to compensate Vₜ sag; frequency still drops
 - [ ] 7.4 Run full test suite (`pnpm test`) — all existing tests pass, new tests pass
 - [ ] 7.5 Check mobile layout — governor slider and frequency readout are usable on narrow viewport
+
+## 8. Magnetic Saturation
+
+- [ ] 8.1 Add saturation curve function to `src/core/saturation.ts`: piecewise linear through (0,0), (1.0, 1.0), (1.5, 1.2)
+- [ ] 8.2 Apply saturation in `simulation.ts` step: `Ea = saturation(iField) × speedLagged` (replaces bare `iField × speedLagged`)
+- [ ] 8.3 Add unit test: at iField = 1.0 → Ea = 1.0 (knee point is exact)
+- [ ] 8.4 Add unit test: at iField = 1.5 → Ea = 1.2 (ceiling)
+- [ ] 8.5 Add unit test: at iField = 1.25 → Ea interpolates linearly between knee and ceiling
+- [ ] 8.6 Manually verify: at rated load with AVR off, cranking field from 1.0 to 1.5 produces a smaller Vₜ gain than cranking from 0.5 to 1.0
+
+## 9. Second Field Time Constant
+
+- [ ] 9.1 Add `TAU_EXCITER = 0.4` and rename existing `TAU = 1.5` to `TAU_FIELD = 1.1` in `constants.ts`
+- [ ] 9.2 Add `exciterLagged: number` to `SimulatorState` (initial = iField default)
+- [ ] 9.3 In `simulation.ts` step: advance `exciterLagged` toward `fieldTarget` with `TAU_EXCITER`, then advance `iField` toward `exciterLagged` with `TAU_FIELD`
+- [ ] 9.4 Add unit test: with high Kp AVR, Vₜ step response overshoots (peak Vₜ > vref) before settling
+- [ ] 9.5 Add unit test: at default Kp/Ki the step response remains stable (no sustained oscillation)
+- [ ] 9.6 Expose Kp and Ki as user-adjustable inputs (range: Kp 0.5–5.0, Ki 0.1–2.0, defaults unchanged)
+- [ ] 9.7 Add Kp / Ki knobs to the UI (positioned near AVR controls)
+- [ ] 9.8 Manually verify: raise Kp to maximum → Vₜ visibly overshoots on field step; lower Kp → overshoot disappears

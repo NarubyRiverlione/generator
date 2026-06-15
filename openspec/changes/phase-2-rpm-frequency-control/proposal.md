@@ -10,22 +10,25 @@ Phase 1 fixes rotor speed at 50 Hz, which obscures the key teaching point that f
 - Active power output gains a speed-dependent component — at off-nominal speed, P deviates from the load demand, reflecting the governor droop physics
 - Add a frequency readout (Hz) to the UI
 - Remove the Phase 1 "rotor speed is fixed" restriction from the UI input panel
+- Add magnetic saturation: replace linear Eₐ/field mapping with a piecewise curve that flattens above ~1.1 pu field
+- Add second field time constant: replace single τ_field with stacked τ_exciter + τ_field so the AVR step response can overshoot
 
 ## Capabilities
 
 ### New Capabilities
 - `turbine-governor`: The turbine governor control — slider (47–53 Hz, default 50 Hz), the physics of rotor-speed-driven Eₐ and frequency, and the frequency readout displayed alongside terminal voltage
+- `saturation-curve`: Non-linear Eₐ/field mapping (open-circuit characteristic); Kp/Ki knobs become user-adjustable to let users observe the effect of AVR tuning against a non-linear plant
 
 ### Modified Capabilities
-- `simulation-core`: Speed is no longer fixed at 1.0 pu; the solver SHALL accept pu speed as an input and scale Eₐ by it before solving the circuit; output frequency is derived as f = 50 × speed_pu
-- `simulator-ui`: The input panel SHALL expose the turbine governor slider; the "no rotor-speed control in MVP" requirement is replaced by the Phase 2 governor control; a frequency readout SHALL appear in the generator output section
+- `simulation-core`: Speed is no longer fixed at 1.0 pu; the solver SHALL accept pu speed as an input and scale Eₐ by it before solving the circuit; output frequency is derived as f = 50 × speed_pu; field-to-Eₐ mapping applies the saturation curve; field dynamics use two stacked first-order lags
+- `simulator-ui`: The input panel SHALL expose the turbine governor slider; the "no rotor-speed control in MVP" requirement is replaced by the Phase 2 governor control; a frequency readout SHALL appear in the generator output section; Kp and Ki become adjustable knobs
 
 ## Impact
 
-- `src/core/simulation.ts` — `SimulatorInputs` type gains `speedHz`, solver scales `Ea` by `speedHz / 50`
-- `src/core/types.ts` — `SimulatorOutputs` gains `frequencyHz`
-- `src/core/constants.ts` — add `SPEED_MIN_HZ = 47`, `SPEED_MAX_HZ = 53`
-- `useGeneratorSimulation` hook — pass `speedHz` from state to core step
-- `InputPanel.tsx` — add turbine governor slider
+- `src/core/simulation.ts` — `SimulatorInputs` type gains `speedHz`, solver scales `Ea` by `speedHz / 50`; saturation curve applied before solver; field lag split into two states
+- `src/core/types.ts` — `SimulatorOutputs` gains `frequencyHz`; `SimulatorState` gains second lag state
+- `src/core/constants.ts` — add `SPEED_MIN_HZ = 47`, `SPEED_MAX_HZ = 53`; add saturation curve breakpoints; add `TAU_EXCITER`
+- `useGeneratorSimulation` hook — pass `speedHz` from state to core step; expose Kp/Ki setters
+- `InputPanel.tsx` — add turbine governor slider; add Kp/Ki knobs
 - `ReadoutPanel.tsx` — add frequency readout (Hz, numeric)
 - No new dependencies

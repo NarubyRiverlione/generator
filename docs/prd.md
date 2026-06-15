@@ -2,13 +2,24 @@
 
 ## Overview
 
-An interactive single-page React application that simulates the steady-state behaviour of a synchronous generator with an exciter. The goal is educational: users learn by manipulating parameters and observing how terminal voltage, power, and reactive output respond in near-real time with a realistic settling delay.
+An interactive single-page React application that simulates the steady-state behaviour of a synchronous generator with an exciter. The goal is educational: to build a deep, intuitive understanding of how a realistic European synchronous generator behaves — the kind you would find in a small-to-medium power plant or industrial installation operating on the 50 Hz European grid.
+
+Parameters are chosen to reflect a real machine, not a textbook toy. Physics are honest but not academically exhaustive.
+
+---
+
+## Learning Philosophy
+
+**One concept at a time.** Each phase and each feature addition targets a single new concept. A new parameter or behaviour is only introduced once the previous one is understood and has had time to settle mentally. This is not a race to feature completeness — it is a deliberate, step-by-step path from basic exciter/voltage relationships through to full grid-connected operation.
+
+Do not add multiple new physical effects in the same iteration. If something is interesting but not the current focus, log it for a future phase and move on.
 
 ---
 
 ## Goals
 
-- Build intuition for the relationship between exciter field voltage and generator output
+- Build intuition for the parameters of a realistic European synchronous generator
+- Understand each parameter — what it represents physically, what it affects, and what a realistic value looks like — before moving to the next
 - Make the impact of load (active and reactive) on terminal voltage tangible
 - Show the difference between operating with and without AVR regulation
 - Keep the physics honest but not academically exhaustive — no edge cases, no fault simulation
@@ -72,7 +83,6 @@ When AVR is enabled, a simple proportional-integral controller adjusts the field
 |---|---|---|
 | Rated voltage (Vₙ) | 400 V (line-to-line) | Base reference |
 | Rated frequency | 50 Hz | European standard |
-| Synchronous reactance (Xₛ) | 1.2 pu | Typical value |
 | Stator resistance (Rₐ) | 0.05 pu | Near-negligible |
 | Exciter time constant (τ) | 1.5 s | Controls settling speed |
 | Rated MVA | 1 MVA | Scales all power readouts |
@@ -90,10 +100,11 @@ All inputs are sliders with a numeric label showing the current value.
 | Exciter field DC | 0.5 – 1.5 | 1.0 | pu |
 | Active load (P) | 0 – 100 | 50 | % of rated |
 | Power factor | 0.6 lag – 1.0 – 0.6 lead | 0.85 lag | — |
+| Synchronous reactance (Xₛ) | 0.8 – 2.0 | 1.2 | pu |
 | AVR enable | off / on | off | toggle |
 | AVR voltage reference | 380 – 420 | 400 | V (only visible when AVR is on) |
 
-**Rotor speed is fixed at 50 Hz / 1500 RPM equivalent — not user-facing in MVP.**
+**Rotor speed is fixed at 50 Hz / 1500 RPM equivalent — not user-facing in Phase 1.**
 
 ---
 
@@ -163,14 +174,15 @@ Single page, two-column on desktop, stacked on mobile. Readouts are ordered to f
 
 ## Out of Scope (MVP)
 
-- Magnetic saturation curve
+- Magnetic saturation curve ← **deferred to Phase 2**
+- Second field time constant (AVR ringing) ← **deferred to Phase 2**
 - Transient / sub-transient reactances
 - Short circuit or fault simulation
 - Grid-connected (infinite bus) mode
 - Multiple generators in parallel
 - Harmonics
 - Visual theming / polished design
-- RPM / frequency variation ← **deferred to phase 2**
+- RPM / frequency variation ← **deferred to Phase 2**
 
 ---
 
@@ -185,6 +197,8 @@ Phases build on each other — concepts from earlier phases are prerequisites fo
 - Show impact of speed deviation on output frequency and voltage
 - Key learning: frequency and voltage are independent — turbine controls P/frequency, exciter controls voltage/Q
 - This separation is the foundation needed before grid connection
+- Magnetic saturation: Eₐ/field curve flattens above ~1.1 pu field; reveals AVR ceiling under heavy load and why over-excitation has diminishing returns
+- Second field time constant: stack τ_exciter + τ_field so the step response can overshoot and ring; Kp/Ki tuning in the UI becomes meaningful
 
 ### Phase 3 — Synchronisation to grid
 **Prerequisite:** Phase 2 complete
@@ -232,6 +246,7 @@ Phases build on each other — concepts from earlier phases are prerequisites fo
 - [ ] All three exciter chain readouts move when exciter field DC changes
 - [ ] Leading power factor load causes Q to go negative, labelled "absorbing"
 - [ ] Load angle (δ) increases with increasing load, warning shown near 90°
+- [ ] Changing Xₛ slider with fixed load causes Vₜ and VSM to shift — higher Xₛ produces lower Vₜ and tighter stability margin
 - [ ] All gauges update smoothly without jank
 - [ ] Works on mobile (stacked layout)
 
@@ -239,6 +254,9 @@ Phases build on each other — concepts from earlier phases are prerequisites fo
 
 ## Notes for Claude Code
 
+- **Never start implementing without explicit confirmation.** The user plans deliberately — proposal, design, written tasks — before any code is written.
+- **One concept at a time.** Do not bundle multiple new physical effects into a single change, even if they seem related. Each new parameter or behaviour gets its own iteration so the user has time to understand it.
+- **Parameters target a realistic European generator.** When choosing defaults or ranges, prefer values representative of a real 50 Hz machine, not textbook extremes.
 - Build and validate `useGeneratorSimulation` first before touching UI
 - The per-unit system is intentional; convert to real units only at display time
 - The exciter chain readouts (AC out, rectified DC, field current) are derived values — fixed ratios from the exciter field DC input, with the time lag applied
