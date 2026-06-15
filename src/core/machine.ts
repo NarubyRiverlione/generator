@@ -6,7 +6,16 @@
  */
 
 export type MachineResult =
-  | { collapsed: false; vt: number; ia: number; delta: number; p: number; q: number; pf: number; stabilityMargin: number }
+  | {
+      collapsed: false
+      vt: number
+      ia: number
+      delta: number
+      p: number
+      q: number
+      pf: number
+      stabilityMargin: number
+    }
   | { collapsed: true }
 
 export function solveMachine(ea: number, p: number, q: number, xs: number): MachineResult {

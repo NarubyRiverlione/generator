@@ -10,10 +10,19 @@ export function initialState(): SimState {
   const inputs = DEFAULT_INPUTS
   const load = computeLoad(inputs.loadFraction, inputs.powerFactor, inputs.pfLag)
   const result = solveMachine(inputs.fieldVoltage, load.p, load.q, PARAMS.xs)
-  const outputs: Outputs =
-    result.collapsed
-      ? { vt: 0, ia: 0, delta: 0, p: 0, q: 0, pf: 1, avrCommand: inputs.fieldVoltage, collapsed: false, stabilityMargin: 0 }
-      : { ...result, avrCommand: inputs.fieldVoltage, collapsed: false }
+  const outputs: Outputs = result.collapsed
+    ? {
+        vt: 0,
+        ia: 0,
+        delta: 0,
+        p: 0,
+        q: 0,
+        pf: 1,
+        avrCommand: inputs.fieldVoltage,
+        collapsed: false,
+        stabilityMargin: 0,
+      }
+    : { ...result, avrCommand: inputs.fieldVoltage, collapsed: false }
 
   return {
     iField: inputs.fieldVoltage,

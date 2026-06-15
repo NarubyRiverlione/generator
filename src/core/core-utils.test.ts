@@ -2,7 +2,15 @@
 
 import { describe, expect, it } from 'vitest'
 import { abs, add, arg, cx, div, mul, sub } from './complex'
-import { fieldToExciterAC, fieldToFieldCurrent, fieldToRectifiedDC, puToAmps, puToKVAR, puToKW, puToVolts } from './units'
+import {
+  fieldToExciterAC,
+  fieldToFieldCurrent,
+  fieldToRectifiedDC,
+  puToAmps,
+  puToKVAR,
+  puToKW,
+  puToVolts,
+} from './units'
 
 describe('complex arithmetic', () => {
   it('add', () => {

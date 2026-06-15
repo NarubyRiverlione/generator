@@ -19,7 +19,20 @@ export function clamp(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v))
 }
 
-export function Knob({ label, min, max, step, value, display, scaleMin, scaleMax, onChange, readOnly, lockLabel, ptrRotation }: KnobProps) {
+export function Knob({
+  label,
+  min,
+  max,
+  step,
+  value,
+  display,
+  scaleMin,
+  scaleMax,
+  onChange,
+  readOnly,
+  lockLabel,
+  ptrRotation,
+}: KnobProps) {
   function adjust(delta: number) {
     if (!readOnly) onChange(clamp(parseFloat((value + delta).toFixed(10)), min, max))
   }
@@ -33,8 +46,14 @@ export function Knob({ label, min, max, step, value, display, scaleMin, scaleMax
   }
 
   function handleKey(e: React.KeyboardEvent) {
-    if (e.key === 'ArrowLeft') { e.preventDefault(); adjust(-step) }
-    if (e.key === 'ArrowRight') { e.preventDefault(); adjust(step) }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault()
+      adjust(-step)
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault()
+      adjust(step)
+    }
   }
 
   return (
