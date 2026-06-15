@@ -6,7 +6,7 @@
  */
 
 export type MachineResult =
-  | { collapsed: false; vt: number; ia: number; delta: number; p: number; q: number; pf: number }
+  | { collapsed: false; vt: number; ia: number; delta: number; p: number; q: number; pf: number; stabilityMargin: number }
   | { collapsed: true }
 
 export function solveMachine(ea: number, p: number, q: number, xs: number): MachineResult {
@@ -18,6 +18,9 @@ export function solveMachine(ea: number, p: number, q: number, xs: number): Mach
   const C = p * p + q * q
 
   const discriminant = B * B - 4 * A * C
+  // D at no-load (p=q=0): only the ea² term survives → (9ea²/xs²)²
+  const dNoLoad = (9 * ea * ea) / xs2
+  const stabilityMargin = dNoLoad > 0 ? Math.max(0, discriminant) / (dNoLoad * dNoLoad) : 0
 
   if (discriminant < 0) {
     return { collapsed: true }
@@ -44,5 +47,5 @@ export function solveMachine(ea: number, p: number, q: number, xs: number): Mach
   const s = Math.sqrt(p * p + q * q)
   const pf = s > 0 ? (q >= 0 ? p / s : -(p / s)) : 1
 
-  return { collapsed: false, vt, ia, delta, p, q, pf }
+  return { collapsed: false, vt, ia, delta, p, q, pf, stabilityMargin }
 }

@@ -16,7 +16,7 @@ import { StatusDisplay } from './components/StatusDisplay'
 import { useGeneratorSimulation } from './hooks/useGeneratorSimulation'
 
 export default function App() {
-  const { inputs, outputs, setInput } = useGeneratorSimulation()
+  const { inputs, outputs, setInput, relay27Tripped, resetRelay27 } = useGeneratorSimulation()
 
   const fieldValue = inputs.avrOn ? outputs.avrCommand : inputs.fieldVoltage
   const pfSigned = inputs.pfLag ? inputs.powerFactor : -inputs.powerFactor
@@ -33,7 +33,12 @@ export default function App() {
         <b>SYNCHRONOUS GENERATOR</b>&nbsp;·&nbsp;400 V · 50 Hz · 1 MVA · ISLANDED
       </p>
 
-      {outputs.collapsed && <div className="collapsed-banner">⚠ VOLTAGE COLLAPSE — REDUCE LOAD OR INCREASE FIELD</div>}
+      {relay27Tripped && (
+        <div className="collapsed-banner">
+          ⚠ 27 RELAY TRIP — UNDER-VOLTAGE — LOAD DISCONNECTED
+          <button className="relay-reset-btn" onClick={resetRelay27}>RESET</button>
+        </div>
+      )}
 
       <div className="switchboard-grid">
         {/* Row 1: gauges — auto-placed, pinned to row 1 via CSS */}
@@ -81,12 +86,12 @@ export default function App() {
 
         {/* Row 3, col 1: indicator lights (top 4) — vertically centered */}
         <div style={{ gridColumn: 1, gridRow: 3, alignSelf: 'center' }}>
-          <IndicatorLights avrOn={inputs.avrOn} outputs={outputs} half="top" />
+          <IndicatorLights avrOn={inputs.avrOn} outputs={outputs} half="top" relay27Tripped={relay27Tripped} />
         </div>
 
         {/* Row 3, col 2: indicator lights (bottom 4) — vertically centered */}
         <div style={{ gridColumn: 2, gridRow: 3, alignSelf: 'center' }}>
-          <IndicatorLights avrOn={inputs.avrOn} outputs={outputs} half="bottom" />
+          <IndicatorLights avrOn={inputs.avrOn} outputs={outputs} half="bottom" relay27Tripped={relay27Tripped} />
         </div>
 
         {/* Row 3, col 5: power factor knob */}

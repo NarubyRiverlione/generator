@@ -41,6 +41,12 @@ export type Outputs = {
   avrCommand: number
   /** true when load exceeds maximum loadability. */
   collapsed: boolean
+  /**
+   * Voltage stability margin [0, 1].
+   * 1.0 = no load; 0.0 = nose point (about to collapse).
+   * Based on discriminant / D_no_load; independent of PF and load angle.
+   */
+  stabilityMargin: number
 }
 
 export type Params = {
