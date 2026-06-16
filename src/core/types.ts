@@ -11,8 +11,6 @@ export type Inputs = {
   pfLag: boolean
   /** AVR enabled. */
   avrOn: boolean
-  /** AVR voltage reference, per-unit. Visible only when AVR is on. */
-  vref: number
 }
 
 export type SimState = {

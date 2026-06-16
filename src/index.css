@@ -45,7 +45,7 @@ body {
     inset 0 1px 0 #fff,
     inset 0 -3px 10px #0001,
     0 14px 44px #0006;
-  padding: 26px 26px 30px;
+  padding: 26px 26px 16px;
 }
 
 .panel-title {
@@ -174,6 +174,16 @@ body {
     0 4px 10px #0006,
     inset 0 1px 2px #fff2;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.lcd-bottom {
+  height: 125px; /* sticky-note natural height; fault screen fills same space */
+  flex-shrink: 0;
+  position: relative;
+  overflow: visible; /* lets tape strip peek above */
+  margin-top: 8px;
 }
 
 .screen {
@@ -184,6 +194,42 @@ body {
   font-family: var(--mono);
   color: #14210c;
   box-shadow: inset 0 0 8px #0004;
+}
+
+.screen-fault {
+  border: 2px solid #000;
+  border-radius: 3px;
+  padding: 8px 10px;
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 1px;
+  box-shadow: inset 0 0 8px #0004;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.screen-fault--ok {
+  background: linear-gradient(180deg, #7a8f62, #6a7e54);
+  color: #1a2a0e88;
+}
+
+.screen-fault--warn {
+  background: linear-gradient(180deg, #c4ae6a, #ad9850);
+  color: #1a1200;
+}
+
+.screen-fault--danger {
+  background: linear-gradient(180deg, #c49060, #ad7848);
+  color: #1a0800;
+}
+
+.screen-fault--fault {
+  background: linear-gradient(180deg, #bf8080, #a86060);
+  color: #200000;
+}
+
+.fault-ok {
+  opacity: 0.55;
 }
 
 .screen .l1,
@@ -209,6 +255,34 @@ body {
 .warn-red {
   color: #6e120c;
   font-weight: bold;
+}
+
+.lcd-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.info-btn {
+  background: none;
+  border: 1px solid #fff6;
+  border-radius: 3px;
+  color: #bbb;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: color 0.1s, border-color 0.1s;
+}
+
+.info-btn:hover {
+  color: #e0e0e0;
+  border-color: #fff9;
+}
+
+.info-btn.active {
+  color: var(--amber);
+  border-color: var(--amber);
 }
 
 .legend {
@@ -304,62 +378,74 @@ body {
     inset 0 2px 3px #fff7;
 }
 
-/* ── AVR pushbuttons ── */
+/* ── AVR selector switch ── */
 .avr-section {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.avr-row {
-  display: flex;
-  gap: 22px;
-  margin-top: 4px;
-}
-
-.pb {
-  width: 64px;
+.sel-wrap {
   text-align: center;
 }
 
-.dome {
-  display: block;
-  width: 40px;
-  height: 40px;
+.sel-positions {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--ink-soft);
+  letter-spacing: 1px;
+  width: 72px;
+  margin: 0 auto 4px;
+}
+
+.sel-switch {
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  margin: 6px auto 0;
   border: none;
+  padding: 0;
   cursor: pointer;
+  display: block;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  background: #161719;
   box-shadow:
-    0 0 0 3px var(--chrome1),
-    0 0 0 5px var(--chrome2),
-    0 3px 6px #0005,
-    inset 0 -5px 10px #00000045;
-  transition:
-    transform 0.08s,
-    box-shadow 0.08s;
+    0 0 0 4px var(--chrome1),
+    0 0 0 6px var(--chrome2),
+    0 4px 8px #0005,
+    inset 0 2px 3px #fff2;
+  transition: box-shadow 0.08s;
 }
 
-.dome:active,
-.dome.active {
-  transform: scale(0.95);
+.sel-switch:active {
   box-shadow:
-    0 0 0 3px var(--chrome1),
-    0 0 0 5px var(--chrome2),
-    0 1px 3px #0005,
-    inset 0 -3px 7px #00000045;
+    0 0 0 4px var(--chrome1),
+    0 0 0 6px var(--chrome2),
+    0 2px 4px #0005,
+    inset 0 1px 2px #fff2;
 }
 
-.dome.green {
-  background:
-    radial-gradient(circle at 38% 28%, #dfffe9, transparent 46%),
-    radial-gradient(circle at 50% 60%, #1ea547, #0a5e26 72%);
+.sel-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 32%, #3a3c3f, #161719 80%);
+  transition: transform 0.2s ease;
 }
 
-.dome.red {
-  background:
-    radial-gradient(circle at 38% 28%, #ffd9d4, transparent 46%),
-    radial-gradient(circle at 50% 60%, var(--red), var(--red-d) 72%);
+.sel-bar {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  width: 10px;
+  height: 27px;
+  margin-left: -5px;
+  background: linear-gradient(180deg, #c8cace 0%, #9a9c9f 100%);
+  border-radius: 3px;
+  box-shadow: 0 0 3px #fff8;
 }
 
 /* ── Rotary knob controls ── */
@@ -450,6 +536,21 @@ body {
   box-shadow: inset 0 1px 2px #fff2;
 }
 
+.knob-ticks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.knob-ticks line {
+  stroke: var(--chrome2);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
 .knob-clickable {
   cursor: pointer;
 }
@@ -509,7 +610,9 @@ body {
 
 /* ── Sticky-note placard ── */
 .sticky-note {
-  margin-top: 12px;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   background: #fefae8;
   border: 1px solid #d4c97a;
   border-radius: 2px;
@@ -522,7 +625,6 @@ body {
   font-size: 10px;
   line-height: 1.7;
   color: #2a2510;
-  position: relative;
 }
 
 /* Tape strip at top */
@@ -563,25 +665,50 @@ body {
   padding: 6px 12px;
   border-radius: 3px;
   margin-top: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
 }
 
-.relay-reset-btn {
-  background: #fff;
-  color: #e23b2e;
+/* ── 27 relay reset dome ── */
+.relay27-section {
+  text-align: center;
+  width: 90px;
+}
+
+.relay27-dome {
+  display: block;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  margin: 36px auto 8px;
   border: none;
-  border-radius: 3px;
-  font-size: 10px;
-  font-weight: bold;
-  letter-spacing: 1.5px;
-  padding: 3px 10px;
+  cursor: default;
+  background:
+    radial-gradient(circle at 38% 28%, #fff7d4, transparent 46%),
+    radial-gradient(circle at 50% 60%, var(--amber), #9a6a08 72%);
+  box-shadow:
+    0 0 0 3px var(--chrome1),
+    0 0 0 5px var(--chrome2),
+    0 3px 6px #0005,
+    inset 0 -4px 8px #0006;
+  transition:
+    transform 0.08s,
+    box-shadow 0.08s;
+}
+
+.relay27-dome.tripped {
+  background:
+    radial-gradient(circle at 38% 28%, #ffd9d4, transparent 46%),
+    radial-gradient(circle at 50% 60%, var(--red), var(--red-d) 72%);
+  box-shadow:
+    0 0 0 3px var(--chrome1),
+    0 0 0 5px var(--chrome2),
+    0 0 14px var(--red),
+    0 3px 6px #0005,
+    inset 0 -4px 8px #0006;
   cursor: pointer;
 }
-.relay-reset-btn:hover {
-  background: #ffe5e3;
+
+.relay27-dome.tripped:active {
+  transform: scale(0.95);
 }
 
 /* ── Footer ── */

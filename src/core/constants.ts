@@ -12,6 +12,7 @@ export const PARAMS: Params = {
 
 export const AVR_COMMAND_MIN = 0.5
 export const AVR_COMMAND_MAX = 1.5
+export const AVR_VREF = 1.0
 
 /** Under-voltage relay (ANSI 27) trip threshold, per-unit. */
 export const RELAY27_TRIP_VT = 0.85
@@ -22,5 +23,4 @@ export const DEFAULT_INPUTS: Inputs = {
   powerFactor: 0.85,
   pfLag: true,
   avrOn: false,
-  vref: 1.0,
 }

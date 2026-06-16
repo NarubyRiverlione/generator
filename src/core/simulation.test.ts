@@ -5,6 +5,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { AVR_COMMAND_MAX, AVR_COMMAND_MIN, DEFAULT_INPUTS, PARAMS } from './constants'
+import { stepAvr } from './avr'
 import { computeLoad } from './load'
 import { solveMachine } from './machine'
 import { initialState, step } from './simulation'
@@ -133,20 +134,18 @@ describe('4.3 load increase with AVR off', () => {
 // ── 4.4  Load↑ AVR on → field rises, settled Vₜ ≈ Vref ─────────────────────
 
 describe('4.4 load increase with AVR on', () => {
-  it('AVR holds Vt within tolerance of Vref under increased load', () => {
-    const vref = 1.0
+  it('AVR holds Vt within tolerance of 1.0 pu under increased load', () => {
     // Unity PF so P_max ≈ 1.25; 60% load is well within range with AVR headroom
     const inputs: Inputs = {
       ...DEFAULT_INPUTS,
       avrOn: true,
-      vref,
       loadFraction: 0.6,
       powerFactor: 1.0,
       pfLag: true,
     }
     // Settle over many τ; AVR has time to converge
     const { outputs } = advanceTime(inputs, 30 * PARAMS.tau)
-    expect(outputs.vt).toBeCloseTo(vref, 1) // ±0.05 pu tolerance
+    expect(outputs.vt).toBeCloseTo(1.0, 1) // ±0.05 pu tolerance
   })
 })
 
@@ -247,24 +246,23 @@ describe('4.6 voltage collapse', () => {
 
 describe('4.7 AVR anti-windup', () => {
   it('command never leaves [0.5, 1.5] under sustained large error', () => {
-    // Force huge Vref so error is always positive and large
-    const inputs: Inputs = { ...DEFAULT_INPUTS, avrOn: true, vref: 10.0, loadFraction: 0.5 }
-    const { outputs } = advanceTime(inputs, 30 * PARAMS.tau)
-
-    expect(outputs.avrCommand).toBeLessThanOrEqual(AVR_COMMAND_MAX + 1e-9)
-    expect(outputs.avrCommand).toBeGreaterThanOrEqual(AVR_COMMAND_MIN - 1e-9)
+    // Call stepAvr directly with an extreme vref to force sustained saturation
+    let integral = 0
+    for (let i = 0; i < 1000; i++) {
+      const r = stepAvr(10.0, 0.5, integral, PARAMS.kp, PARAMS.ki, 0.033)
+      integral = r.integral
+      expect(r.command).toBeLessThanOrEqual(AVR_COMMAND_MAX + 1e-9)
+      expect(r.command).toBeGreaterThanOrEqual(AVR_COMMAND_MIN - 1e-9)
+    }
   })
 
-  it('integral remains bounded (command stays at ceiling, no runaway)', () => {
-    const inputs: Inputs = { ...DEFAULT_INPUTS, avrOn: true, vref: 10.0, loadFraction: 0.1 }
-    const { state } = advanceTime(inputs, 60 * PARAMS.tau)
-
-    // After long saturation the integral should not have drifted unboundedly
-    // (the clamp should hold avrIntegral in reasonable range)
-    // Bound: integral < (MAX_CMD - Kp*error) / Ki + some slack
-    // In saturation: command = 1.5, so Kp*e + Ki*integral ≈ 1.5, thus integral ≈ (1.5 - Kp*(vref-vt))/Ki
-    // With vref=10, vt≈? — integral can be negative or bounded
-    expect(Math.abs(state.avrIntegral)).toBeLessThan(100)
+  it('integral remains bounded (no runaway) under sustained large error', () => {
+    let integral = 0
+    for (let i = 0; i < 3000; i++) {
+      const r = stepAvr(10.0, 0.5, integral, PARAMS.kp, PARAMS.ki, 0.033)
+      integral = r.integral
+    }
+    expect(Math.abs(integral)).toBeLessThan(100)
   })
 })
 

@@ -1,4 +1,4 @@
-/** AVR on/off pushbutton pair and Vref knob. */
+/** AVR selector switch and Vref knob. */
 
 import type { Inputs } from '../core/types'
 
@@ -10,64 +10,27 @@ type Props = {
 export function AvrControl({ inputs, onSetInput }: Props) {
   return (
     <div className="avr-section">
-      {/* AVR pushbuttons */}
-      <div className="avr-row">
-        <div className="pb">
-          <button
-            className={`dome${inputs.avrOn ? ' green active' : ' green'}`}
-            onClick={() => onSetInput('avrOn', true)}
-            aria-pressed={inputs.avrOn}
-            title="AVR ON"
-          />
-          <div className="card">AVR ON</div>
+      <div className="sel-wrap">
+        <div className="card" style={{ marginBottom: 8 }}>AVR</div>
+        <div className="sel-positions">
+          <span>0</span>
+          <span>1</span>
         </div>
-        <div className="pb">
-          <button
-            className={`dome${!inputs.avrOn ? ' red active' : ' red'}`}
-            onClick={() => onSetInput('avrOn', false)}
-            aria-pressed={!inputs.avrOn}
-            title="AVR OFF"
-          />
-          <div className="card">AVR OFF</div>
-        </div>
+        <button
+          className="sel-switch"
+          onClick={() => onSetInput('avrOn', !inputs.avrOn)}
+          aria-pressed={inputs.avrOn}
+          title={inputs.avrOn ? 'AVR ON — click to turn off' : 'AVR OFF — click to turn on'}
+        >
+          <div
+            className="sel-face"
+            style={{ transform: `rotate(${inputs.avrOn ? 45 : -45}deg)` }}
+          >
+            <div className="sel-bar" />
+          </div>
+        </button>
       </div>
 
-      {inputs.avrOn && (
-        <div className="knob-wrap vref-knob">
-          <div className="card">AVR Vref</div>
-          <div
-            className="knob-hitbox knob-clickable"
-            onClick={(e) => {
-              const left = e.nativeEvent.offsetX < e.currentTarget.offsetWidth / 2
-              const next = Math.max(0.95, Math.min(1.05, inputs.vref + (left ? -0.001 : 0.001)))
-              onSetInput('vref', parseFloat(next.toFixed(10)))
-            }}
-            onKeyDown={(e) => {
-              const delta = e.key === 'ArrowLeft' ? -0.001 : e.key === 'ArrowRight' ? 0.001 : 0
-              if (!delta) return
-              e.preventDefault()
-              const next = Math.max(0.95, Math.min(1.05, inputs.vref + delta))
-              onSetInput('vref', parseFloat(next.toFixed(10)))
-            }}
-            role="slider"
-            aria-label="AVR voltage reference"
-            aria-valuemin={0.95}
-            aria-valuemax={1.05}
-            aria-valuenow={inputs.vref}
-            tabIndex={0}
-          >
-            <div className="knob">
-              <div className="ptr" style={{ transform: `rotate(${-130 + ((inputs.vref - 0.95) / 0.1) * 260}deg)` }} />
-              <div className="hub" />
-            </div>
-          </div>
-          <div className="scale">
-            <span>380 V</span>
-            <span>420 V</span>
-          </div>
-          <div className="plate">{Math.round(inputs.vref * 400)} V</div>
-        </div>
-      )}
     </div>
   )
 }

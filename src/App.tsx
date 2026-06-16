@@ -33,15 +33,6 @@ export default function App() {
         <b>SYNCHRONOUS GENERATOR</b>&nbsp;·&nbsp;400 V · 50 Hz · 1 MVA · ISLANDED
       </p>
 
-      {relay27Tripped && (
-        <div className="collapsed-banner">
-          ⚠ 27 RELAY TRIP — UNDER-VOLTAGE — LOAD DISCONNECTED
-          <button className="relay-reset-btn" onClick={resetRelay27}>
-            RESET
-          </button>
-        </div>
-      )}
-
       <div className="switchboard-grid">
         {/* Row 1: gauges — auto-placed, pinned to row 1 via CSS */}
         <ExciterChain iFieldPu={outputs.avrCommand} />
@@ -67,7 +58,7 @@ export default function App() {
 
         {/* Row 2, cols 2-4: LCD panel — height drives row 2 */}
         <div style={{ gridColumn: '2 / 5', gridRow: 2 }}>
-          <StatusDisplay outputs={outputs} />
+          <StatusDisplay outputs={outputs} relay27Tripped={relay27Tripped} />
         </div>
 
         {/* Row 2, col 5: active load knob — vertically centered */}
@@ -97,7 +88,7 @@ export default function App() {
         </div>
 
         {/* Row 3, col 5: power factor knob */}
-        <div className="knob-cell" style={{ gridColumn: 5, gridRow: 3 }}>
+        <div className="knob-cell" style={{ gridColumn: 5, gridRow: 3, alignSelf: 'start' }}>
           <Knob
             label="POWER FACTOR"
             min={-1}
@@ -112,13 +103,25 @@ export default function App() {
           />
         </div>
 
-        {/* Row 3, cols 3-4: AVR controls */}
-        <div style={{ gridColumn: '3 / 5', gridRow: 3, alignSelf: 'center' }}>
+        {/* Row 3, col 3: AVR controls */}
+        <div className="knob-cell" style={{ gridColumn: 3, gridRow: 3, alignSelf: 'start' }}>
           <AvrControl inputs={inputs} onSetInput={setInput} />
+        </div>
+
+        {/* Row 3, col 4: 27 relay reset */}
+        <div className="knob-cell" style={{ gridColumn: 4, gridRow: 3, alignSelf: 'start' }}>
+          <div className="relay27-section">
+            <div className="card">27 RELAY</div>
+            <button
+              className={`relay27-dome${relay27Tripped ? ' tripped' : ''}`}
+              onClick={relay27Tripped ? resetRelay27 : undefined}
+              title={relay27Tripped ? '27 relay tripped — click to reset' : '27 relay normal'}
+            />
+            <div className="card" style={{ marginTop: 4 }}>RESET</div>
+          </div>
         </div>
       </div>
 
-      <div className="footer">PHASE 1 MVP · ISLANDED STEADY-STATE SIMULATOR</div>
     </div>
   )
 }

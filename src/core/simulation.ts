@@ -1,7 +1,7 @@
 /** Simulation step: field lag → AVR or manual target → machine solve. */
 
 import { stepAvr } from './avr'
-import { DEFAULT_INPUTS, PARAMS } from './constants'
+import { AVR_VREF, DEFAULT_INPUTS, PARAMS } from './constants'
 import { computeLoad } from './load'
 import { solveMachine } from './machine'
 import type { Inputs, Outputs, Params, SimState } from './types'
@@ -40,7 +40,7 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   let avrIntegral: number
 
   if (inputs.avrOn) {
-    const avr = stepAvr(inputs.vref, state.lastValidOutputs.vt, state.avrIntegral, params.kp, params.ki, dt)
+    const avr = stepAvr(AVR_VREF, state.lastValidOutputs.vt, state.avrIntegral, params.kp, params.ki, dt)
     fieldTarget = avr.command
     avrCommand = avr.command
     avrIntegral = avr.integral
