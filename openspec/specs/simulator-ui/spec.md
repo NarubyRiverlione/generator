@@ -3,30 +3,38 @@
 ## Purpose
 
 The simulator UI is the React front-end for the islanded synchronous generator simulator. It presents input controls (sliders, AVR toggle), drives the simulation loop via a custom React hook, displays generator output readouts as SVG arc gauges and numeric values, and surfaces stability warnings. All physics are delegated to the simulation core.
-
 ## Requirements
-
 ### Requirement: Input panel controls
-The UI SHALL present sliders with numeric value labels for exciter field DC (0.5–1.5 pu, default 1.0), active load (0–100 %, default 50), and power factor (0.6 lag through 1.0 to 0.6 lead, default 0.85 lag), plus an AVR on/off toggle (default off). The rotor speed / frequency SHALL be fixed at 50 Hz and SHALL NOT be exposed as a control.
+The UI SHALL present rotary **knobs** with numeric value labels for exciter field DC (0–1.5 pu,
+default 0), active load (0–100 %, default 0), and power factor (0.6 lag through 1.0 to 0.6 lead,
+default 0.85 lag), plus an AVR on/off selector switch (default off). The rotor speed / frequency
+SHALL be fixed at 50 Hz and SHALL NOT be exposed as a control.
 
-#### Scenario: Sliders show current value
-- **WHEN** the user drags any input slider
-- **THEN** the adjacent numeric label updates to the current value in its unit
+#### Scenario: Knobs show current value
+- **WHEN** the user turns any input knob
+- **THEN** the knob's numeric label updates to the current value in its unit
 
 #### Scenario: No rotor-speed control in MVP
 - **WHEN** the input panel is rendered
-- **THEN** there is no rotor-speed or frequency slider and no frequency readout
+- **THEN** there is no rotor-speed or frequency knob and no frequency readout
 
 ### Requirement: AVR control behavior
-When AVR is enabled, the UI SHALL make the exciter field DC slider read-only and display the value the AVR is currently commanding, and SHALL reveal an AVR voltage-reference slider (380–420 V, default 400). When AVR is disabled, the Vref slider SHALL be hidden and the field DC slider SHALL be user-adjustable.
+AVR SHALL be toggled by an on/off selector switch. The AVR voltage reference SHALL be fixed at rated
+(1.0 pu / 400 V) and SHALL NOT be user-adjustable. When AVR is enabled, the UI SHALL make the exciter
+field DC knob read-only and display the value the AVR is currently commanding; when AVR is disabled,
+the field DC knob SHALL be user-adjustable.
 
-#### Scenario: Field slider becomes read-only under AVR
-- **WHEN** the user enables AVR
-- **THEN** the exciter field DC slider becomes read-only, shows the AVR-commanded value, and the Vref slider becomes visible
+#### Scenario: Field knob becomes read-only under AVR
+- **WHEN** the user enables AVR via the selector switch
+- **THEN** the exciter field DC knob becomes read-only and shows the AVR-commanded value
 
-#### Scenario: Field slider restored when AVR disabled
+#### Scenario: Field knob restored when AVR disabled
 - **WHEN** the user disables AVR
-- **THEN** the exciter field DC slider becomes user-adjustable again and the Vref slider is hidden
+- **THEN** the exciter field DC knob becomes user-adjustable again
+
+#### Scenario: Voltage reference is fixed
+- **WHEN** AVR is enabled
+- **THEN** the AVR regulates terminal voltage to the fixed rated reference and no Vref control is shown
 
 ### Requirement: Generator output readouts
 The UI SHALL display terminal voltage (Vₜ) and active power (P) as SVG arc gauges and numeric values, and SHALL display reactive power (Q), load angle (δ), and calculated power factor as numeric values. Q SHALL be labelled "supplying" when positive and "absorbing" when negative.
@@ -50,17 +58,6 @@ Each gauge SHALL be a hand-rolled SVG semicircular arc (~180° sweep) inside a s
 - **WHEN** the gauge is rendered
 - **THEN** coloured zone arcs are flush with the base track (same SVG radius), with no visible gap between the coloured band and the dark arc
 
-### Requirement: Load-angle stability warning
-The UI SHALL show a stability warning as the load angle δ approaches 90°, and SHALL surface the collapsed/unstable state reported by the core when load exceeds maximum loadability.
-
-#### Scenario: Warning near the stability limit
-- **WHEN** the load angle δ approaches 90°
-- **THEN** a visible stability warning is shown on the δ readout
-
-#### Scenario: Collapsed state surfaced
-- **WHEN** the core reports a collapsed state
-- **THEN** the UI shows an explicit unstable/collapsed indication rather than blank or NaN readouts
-
 ### Requirement: React driver hook
 A custom React hook SHALL own the animation loop (~30 ms cadence using real elapsed time), hold the current inputs and latest outputs in React state, and delegate every calculation to the pure simulation core. The hook SHALL contain no physics of its own.
 
@@ -69,8 +66,53 @@ A custom React hook SHALL own the animation loop (~30 ms cadence using real elap
 - **THEN** it calls the core step function with the real elapsed time and stores the returned outputs, performing no circuit math itself
 
 ### Requirement: Responsive layout
-The UI SHALL present a single page with a two-column layout on desktop and a stacked layout on mobile, ordering the readouts to follow the physical signal chain (exciter input → exciter chain → generator output).
+The UI SHALL present the controls and readouts as a switchboard-style grid that follows the physical
+signal chain (exciter input → exciter chain → generator output), and SHALL remain usable on narrow
+viewports.
 
-#### Scenario: Layout stacks on narrow viewports
+#### Scenario: Layout remains usable on narrow viewports
 - **WHEN** the viewport is narrow (mobile width)
-- **THEN** the columns stack vertically and all controls and readouts remain usable
+- **THEN** the grid reflows and all knobs, switches, and readouts remain usable
+
+### Requirement: Voltage stability margin display
+The UI SHALL display the voltage stability margin (VSM) reported by the core as a percentage on the
+status display. It SHALL be shown amber when below 20 % and red when below 8 %, giving an advance
+warning of approaching voltage collapse.
+
+#### Scenario: VSM percentage shown
+- **WHEN** the simulation is running
+- **THEN** the status display shows the current VSM as a percentage
+
+#### Scenario: VSM colour escalates near collapse
+- **WHEN** the VSM falls below 20 % and then below 8 %
+- **THEN** the VSM readout turns amber, then red
+
+### Requirement: ANSI-27 under-voltage relay
+The UI driver SHALL implement an ANSI-27 under-voltage relay that disconnects the load when terminal
+voltage falls below 0.85 pu. The relay SHALL arm only once Vₜ has risen above the trip threshold
+(startup inhibit), so it does not fire during field build-up from cold. On trip it SHALL set active
+load to 0, surface a trip banner and a red LED indicator, and latch until the user resets it via a
+dome reset control. After reset the relay SHALL re-arm only once Vₜ is again healthy, preventing an
+immediate re-trip.
+
+#### Scenario: Relay trips on under-voltage and sheds load
+- **WHEN** terminal voltage falls below 0.85 pu after having been healthy
+- **THEN** the relay trips, active load is set to 0, and the trip banner and red LED are shown
+
+#### Scenario: No spurious trip during cold start
+- **WHEN** the machine starts from zero field and Vₜ rises through 0.85 pu during field build-up
+- **THEN** the relay does not trip (it arms only after Vₜ exceeds the threshold)
+
+#### Scenario: Reset re-arms without immediate re-trip
+- **WHEN** the user clicks the dome reset after a trip
+- **THEN** the banner clears, the load control is free again, and the relay re-arms only once Vₜ is healthy
+
+### Requirement: Field-at-ceiling indicator
+The UI SHALL show a field-at-ceiling indicator (amber) when AVR is enabled and the AVR field command
+has reached its maximum (≥ ceiling), signalling that the regulator can no longer raise excitation to
+hold voltage.
+
+#### Scenario: Indicator lights when AVR saturates
+- **WHEN** AVR is enabled and its field command reaches the ceiling
+- **THEN** the field-at-ceiling indicator lights amber
+
