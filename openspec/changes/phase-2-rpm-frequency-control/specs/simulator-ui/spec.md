@@ -1,37 +1,40 @@
 ## MODIFIED Requirements
 
 ### Requirement: Input panel controls
-The UI SHALL present sliders with numeric value labels for exciter field DC (0.5–1.5 pu, default 1.0), active load (0–100 %, default 50), power factor (0.6 lag through 1.0 to 0.6 lead, default 0.85 lag), turbine governor (47–53 Hz, default 50 Hz, step 0.1 Hz), and an AVR on/off toggle (default off).
+The UI SHALL present rotary knobs with numeric value labels for exciter field DC (0–1.5 pu, default 0),
+active load (0–100 %, default 0), and power factor (0.6 lag through 1.0 to 0.6 lead, default 0.85 lag),
+an AVR on/off selector switch (default off), and a turbine governor **speed-changer**: a spring-return
+raise/lower switch (neutral centre, two-stage slow/fast throw) that drives the **fine** governor valve.
+The rotor speed is no longer fixed — it is trimmed within the 47–53 Hz band, indirectly through the
+speed-changer switch. (The coarse throttle valve and run-up from rest are deferred to Phase 3; the
+machine starts already running at 1500 rpm.)
 
-#### Scenario: Sliders show current value
-- **WHEN** the user drags any input slider
-- **THEN** the adjacent numeric label updates to the current value in its unit
+#### Scenario: Knobs show current value
+- **WHEN** the user turns any input knob
+- **THEN** the knob's numeric label updates to the current value in its unit
 
-#### Scenario: Turbine governor slider present
+#### Scenario: Governor speed-changer present
 - **WHEN** the input panel is rendered
-- **THEN** a turbine governor slider is present with range 47–53 Hz and its current value displayed in Hz
+- **THEN** a spring-return raise/lower speed-changer switch is present, and holding it raises or lowers the intake valve (and thereby rotor speed)
 
-#### Scenario: Governor at 50 Hz matches Phase 1 baseline
-- **WHEN** the turbine governor slider is at 50 Hz
-- **THEN** simulation output is identical to Phase 1 behaviour for the same field and load settings
+#### Scenario: Governor at nominal matches Phase 1 baseline
+- **WHEN** the valve is at its nominal position (50 % → 1500 rpm / 50 Hz)
+- **THEN** simulation output matches Phase 1 behaviour for the same field and load settings
 
 ### Requirement: Generator output readouts
-The UI SHALL display terminal voltage (Vₜ) and active power (P) as SVG arc gauges and numeric values, and SHALL display reactive power (Q), load angle (δ), calculated power factor, and output frequency (Hz) as numeric values. Q SHALL be labelled "supplying" when positive and "absorbing" when negative.
+The UI SHALL display terminal voltage (Vₜ) and active power (P) as SVG arc gauges and numeric values,
+and SHALL display reactive power (Q), load angle (δ), calculated power factor, shaft speed in **RPM**
+(headline), output frequency in **Hz**, and the **fine-valve position** (% of the governing band) as
+numeric values. Q SHALL be labelled "supplying" when positive and "absorbing" when negative.
 
 #### Scenario: Gauges and numerics update as the simulation settles
 - **WHEN** the simulation state changes and settles
-- **THEN** the Vₜ and P gauges, all numeric readouts, and the frequency readout update continuously to reflect the current solved values
+- **THEN** the Vₜ and P gauges and all numeric readouts — including RPM, Hz, and valve position — update continuously to reflect the current solved values
 
 #### Scenario: Reactive power direction labelled
 - **WHEN** the solved Q is negative (leading/capacitive load)
 - **THEN** the Q readout is labelled "absorbing"; when Q is positive it is labelled "supplying"
 
-#### Scenario: Frequency readout reflects governor setting
-- **WHEN** the turbine governor is set to 47 Hz and the speed lag has settled
-- **THEN** the frequency readout displays 47.0 Hz
-
-## REMOVED Requirements
-
-### Requirement: No rotor-speed control in MVP
-**Reason:** Phase 2 adds the turbine governor slider; the MVP restriction no longer applies.
-**Migration:** The scenario "No rotor-speed or frequency slider is present" is replaced by the new "Turbine governor slider present" scenario in the modified Input panel controls requirement above.
+#### Scenario: RPM and frequency reflect the valve
+- **WHEN** the speed-changer is held lower until the valve and speed settle
+- **THEN** the RPM and Hz readouts fall together (e.g. toward 1410 rpm / 47.0 Hz) and the valve-position readout shows the reduced opening

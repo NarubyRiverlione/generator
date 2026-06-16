@@ -1,7 +1,11 @@
 ## MODIFIED Requirements
 
 ### Requirement: Per-unit base and fixed machine parameters
-The simulation core SHALL perform all internal computation in per-unit, using a single central base (S_base = 1 MVA, V_LL_base = 400 V, f_rated = 50 Hz) and fixed machine parameters (Xₛ = 1.2 pu, Rₐ = 0.05 pu). Conversion to real display units (V, kW, kVAR, A, Hz) SHALL occur only at readout time, never inside the solver. Rotor speed SHALL be treated as a variable input (default 1.0 pu); it is no longer a fixed constant.
+The simulation core SHALL perform all internal computation in per-unit, using a single central base
+(S_base = 1 MVA, V_LL_base = 400 V, f_rated = 50 Hz) and fixed machine parameters (Xₛ = 1.2 pu,
+Rₐ = 0.05 pu). Conversion to real display units (V, kW, kVAR, A, Hz, RPM) SHALL occur only at readout
+time, never inside the solver. Rotor speed SHALL be treated as a variable (default 1.0 pu), driven by
+the turbine governor; it is no longer a fixed constant.
 
 #### Scenario: Internal math stays in per-unit
 - **WHEN** the core solves the circuit for any input set
@@ -9,13 +13,16 @@ The simulation core SHALL perform all internal computation in per-unit, using a 
 
 #### Scenario: Display conversion applied once at the edge
 - **WHEN** an output value is presented to the UI layer
-- **THEN** the per-unit value is multiplied by its base exactly once (e.g. Vₜ_pu × 400 V, P_pu × 1000 kW, speed_pu × 50 Hz)
+- **THEN** the per-unit value is multiplied by its base exactly once (e.g. Vₜ_pu × 400 V, P_pu × 1000 kW, speed_pu × 50 Hz → Hz, then × 30 → RPM)
 
 ### Requirement: Steady-state circuit solve
-Given the internal EMF Eₐ (which now equals field_pu × speed_pu) and the load demand (P, Q), the core SHALL solve the round-rotor machine equations for terminal voltage Vₜ and load angle δ by solving the quadratic in Vₜ² and selecting the upper (physically stable) root, then derive armature current Iₐ, active power, reactive power, and calculated power factor consistently from that solution.
+The core SHALL solve the round-rotor machine equations for terminal voltage Vₜ and load angle δ from
+the internal EMF Eₐ (which now equals `field_pu × speed_pu`) and the load demand (P, Q), by solving the
+quadratic in Vₜ² and selecting the upper (physically stable) root, then derive armature current Iₐ,
+active power, reactive power, and calculated power factor consistently from that solution.
 
 #### Scenario: No-load terminal voltage equals EMF
-- **WHEN** active load is 0 %
+- **WHEN** active load is 0 % with a non-zero field and rated speed
 - **THEN** terminal voltage Vₜ settles to Eₐ (= field_pu × speed_pu) and armature current Iₐ is approximately zero
 
 #### Scenario: Load increase sags terminal voltage with fixed field and speed
@@ -32,13 +39,16 @@ Given the internal EMF Eₐ (which now equals field_pu × speed_pu) and the load
 
 ## ADDED Requirements
 
-### Requirement: Frequency output
-The simulation core SHALL include output frequency in `SimulatorOutputs` as `frequencyHz`, derived as `frequencyHz = 50 × speed_pu` where speed_pu is the lagged per-unit rotor speed. This value SHALL be computed each step and returned alongside Vₜ, P, Q, δ, and the other existing outputs.
+### Requirement: Frequency and RPM outputs
+The simulation core SHALL include output frequency and shaft speed in `Outputs`: `frequencyHz` derived
+as `50 × speed_pu`, and `rpm` derived as `(120 / poles) × frequencyHz` for the fixed pole count
+(4 poles → `rpm = 30 × frequencyHz`, so 1500 rpm at 50 Hz). Both SHALL be computed each step from the
+lagged rotor speed and returned alongside Vₜ, P, Q, δ and the other existing outputs.
 
-#### Scenario: Frequency tracks lagged speed
-- **WHEN** rotor speed is set to 47 Hz and sufficient time passes for the lag to settle
-- **THEN** frequencyHz in outputs is 47 Hz (± 0.05 Hz)
+#### Scenario: Frequency and RPM track lagged speed
+- **WHEN** rotor speed corresponds to 47 Hz and the spin-up lag has settled
+- **THEN** `frequencyHz` ≈ 47 Hz and `rpm` ≈ 1410 (± tolerance)
 
-#### Scenario: Frequency is 50 Hz at rated speed
-- **WHEN** rotor speed is 50 Hz
-- **THEN** frequencyHz in outputs is 50 Hz regardless of field or load settings
+#### Scenario: Rated readouts at rated speed
+- **WHEN** rotor speed is 1.0 pu (nominal valve)
+- **THEN** `frequencyHz` is 50 Hz and `rpm` is 1500, regardless of field or load settings
