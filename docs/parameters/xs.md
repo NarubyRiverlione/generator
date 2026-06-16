@@ -50,7 +50,7 @@ Double Xₛ → halve P_max. A soft machine hits its stability limit at a much l
 
 ## What to observe in the simulator
 
-Xₛ is fixed in Phase 1 — it is a machine property, not a control. Understanding it here sets the foundation for Phase 2 where saturation will show that Xₛ is not perfectly constant across operating points.
+Xₛ is fixed in Phase 1 — it is a machine property, not a control. Understanding it here sets the foundation for the Saturation & AVR-tuning change, where saturation will show that Xₛ is not perfectly constant across operating points.
 
 ## Related
 

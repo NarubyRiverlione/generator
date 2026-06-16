@@ -19,24 +19,31 @@ Fixed 50 Hz, single machine, no grid connection.
 - AVR with PI controller (Kp = 2.0, Ki = 0.5) and anti-windup
 - SVG arc gauges for Vt and P; LCD readout for Q, δ, VSM, PF
 - Voltage stability margin (VSM) warning; 27-relay under-voltage trip
-- Xs slider (0.8–2.0 pu): shows how machine stiffness affects voltage regulation and P_max
+- Fixed machine parameters (Xₛ = 1.2 pu, Rₐ = 0.05 pu); AVR reference fixed at rated (1.0 pu / 400 V)
 
 ### Phase 2 — RPM / Frequency control (planned)
 
 Prerequisite: Phase 1.
 
-- Turbine governor knob (47–53 Hz) as a second independent input
-- Rotor speed scales internal EMF: `Eₐ = field × speed_pu`
-- Live frequency readout; first-order speed lag (τ = 0.5 s)
-- Key learning: turbine controls frequency/P, exciter controls voltage/Q — same knobs, independent effects
-- Layout expands to 6-column switchboard: governor knob mirrors exciter field knob as a visual bookend
+- Turbine governor **speed-changer** — spring-return raise/lower switch (two-stage slow/fast) driving
+  the **fine** governor valve within the 47–53 Hz band; machine starts already running at 1500 rpm
+- Rotor speed scales internal EMF: `Eₐ = field × speed_pu`, so a speed change moves both frequency and voltage
+- **RPM** (headline) and **Hz** readouts, plus a fine-valve-position readout; kinematic spin-up lag (τ ≈ 2.5 s)
+- Key learning: turbine controls frequency/P, exciter controls voltage/Q — independent channels
+
+### Saturation & AVR tuning (planned — standalone, unscheduled)
+
+Carved out of Phase 2 (it concerns the voltage channel). Prerequisite: Phase 2.
+
 - Magnetic saturation: Ea/field curve flattens above ~1.1 pu; shows AVR ceiling under heavy load
-- Second field time constant: stacked τ_exciter + τ_field produces AVR overshoot and ringing; Kp/Ki tuning becomes meaningful
+- Second field time constant: stacked τ_exciter + τ_field produces AVR overshoot and ringing
+- Kp/Ki become user-adjustable; tuning against the second-order saturating plant becomes meaningful
 
 ### Phase 3 — Synchronisation to grid (planned)
 
 Prerequisite: Phase 2.
 
+- **Coarse throttle valve and run-up from rest** (0 → 1500 rpm) — the startup Phase 2 assumes done; true rotor inertia (swing equation)
 - Simulated grid reference (fixed 400 V, 50 Hz)
 - Synchroscope showing phase angle difference between generator and grid
 - User must match voltage, frequency, and phase before closing the breaker

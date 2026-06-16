@@ -49,9 +49,9 @@ Clamped to [0.5, 1.5] pu. Anti-windup prevents the integrator from accumulating 
 - Supply more reactive power than the machine's ceiling field allows
 - Prevent a 27 relay trip if load genuinely exceeds capability
 
-## Phase 2 note
+## AVR-tuning note
 
-In Phase 1, the single field lag (τ = 1.5 s) makes the AVR unconditionally stable for any positive Kp — there is nothing to tune against. Phase 2 introduces a second time constant, creating the possibility of overshoot and ringing. Kp/Ki tuning will become genuinely consequential then.
+In Phase 1, the single field lag (τ = 1.5 s) makes the AVR unconditionally stable for any positive Kp — there is nothing to tune against. The Saturation & AVR-tuning change (carved out of Phase 2) introduces a second time constant, creating the possibility of overshoot and ringing. Kp/Ki tuning will become genuinely consequential then.
 
 ## Related
 

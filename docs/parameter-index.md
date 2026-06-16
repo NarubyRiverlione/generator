@@ -2,6 +2,8 @@
 
 Cross-reference of all parameters and concepts. A dot (●) means the row item directly influences the column item.
 
+**Operator controls** (adjustable in the shipped UI): exciter field DC, active load, power factor, AVR on/off. **Fixed parameters** (machine properties / design constants, listed here for their physics influence but not user-adjustable): Xₛ, Rₐ, τ, Vref, and Kp/Ki. Rotor speed is fixed in Phase 1 and becomes adjustable via the turbine governor in Phase 2.
+
 ## Parameters → Outputs and Concepts
 
 |  | Vₜ | P | Q | δ | VSM | Relay 27 trip | AVR behaviour |
@@ -27,7 +29,7 @@ Cross-reference of all parameters and concepts. A dot (●) means the row item d
 | Xₛ | How much field voltage you need to hold Vₜ; how quickly VSM drops with load |
 | Load fraction | How hard the AVR works; whether the 27 relay arms quickly |
 | Power factor | How aggressively load fraction drives VSM down |
-| τ | How responsive the AVR feels; how much Kp/Ki matter (Phase 2) |
+| τ | How responsive the AVR feels; how much Kp/Ki matter (Saturation & AVR-tuning change) |
 
 ---
 

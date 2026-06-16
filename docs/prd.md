@@ -100,11 +100,11 @@ All inputs are sliders with a numeric label showing the current value.
 | Exciter field DC | 0.5 – 1.5 | 1.0 | pu |
 | Active load (P) | 0 – 100 | 50 | % of rated |
 | Power factor | 0.6 lag – 1.0 – 0.6 lead | 0.85 lag | — |
-| Synchronous reactance (Xₛ) | 0.8 – 2.0 | 1.2 | pu |
 | AVR enable | off / on | off | toggle |
-| AVR voltage reference | 380 – 420 | 400 | V (only visible when AVR is on) |
 
-**Rotor speed is fixed at 50 Hz / 1500 RPM equivalent — not user-facing in Phase 1.**
+**Fixed (not user controls):** synchronous reactance Xₛ = 1.2 pu and armature resistance Rₐ = 0.05 pu
+are machine properties; the AVR voltage reference is fixed at rated (1.0 pu / 400 V). Rotor speed is
+fixed at 50 Hz / 1500 RPM in Phase 1.
 
 ---
 
@@ -154,7 +154,7 @@ Single page, two-column on desktop, stacked on mobile. Readouts are ordered to f
 │  Active load   ──│                      │
 │  Power factor    │  GENERATOR OUTPUT    │
 │  AVR toggle    ──│── Vₜ gauge           │
-│  [AVR Vref]      │── P gauge            │
+│                  │── P gauge            │
 │                  │── Q / δ / PF        │
 └──────────────────┴──────────────────────┘
 ```
@@ -163,7 +163,7 @@ Single page, two-column on desktop, stacked on mobile. Readouts are ordered to f
 
 ## Behaviour Notes
 
-- When AVR is toggled **on**: exciter field DC slider becomes read-only and shows the value AVR is currently commanding. User can still adjust AVR reference voltage.
+- When AVR is toggled **on**: exciter field DC becomes read-only and shows the value AVR is currently commanding. The AVR reference is fixed at rated (1.0 pu / 400 V) — not user-adjustable in the shipped build.
 - When load increases with AVR **off**: terminal voltage drops visibly — this is the key learning moment.
 - When load increases with AVR **on**: exciter field DC rises automatically, the entire chain (exciter AC → rectified DC → field current) moves to compensate, Vₜ stays near reference. User can watch the chain react.
 - Reactive power (Q) goes **negative** when load is capacitive (leading PF) — label this clearly as "absorbing" vs "supplying".
@@ -174,8 +174,8 @@ Single page, two-column on desktop, stacked on mobile. Readouts are ordered to f
 
 ## Out of Scope (MVP)
 
-- Magnetic saturation curve ← **deferred to Phase 2**
-- Second field time constant (AVR ringing) ← **deferred to Phase 2**
+- Magnetic saturation curve ← **deferred to the Saturation & AVR-tuning change** (see roadmap)
+- Second field time constant (AVR ringing) ← **deferred to the Saturation & AVR-tuning change**
 - Transient / sub-transient reactances
 - Short circuit or fault simulation
 - Grid-connected (infinite bus) mode
@@ -193,16 +193,35 @@ Phases build on each other — concepts from earlier phases are prerequisites fo
 ### Phase 2 — RPM / Frequency control
 **Prerequisite:** Phase 1 complete
 
-- Add rotor speed / turbine governor slider (47–53 Hz range)
-- Show impact of speed deviation on output frequency and voltage
+> **Design insight (post-PRD):** speed is not commanded as "Hz". The turbine has a **coarse** throttle
+> valve (run-up from rest) and a **fine** governor valve (frequency trim). Phase 2 implements the
+> **fine** valve only, on a machine that starts already running at 1500 rpm. RPM is the headline
+> readout; Hz sits beside it. The coarse valve + run-up move to Phase 3. See the
+> `phase-2-rpm-frequency-control` change for the full design.
+
+- Add a **turbine governor speed-changer** — a spring-return raise/lower switch (two-stage slow/fast)
+  that drives the fine governor valve within the 47–53 Hz band (1410–1590 rpm)
+- Rotor speed scales internal EMF (`Eₐ = field × speed_pu`), so a speed change moves both frequency and
+  voltage; a kinematic spin-up lag (τ ≈ 2.5 s) makes the shaft ease to the new speed
+- Add **RPM** (headline) and **Hz** readouts, plus a fine-valve-position readout
 - Key learning: frequency and voltage are independent — turbine controls P/frequency, exciter controls voltage/Q
 - This separation is the foundation needed before grid connection
+
+### Saturation & AVR tuning (standalone — unscheduled)
+**Prerequisite:** Phase 2 complete (saturation scales the same Eₐ that speed scales)
+
+Originally drafted inside Phase 2, carved out as the `avr-tuning-and-saturation` change because it
+concerns the *voltage* channel, not rotor speed. Slot into the roadmap when desired.
+
 - Magnetic saturation: Eₐ/field curve flattens above ~1.1 pu field; reveals AVR ceiling under heavy load and why over-excitation has diminishing returns
-- Second field time constant: stack τ_exciter + τ_field so the step response can overshoot and ring; Kp/Ki tuning in the UI becomes meaningful
+- Second field time constant: stack τ_exciter + τ_field so the step response can overshoot and ring
+- Kp/Ki become user-adjustable so tuning against the now-second-order, saturating plant is meaningful
 
 ### Phase 3 — Synchronisation to grid
 **Prerequisite:** Phase 2 complete
 
+- Add the **coarse throttle valve** and shaft **run-up from rest** (0 → 1500 rpm) — the startup that
+  Phase 2 assumes already done; introduce true rotor inertia (swing equation) here
 - Add a simulated grid reference (fixed 400V, 50Hz)
 - Add synchroscope — visual display of phase angle difference between generator and grid
 - User must match voltage (exciter), frequency (turbine), and phase angle before closing the breaker
@@ -246,7 +265,6 @@ Phases build on each other — concepts from earlier phases are prerequisites fo
 - [ ] All three exciter chain readouts move when exciter field DC changes
 - [ ] Leading power factor load causes Q to go negative, labelled "absorbing"
 - [ ] Load angle (δ) increases with increasing load, warning shown near 90°
-- [ ] Changing Xₛ slider with fixed load causes Vₜ and VSM to shift — higher Xₛ produces lower Vₜ and tighter stability margin
 - [ ] All gauges update smoothly without jank
 - [ ] Works on mobile (stacked layout)
 

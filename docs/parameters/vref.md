@@ -14,13 +14,16 @@ Set by the operator from the control room. On European grids the standard LV bus
 
 ## Simulator value
 
-Range **0.95 – 1.05 pu**, default **1.0 pu**. Only visible and active when AVR is on.
+**Fixed at 1.0 pu (400 V).** Vref is not exposed as a control in this simulator — when AVR is on it
+always regulates terminal voltage to rated. (Adjustable Vref is real-machine behaviour, mainly used for
+reactive-power sharing once grid-connected; it is intentionally out of scope here.)
 
 ## Effect on the machine
 
-- Raising Vref causes the AVR to command more field, raising Vₜ and increasing the reactive power Q supplied to the load.
-- Lowering Vref causes the AVR to reduce field, lowering Vₜ. If lowered far enough with a lagging load, the 27 relay can trip.
-- The AVR will raise field as high as needed (up to 1.5 pu ceiling) to reach Vref. If the load is too heavy to reach Vref even at the ceiling, the FIELD AT CEILING indicator lights and Vₜ settles below Vref.
+Although Vref is fixed in the simulator, the relationships it governs are still worth understanding:
+
+- A higher reference would make the AVR command more field, raising Vₜ and the reactive power Q supplied; a lower reference would do the opposite, and if low enough with a lagging load the 27 relay could trip.
+- At the fixed rated reference, the AVR raises field as high as needed (up to the 1.5 pu ceiling) to hold Vₜ at rated. If the load is too heavy to reach rated even at the ceiling, the FIELD AT CEILING indicator lights and Vₜ settles below rated.
 
 ## Related
 

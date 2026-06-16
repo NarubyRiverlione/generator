@@ -19,7 +19,7 @@ Where `error = Vref − Vₜ`. The result is clamped to [0.5, 1.5] pu with anti-
 
 Tuned by the commissioning engineer to match the specific machine's time constants and stability margins. A faster machine (smaller τ) can handle higher gains. A larger machine with a long field time constant needs more conservative tuning.
 
-In Phase 1 the gains are fixed because the single first-order plant (one τ) is unconditionally stable for any positive Kp — there is nothing to tune against. Phase 2 introduces a second time constant which creates the possibility of overshoot and ringing, making Kp/Ki tuning meaningful.
+In Phase 1 the gains are fixed because the single first-order plant (one τ) is unconditionally stable for any positive Kp — there is nothing to tune against. The Saturation & AVR-tuning change (carved out of Phase 2) introduces a second time constant which creates the possibility of overshoot and ringing, making Kp/Ki tuning meaningful.
 
 ## Realistic range
 
