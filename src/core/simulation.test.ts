@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { AVR_COMMAND_MAX, AVR_COMMAND_MIN, DEFAULT_INPUTS, PARAMS, TAU_SPINUP } from './constants'
+import { AVR_COMMAND_MAX, AVR_COMMAND_MIN, DEFAULT_INPUTS, PARAMS, RPM_RATED, TAU_SPINUP, VALVE_RPM_MAX } from './constants'
 import { stepAvr } from './avr'
 import { computeLoad } from './load'
 import { solveMachine } from './machine'
@@ -285,17 +285,18 @@ function advanceWithState(startState: SimState, inputs: Inputs, totalSeconds: nu
   return { state, outputs }
 }
 
-// 3.1  Rated speed → Phase 1 baseline Vₜ, P, Q
-describe('3.1 rated speed matches Phase 1 baseline', () => {
-  it('nominal valve (50 %) → 50 Hz / 1500 rpm and same Vt, P, Q as fixed-speed Phase 1', () => {
+// 3.1  Rated valve → 50 Hz / 1500 rpm; matches Phase 1 baseline Vₜ, P, Q
+describe('3.1 rated valve matches Phase 1 baseline', () => {
+  it('valve at ~93.75 % → 50 Hz / 1500 rpm and same Vt, P, Q as fixed-speed Phase 1', () => {
+    // Seed with valve at rated position (1500 / 1600 × 100 = 93.75 %) and speed already at 1.0 pu
+    const ratedValvePct = (RPM_RATED / VALVE_RPM_MAX) * 100
+    const seeded: SimState = { ...initialState(), valvePct: ratedValvePct, speedLagged: 1.0 }
     const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0.5, powerFactor: 0.85, pfLag: true, avrOn: false, valveCommand: 0 }
-    // Settle over many τ; valve stays at 50 %, speedLagged stays 1.0
-    const { outputs } = advanceWithState(initialState(), inputs, 10 * PARAMS.tau)
+    const { outputs } = advanceWithState(seeded, inputs, 10 * PARAMS.tau)
     expect(outputs.frequencyHz).toBeCloseTo(50, 2)
     expect(outputs.rpm).toBeCloseTo(1500, 0)
     // Compare against direct machine solve at speed=1.0 (Phase 1 reference)
     const load = computeLoad(0.5, 0.85, true)
-    // field will have lagged to ~1.0 over 10τ; Vt should match solveMachine(1.0, ...)
     const ref = solveMachine(1.0, load.p, load.q, PARAMS.xs)
     expect(outputs.vt).toBeCloseTo(ref.vt, 2)
     expect(outputs.p).toBeCloseTo(ref.p, 2)
@@ -303,24 +304,24 @@ describe('3.1 rated speed matches Phase 1 baseline', () => {
   })
 })
 
-// 3.2  Valve held lower → speed settles to ~47 Hz / 1410 rpm
-describe('3.2 valve held lower → speed settles at low end of band', () => {
-  it('valve at 0 % after many τ_spinup → frequencyHz ≈ 47 and rpm ≈ 1410', () => {
-    // Seed state with valvePct already at 0 so we only wait on spin-up lag, not jog
-    const seeded: SimState = { ...initialState(), valvePct: 0 }
+// 3.2  Valve at partial opening → speed settles to corresponding RPM / Hz
+describe('3.2 valve at 60 % → speed settles at 960 rpm / 32 Hz', () => {
+  it('valve at 60 % after many τ_spinup → rpm ≈ 960 and frequencyHz ≈ 32', () => {
+    // 60 % valve: rpmTarget = 0.6 × 1600 = 960 rpm; Hz = 960 / 30 = 32
+    const seeded: SimState = { ...initialState(), valvePct: 60 }
     const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.2, loadFraction: 0, avrOn: false, valveCommand: 0 }
     const { outputs } = advanceWithState(seeded, inputs, 10 * TAU_SPINUP)
-    expect(outputs.frequencyHz).toBeCloseTo(47, 1)
-    expect(outputs.rpm).toBeCloseTo(1410, 0)
+    expect(outputs.rpm).toBeCloseTo(960, 0)
+    expect(outputs.frequencyHz).toBeCloseTo(32, 1)
   })
 })
 
 // 3.3  Valve step → after 1 τ_spinup, lagged speed ~63 % toward new target
 describe('3.3 spin-up lag: 63 % moved after 1 τ_spinup', () => {
-  it('speedLagged moves ~63 % toward the high-end target after 2.5 s', () => {
-    // Seed with valvePct = 100 so target is 1.06 pu; speedLagged still 1.0
+  it('speedLagged moves ~63 % toward the full-open target (1600 rpm) after 2.5 s', () => {
+    // Seed with valvePct = 100 → rpmTarget = 1600, speedTarget_pu = 1600/1500; speedLagged at 1.0
     const seeded: SimState = { ...initialState(), valvePct: 100, speedLagged: 1.0 }
-    const speedTarget_pu = 53 / 50 // = 1.06
+    const speedTarget_pu = VALVE_RPM_MAX / RPM_RATED // = 1600/1500 ≈ 1.0667
     const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0, avrOn: false, valveCommand: 0 }
     const { state } = advanceWithState(seeded, inputs, TAU_SPINUP)
     const progress = (state.speedLagged - 1.0) / (speedTarget_pu - 1.0)
@@ -332,11 +333,13 @@ describe('3.3 spin-up lag: 63 % moved after 1 τ_spinup', () => {
 // 3.4  Speed reduction with AVR off → Vₜ falls (Eₐ scaled down); stays above 0.85 relay trip
 describe('3.4 speed reduction sags Vt with AVR off', () => {
   it('lower speed → lower Vt; field high enough to stay above 0.85 relay trip', () => {
-    const inputs_rated: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.2, loadFraction: 0.3, avrOn: false, valveCommand: 0 }
-    const seeded_low: SimState = { ...initialState(), valvePct: 0 }
-    const inputs_low: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.2, loadFraction: 0.3, avrOn: false, valveCommand: 0 }
+    // rated: initial state (~93.44 % valve → ~0.997 pu speed)
+    // low: valve at 75 % → rpmTarget = 1200, speed_pu = 0.8, Eₐ = 1.3 × 0.8 = 1.04 (above relay)
+    const inputs_rated: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.3, loadFraction: 0, avrOn: false, valveCommand: 0 }
+    const seeded_low: SimState = { ...initialState(), valvePct: 75 }
+    const inputs_low: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.3, loadFraction: 0, avrOn: false, valveCommand: 0 }
 
-    const { outputs: out_rated } = advanceWithState(initialState(), inputs_rated, 10 * PARAMS.tau)
+    const { outputs: out_rated } = advanceWithState(initialState(), inputs_rated, 10 * TAU_SPINUP)
     const { outputs: out_low } = advanceWithState(seeded_low, inputs_low, 10 * TAU_SPINUP)
 
     expect(out_low.vt).toBeLessThan(out_rated.vt)
@@ -350,7 +353,7 @@ describe('3.5 spin-up lag and field lag are independent', () => {
     // Seed: valve at 100 %, speed still at 1.0; iField starting from 0 with field target 1.4
     const seeded: SimState = { ...initialState(), valvePct: 100, speedLagged: 1.0, iField: 0 }
     const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.4, loadFraction: 0, avrOn: false, valveCommand: 0 }
-    const speedTarget_pu = 53 / 50
+    const speedTarget_pu = VALVE_RPM_MAX / RPM_RATED // = 1600/1500 ≈ 1.0667
 
     // Measure both lags at a common time: 1.5 s (= τ_field, shorter than τ_spinup = 2.5 s)
     // At 1.5 s: field progress ≈ 1 − 1/e ≈ 63 %; speed progress ≈ 1 − e^(−0.6) ≈ 45 %

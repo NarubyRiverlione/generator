@@ -22,7 +22,7 @@ export type SimState = {
   iField: number
   /** AVR PI integrator accumulator. */
   avrIntegral: number
-  /** Fine-valve position, % of the governing band [0, 100]; 50 = nominal (1500 rpm). */
+  /** Valve position, % of full travel [0, 100]; 0 = closed = 0 rpm; ~93.75 = rated (1500 rpm). */
   valvePct: number
   /** Lagged rotor speed, per-unit; follows valve target through spin-up lag. */
   speedLagged: number
@@ -53,25 +53,12 @@ export type Outputs = {
    * Based on discriminant / D_no_load; independent of PF and load angle.
    */
   stabilityMargin: number
-  /** Output frequency, Hz; derived as 50 × speed_pu. */
+  /** Output frequency, Hz; derived as rpm / 30 (shaft-primary: valve → RPM → Hz). */
   frequencyHz: number
-  /** Shaft speed, RPM; derived as (120 / poles) × frequencyHz. */
+  /** Shaft speed, RPM; derived as speedLagged × RPM_RATED. */
   rpm: number
-  /** Fine-valve position, % of governing band [0, 100]; mirrored from SimState. */
+  /** Valve position, % of full travel [0, 100]; mirrored from SimState. */
   valvePct: number
-}
-
-export type Params = {
-  /** Synchronous reactance, per-unit. */
-  xs: number
-  /** Armature resistance, per-unit. */
-  ra: number
-  /** Field first-order time constant, seconds. */
-  tau: number
-  /** AVR proportional gain. */
-  kp: number
-  /** AVR integral gain. */
-  ki: number
 }
 
 export type Params = {

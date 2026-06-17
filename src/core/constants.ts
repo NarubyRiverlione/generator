@@ -17,13 +17,13 @@ export const AVR_VREF = 1.0
 /** Under-voltage relay (ANSI 27) trip threshold, per-unit. */
 export const RELAY27_TRIP_VT = 0.85
 
-/** Turbine governor — fine-valve governing band (0 % = low end of band, not a closed valve). */
-export const VALVE_FREQ_LOW = 47   // Hz at 0 % fine valve (1410 rpm)
-export const VALVE_FREQ_HIGH = 53  // Hz at 100 % fine valve (1590 rpm)
+/** Turbine governor — single intake valve, shaft-primary. 0 % = closed = 0 rpm. */
+export const VALVE_RPM_MAX = 1600  // rpm at 100 % valve (overspeed trip, ~107 % rated)
+export const RPM_RATED = 1500      // synchronous speed, 4-pole @ 50 Hz
 
-/** Fine-valve jog rates (valve %/s). Inner slow stage; outer fast stage. */
-export const JOG_SLOW = 5   // %/s  ≈ 9 rpm/s, 0.3 Hz/s
-export const JOG_FAST = 25  // %/s  ≈ 45 rpm/s, 1.5 Hz/s
+/** Jog rates (valve %/s). Inner slow stage; outer fast stage. */
+export const JOG_SLOW = 5   // %/s  ≈ 80 rpm/s at rated speed
+export const JOG_FAST = 25  // %/s  ≈ 400 rpm/s; full range ≈ 4 s
 
 /** Spin-up lag time constant (s). Shaft is slower than the field lag (τ_field = 1.5 s). */
 export const TAU_SPINUP = 2.5

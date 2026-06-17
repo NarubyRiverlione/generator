@@ -1,7 +1,7 @@
 /** Simulation step: field lag → AVR or manual target → machine solve. */
 
 import { stepAvr } from './avr'
-import { AVR_VREF, DEFAULT_INPUTS, JOG_FAST, JOG_SLOW, PARAMS, POLES, TAU_SPINUP, VALVE_FREQ_HIGH, VALVE_FREQ_LOW } from './constants'
+import { AVR_VREF, DEFAULT_INPUTS, JOG_FAST, JOG_SLOW, PARAMS, RPM_RATED, TAU_SPINUP, VALVE_RPM_MAX } from './constants'
 import { computeLoad } from './load'
 import { solveMachine } from './machine'
 import type { Inputs, Outputs, Params, SimState, ValveCommand } from './types'
@@ -14,11 +14,16 @@ function jogRate(cmd: ValveCommand): number {
   return 0
 }
 
+// Initial valve ~1495 rpm (slightly sub-synchronous; operator trims to 1500 for Phase 3 sync)
+const VALVE_PCT_INIT = (1495 / VALVE_RPM_MAX) * 100   // ≈ 93.44 %
+const SPEED_INIT_PU = 1495 / RPM_RATED                // ≈ 0.9967
+
 export function initialState(): SimState {
   const inputs = DEFAULT_INPUTS
   const load = computeLoad(inputs.loadFraction, inputs.powerFactor, inputs.pfLag)
-  // speedLagged = 1.0 at init → Eₐ = field × 1.0 = field (Phase 1 equivalent)
-  const result = solveMachine(inputs.fieldVoltage * 1.0, load.p, load.q, PARAMS.xs)
+  const result = solveMachine(inputs.fieldVoltage * SPEED_INIT_PU, load.p, load.q, PARAMS.xs)
+  const initRpm = SPEED_INIT_PU * RPM_RATED
+  const initHz = initRpm / 30
   const outputs: Outputs = result.collapsed
     ? {
         vt: 0,
@@ -30,24 +35,24 @@ export function initialState(): SimState {
         avrCommand: inputs.fieldVoltage,
         collapsed: false,
         stabilityMargin: 0,
-        frequencyHz: 50,
-        rpm: 1500,
-        valvePct: 50,
+        frequencyHz: initHz,
+        rpm: initRpm,
+        valvePct: VALVE_PCT_INIT,
       }
     : {
         ...result,
         avrCommand: inputs.fieldVoltage,
         collapsed: false,
-        frequencyHz: 50,
-        rpm: 1500,
-        valvePct: 50,
+        frequencyHz: initHz,
+        rpm: initRpm,
+        valvePct: VALVE_PCT_INIT,
       }
 
   return {
     iField: inputs.fieldVoltage,
     avrIntegral: 0,
-    valvePct: 50,
-    speedLagged: 1.0,
+    valvePct: VALVE_PCT_INIT,
+    speedLagged: SPEED_INIT_PU,
     lastValidOutputs: outputs,
   }
 }
@@ -77,17 +82,17 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   // 2.1 Integrate valve: holds when valveCommand = 0, clamped to [0, 100]
   const valvePct = Math.min(100, Math.max(0, state.valvePct + jogRate(inputs.valveCommand) * dt))
 
-  // 2.2 Map valve to target speed and advance spin-up lag (exact-exponential, same form as field lag)
-  const speedTargetHz = VALVE_FREQ_LOW + (valvePct / 100) * (VALVE_FREQ_HIGH - VALVE_FREQ_LOW)
-  const speedTarget_pu = speedTargetHz / 50
+  // 2.2 Valve → RPM (shaft-primary); advance spin-up lag (exact-exponential, same form as field lag)
+  const rpmTarget = (valvePct / 100) * VALVE_RPM_MAX
+  const speedTarget_pu = rpmTarget / RPM_RATED
   const speedLagged = state.speedLagged + (speedTarget_pu - state.speedLagged) * (1 - Math.exp(-dt / TAU_SPINUP))
 
   // 2.3 Scale internal EMF by speed before circuit solve: Eₐ = field_lagged × speed_pu
   const ea = iField * speedLagged
 
-  // 2.4 Derive speed readouts (shaft keeps spinning regardless of voltage collapse)
-  const frequencyHz = 50 * speedLagged
-  const rpm = (120 / POLES) * frequencyHz
+  // 2.4 Derive readouts shaft-first: RPM → Hz (Hz is never an intermediate variable)
+  const rpm = speedLagged * RPM_RATED
+  const frequencyHz = rpm / 30
 
   // Machine solve
   const load = computeLoad(inputs.loadFraction, inputs.powerFactor, inputs.pfLag)
