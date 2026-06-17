@@ -1,0 +1,94 @@
+/* Indicator lights block: small LEDs and large indicator bulbs. */
+
+.indicator-block {
+  background: var(--surface-recessed);
+  border-radius: 4px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.indicator-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  color: #222;
+  letter-spacing: 0.3px;
+}
+
+/* Small LED indicators */
+.led {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #9aa;
+  box-shadow: inset 0 0 2px #0006;
+}
+
+.led.on {
+  background: var(--green);
+  box-shadow: 0 0 5px var(--green);
+}
+
+.led.amber {
+  background: var(--amber);
+  box-shadow: 0 0 5px var(--amber);
+}
+
+.led.red-led {
+  background: var(--red);
+  box-shadow: 0 0 5px var(--red);
+}
+
+/* Indicator bulbs */
+.lamps {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.lamp {
+  width: 72px;
+  text-align: center;
+}
+
+.bulb {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin: 0 auto 8px;
+  background: radial-gradient(circle at 35% 30%, #fff6, var(--lampoff));
+  box-shadow:
+    inset 0 -3px 6px #0008,
+    inset 0 2px 3px #fff3,
+    0 1px 2px #0006;
+  border: 2px solid #1d1c18;
+}
+
+.bulb.green.on {
+  background: radial-gradient(circle at 35% 30%, #c9ffd8, var(--green));
+  box-shadow:
+    0 0 14px #20c24aaa,
+    inset 0 -2px 5px #0a5a1f,
+    inset 0 2px 3px #fff7;
+}
+
+.bulb.amber.on {
+  background: radial-gradient(circle at 35% 30%, #fff0c2, var(--amber));
+  box-shadow:
+    0 0 14px #e8a02aaa,
+    inset 0 -2px 5px #7a5208,
+    inset 0 2px 3px #fff7;
+}
+
+.bulb.red.on {
+  background: radial-gradient(circle at 35% 30%, #ffd2cc, var(--red));
+  box-shadow:
+    0 0 14px #e23b2eaa,
+    inset 0 -2px 5px #6e120c,
+    inset 0 2px 3px #fff7;
+}

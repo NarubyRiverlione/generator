@@ -1,0 +1,107 @@
+/* AVR selector switch and governor spring-loaded selector. */
+
+/* AVR selector */
+.avr-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sel-wrap {
+  text-align: center;
+}
+
+.sel-positions {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--ink-soft);
+  letter-spacing: 1px;
+  width: 72px;
+  margin: 0 auto 4px;
+}
+
+.sel-switch {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: block;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  background: var(--knob-face);
+  box-shadow:
+    0 0 0 4px var(--chrome1),
+    0 0 0 6px var(--chrome2),
+    0 4px 8px #0005,
+    inset 0 2px 3px #fff2;
+  transition: box-shadow 0.08s;
+}
+
+.sel-switch:active {
+  box-shadow:
+    0 0 0 4px var(--chrome1),
+    0 0 0 6px var(--chrome2),
+    0 2px 4px #0005,
+    inset 0 1px 2px #fff2;
+}
+
+.sel-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 32%, #3a3c3f, var(--knob-face) 80%);
+  transition: transform 0.2s ease;
+}
+
+.sel-bar {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  width: 10px;
+  height: 27px;
+  margin-left: -5px;
+  background: linear-gradient(180deg, #c8cace 0%, #9a9c9f 100%);
+  border-radius: 3px;
+  box-shadow: 0 0 3px #fff8;
+}
+
+/* Governor speed-changer selector */
+.gov-positions {
+  display: flex;
+  justify-content: space-between;
+  width: 72px;
+  margin: 0 auto 4px;
+}
+
+.gov-pos {
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--ink-soft);
+  letter-spacing: 0;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  transition: color 0.08s;
+}
+
+.gov-pos:hover {
+  color: #a0b0c0;
+}
+
+.gov-pos--active {
+  color: #d4e4f4;
+}
+
+.gov-neutral {
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--ink-soft);
+  cursor: default;
+  user-select: none;
+}

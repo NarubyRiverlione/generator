@@ -1,0 +1,44 @@
+/* 27 undervoltage relay reset dome. */
+
+.relay27-section {
+  text-align: center;
+  width: 90px;
+}
+
+.relay27-dome {
+  display: block;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  margin: 36px auto 8px;
+  border: none;
+  cursor: default;
+  background:
+    radial-gradient(circle at 38% 28%, #fff7d4, transparent 46%),
+    radial-gradient(circle at 50% 60%, var(--amber), var(--amber-d) 72%);
+  box-shadow:
+    0 0 0 3px var(--chrome1),
+    0 0 0 5px var(--chrome2),
+    0 3px 6px #0005,
+    inset 0 -4px 8px #0006;
+  transition:
+    transform 0.08s,
+    box-shadow 0.08s;
+}
+
+.relay27-dome.tripped {
+  background:
+    radial-gradient(circle at 38% 28%, #ffd9d4, transparent 46%),
+    radial-gradient(circle at 50% 60%, var(--red), var(--red-d) 72%);
+  box-shadow:
+    0 0 0 3px var(--chrome1),
+    0 0 0 5px var(--chrome2),
+    0 0 14px var(--red),
+    0 3px 6px #0005,
+    inset 0 -4px 8px #0006;
+  cursor: pointer;
+}
+
+.relay27-dome.tripped:active {
+  transform: scale(0.95);
+}

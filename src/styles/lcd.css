@@ -1,0 +1,203 @@
+/* LCD status display, fault screen, sticky-note legend, and collapse banner. */
+
+.lcd-col {
+  display: contents;
+}
+
+.lcd-mod {
+  background: linear-gradient(180deg, #1c1c1e, #050506);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow:
+    0 4px 10px #0006,
+    inset 0 1px 2px #fff2;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.lcd-bottom {
+  height: 125px; /* sticky-note natural height; fault screen fills same space */
+  flex-shrink: 0;
+  position: relative;
+  overflow: visible; /* lets tape strip peek above */
+  margin-top: 8px;
+}
+
+.screen {
+  background: linear-gradient(180deg, #aebf8e, #9cb079);
+  border: 2px solid #000;
+  border-radius: 3px;
+  padding: 8px 10px;
+  font-family: var(--mono);
+  color: #14210c;
+  box-shadow: inset 0 0 8px #0004;
+}
+
+.screen-fault {
+  border: 2px solid #000;
+  border-radius: 3px;
+  padding: 8px 10px;
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 1px;
+  box-shadow: inset 0 0 8px #0004;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.screen-fault--ok {
+  background: linear-gradient(180deg, #7a8f62, #6a7e54);
+  color: #1a2a0e88;
+}
+
+.screen-fault--warn {
+  background: linear-gradient(180deg, #c4ae6a, #ad9850);
+  color: #1a1200;
+}
+
+.screen-fault--danger {
+  background: linear-gradient(180deg, #c49060, #ad7848);
+  color: #1a0800;
+}
+
+.screen-fault--fault {
+  background: linear-gradient(180deg, #bf8080, #a86060);
+  color: #200000;
+}
+
+.fault-ok {
+  opacity: 0.55;
+}
+
+.screen .l1,
+.screen .l2,
+.screen .l3,
+.screen .l4 {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  letter-spacing: 1px;
+  margin-top: 4px;
+}
+
+.screen .l2 {
+  font-size: 16px;
+  letter-spacing: 2px;
+}
+
+.warn-amber {
+  color: #7a5208;
+  font-weight: bold;
+}
+
+.warn-red {
+  color: #6e120c;
+  font-weight: bold;
+}
+
+.lcd-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.info-btn {
+  background: none;
+  border: 1px solid #fff6;
+  border-radius: 3px;
+  color: #bbb;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: color 0.1s, border-color 0.1s;
+}
+
+.info-btn:hover {
+  color: #e0e0e0;
+  border-color: #fff9;
+}
+
+.info-btn.active {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
+.legend {
+  margin-top: 12px;
+  background: var(--surface-recessed);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.legend table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9px;
+  color: #222;
+}
+
+.legend td {
+  padding: 3px 4px;
+  border-bottom: 1px solid #cfcfc8;
+}
+
+/* Sticky-note placard */
+.sticky-note {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #fefae8;
+  border: 1px solid #d4c97a;
+  border-radius: 2px;
+  padding: 9px 11px 10px;
+  box-shadow:
+    2px 3px 6px #0003,
+    inset 0 1px 0 #fff8;
+  transform: rotate(-0.4deg);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.7;
+  color: #2a2510;
+}
+
+/* Tape strip at top */
+.sticky-note::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%) rotate(1.2deg);
+  width: 48px;
+  height: 14px;
+  background: rgba(220, 210, 140, 0.55);
+  border: 1px solid #c8ba60;
+  border-radius: 1px;
+}
+
+.sticky-line {
+  display: flex;
+  gap: 7px;
+  align-items: baseline;
+}
+
+.sticky-key {
+  font-weight: bold;
+  min-width: 22px;
+  color: #1a1608;
+  letter-spacing: 0.5px;
+}
+
+/* Relay trip / collapse banner */
+.collapsed-banner {
+  background: var(--red);
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-align: center;
+  padding: 6px 12px;
+  border-radius: 3px;
+  margin-top: 10px;
+}
