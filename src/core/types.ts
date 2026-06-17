@@ -7,7 +7,7 @@ export type Inputs = {
   fieldVoltage: number
   /** Active load, fraction of rated [0, 1.5]. */
   loadFraction: number
-  /** Power factor magnitude: lagging [0.92, 1.0], leading [0.6, 1.0]. Sign determined by pfLag. */
+  /** Power factor magnitude: [0.6, 1.0] both lagging and leading. Sign determined by pfLag. */
   powerFactor: number
   /** true = lagging (inductive), false = leading (capacitive). */
   pfLag: boolean

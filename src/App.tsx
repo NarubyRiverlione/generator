@@ -23,9 +23,10 @@ export default function App() {
 
   function handlePfChange(v: number) {
     const abs = Math.abs(v)
-    // Lagging minimum 0.92 (100 % load is only achievable within this range);
-    // leading minimum stays at 0.6.
-    const min = v >= 0 ? 0.92 : 0.6
+    // Symmetric 0.6 floor on both sides. Note: at full load the machine collapses
+    // around 0.85-0.9 lagging (saturation ceiling caps the available field), so the
+    // low-PF lagging range is reachable on the knob but not holdable under heavy load.
+    const min = 0.6
     setInput('powerFactor', abs < min ? min : parseFloat(abs.toFixed(10)))
     setInput('pfLag', v >= 0)
   }
@@ -99,7 +100,7 @@ export default function App() {
             step={0.01}
             value={pfSigned}
             display={`${inputs.powerFactor.toFixed(2)} ${inputs.pfLag ? 'lag' : 'ld'}`}
-            scaleMin="0.92 lag"
+            scaleMin="0.6 lag"
             scaleMax="0.6 ld"
             ptrRotation={-130 + ((inputs.powerFactor - 0.6) / 0.4) * 260}
             onChange={(v) => handlePfChange(clamp(v, -1, 1))}
