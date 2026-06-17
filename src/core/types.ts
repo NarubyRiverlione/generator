@@ -78,4 +78,6 @@ export type Params = {
   kp: number
   /** AVR integral gain. */
   ki: number
+  /** Governor droop, dimensionless (pu speed drop per pu active load). 0.04 = 4 % droop. */
+  govDroop: number
 }

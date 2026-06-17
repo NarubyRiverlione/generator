@@ -8,6 +8,7 @@ export const PARAMS: Params = {
   tau: 1.5,
   kp: 2.0,
   ki: 0.5,
+  govDroop: 0.04,
 }
 
 export const AVR_COMMAND_MIN = 0.5

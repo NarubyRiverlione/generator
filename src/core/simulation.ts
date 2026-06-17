@@ -92,12 +92,13 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   // Valve actuator lag: physical valve position chases setpoint with τ_valve
   const valveActual = Math.min(100, Math.max(0, state.valveActual + (valvePct - state.valveActual) * (1 - Math.exp(-dt / TAU_VALVE))))
 
-  // 2.2 Valve → RPM (shaft-primary); advance spin-up lag (exact-exponential, same form as field lag).
-  // Speed is driven by valve position only — load changes do not feed back into shaft speed.
-  // There is no swing equation or droop; torque-balance feedback is a known simplification.
+  // 2.2 Valve → RPM (shaft-primary); droop-corrected first-order lag.
+  // Pe_prev from the previous step; one-step lag (~33 ms) is negligible at simulator cadence.
+  const Pe_prev = state.lastValidOutputs.p
   const rpmTarget = (valveActual / 100) * VALVE_RPM_MAX
   const speedTarget_pu = rpmTarget / RPM_RATED
-  const speedLagged = state.speedLagged + (speedTarget_pu - state.speedLagged) * (1 - Math.exp(-dt / TAU_SPINUP))
+  const effectiveTarget = speedTarget_pu - Pe_prev * params.govDroop
+  const speedLagged = state.speedLagged + (effectiveTarget - state.speedLagged) * (1 - Math.exp(-dt / TAU_SPINUP))
 
   // 2.3 Scale internal EMF by speed before circuit solve: Eₐ = field_lagged × speed_pu
   const ea = iField * speedLagged

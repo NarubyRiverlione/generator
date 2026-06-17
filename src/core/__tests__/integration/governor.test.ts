@@ -40,22 +40,21 @@ describe('relay-27 core conditions', () => {
   })
 })
 
-// 3.1  Rated valve → 50 Hz / 1500 rpm; matches Phase 1 baseline Vₜ, P, Q
+// 3.1  Rated valve → 50 Hz / 1500 rpm at no load; matches Phase 1 baseline Vₜ
+// Note: with governor droop enabled, 50 Hz / 1500 rpm only holds when Pe = 0 (no droop offset).
 describe('3.1 rated valve matches Phase 1 baseline', () => {
-  it('valve at ~93.75 % → 50 Hz / 1500 rpm and same Vt, P, Q as fixed-speed Phase 1', () => {
+  it('valve at ~93.75 %, zero load → 50 Hz / 1500 rpm and same Vt as fixed-speed Phase 1', () => {
     // Seed with valve at rated position (1500 / 1600 × 100 = 93.75 %) and speed already at 1.0 pu
     const ratedValvePct = (RPM_RATED / VALVE_RPM_MAX) * 100
     const seeded: SimState = { ...initialState(), valvePct: ratedValvePct, speedLagged: 1.0 }
-    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0.5, powerFactor: 0.85, pfLag: true, avrOn: false, valveCommand: 0 }
+    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0, avrOn: false, valveCommand: 0 }
     const { outputs } = advanceWithState(seeded, inputs, 10 * PARAMS.tau)
     expect(outputs.frequencyHz).toBeCloseTo(50, 2)
     expect(outputs.rpm).toBeCloseTo(1500, 0)
     // Compare against direct machine solve at speed=1.0 (Phase 1 reference)
-    const load = computeLoad(0.5, 0.85, true)
+    const load = computeLoad(0, 0.85, true)
     const ref = solveMachine(1.0, load.p, load.q, PARAMS.xs)
     expect(outputs.vt).toBeCloseTo(ref.vt, 2)
-    expect(outputs.p).toBeCloseTo(ref.p, 2)
-    expect(outputs.q).toBeCloseTo(ref.q, 2)
   })
 })
 
@@ -127,6 +126,31 @@ describe('3.5 spin-up lag and field lag are independent', () => {
 
     // The difference confirms they're on independent time constants
     expect(fieldProgress).toBeGreaterThan(speedProgress + 0.10)
+  })
+})
+
+// 3.3b  Governor droop: load at fixed valve → RPM drops
+describe('3.3b governor droop: load drops RPM at fixed valve', () => {
+  it('valve at rated, 0.5 pu load → settled RPM is lower than 1500 by ≈ 0.5 × govDroop × RPM_RATED', () => {
+    const ratedValvePct = (RPM_RATED / VALVE_RPM_MAX) * 100
+    const seeded: SimState = { ...initialState(), valvePct: ratedValvePct, valveActual: ratedValvePct, speedLagged: 1.0 }
+    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0.5, powerFactor: 0.85, pfLag: true, avrOn: false, valveCommand: 0 }
+    const { outputs } = advanceWithState(seeded, inputs, 20 * TAU_SPINUP)
+    const expectedDrop = 0.5 * PARAMS.govDroop * RPM_RATED
+    expect(outputs.rpm).toBeLessThan(1500)
+    expect(outputs.rpm).toBeGreaterThan(1500 - expectedDrop - 5)
+    expect(outputs.rpm).toBeLessThan(1500 - expectedDrop + 5)
+  })
+})
+
+// 3.3c  No-load regression: zero load → RPM stays at 1500
+describe('3.3c governor droop: no-load RPM is not affected', () => {
+  it('valve at rated, zero load → settled RPM ≈ 1500 (no droop offset)', () => {
+    const ratedValvePct = (RPM_RATED / VALVE_RPM_MAX) * 100
+    const seeded: SimState = { ...initialState(), valvePct: ratedValvePct, valveActual: ratedValvePct, speedLagged: 1.0 }
+    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0, avrOn: false, valveCommand: 0 }
+    const { outputs } = advanceWithState(seeded, inputs, 20 * TAU_SPINUP)
+    expect(outputs.rpm).toBeCloseTo(1500, 0)
   })
 })
 
