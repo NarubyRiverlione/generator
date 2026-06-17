@@ -74,9 +74,10 @@ export function SpringLoadedSelector({ onCommand }: Props) {
         <span className="knob-corner bl">▼▼</span>
         <span className="knob-corner br">▲▲</span>
       </div>
-      {/* invisible spacers — match scale + plate height on other dials so alignSelf:center lands at the same knob height */}
-      <div className="scale" style={{ visibility: 'hidden' }}><span /><span /></div>
+      {/* invisible spacers — match scale + plate + locktag height on Knob so alignSelf:center lands at the same knob height */}
+      <div className="scale" style={{ visibility: 'hidden' }}><span>{' '}</span><span>{' '}</span></div>
       <div className="plate" style={{ visibility: 'hidden' }}>-</div>
+      <div className="locktag" style={{ visibility: 'hidden' }}>{' '}</div>
     </div>
   )
 }

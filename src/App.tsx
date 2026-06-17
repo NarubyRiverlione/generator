@@ -5,6 +5,7 @@
  *   Row 3: [lights 1-4] [LCD cont.] [AVR SelectorSwitch] [27 relay] [power factor knob] [SpringLoadedSelector]
  */
 
+import { PositionIndicator } from './components/PositionIndicator'
 import { SelectorSwitch } from './components/SelectorSwitch'
 import { ExciterChain } from './ExciterChain'
 import { SpringLoadedSelector } from './components/SpringLoadedSelector'
@@ -119,6 +120,9 @@ export default function App() {
             <div className="card" style={{ marginTop: 4 }}>RESET</div>
           </div>
         </div>
+
+        {/* Row 1, col 6: valve position indicator — placeholder uses valvePct for both until companion change lands */}
+        <PositionIndicator setpoint={outputs.valvePct} actual={outputs.valvePct} />
 
         {/* Row 2, col 6: governor SpringLoadedSelector — right-hand frequency bookend */}
         <div className="knob-cell" style={{ gridColumn: 6, gridRow: 2, alignSelf: 'center' }}>
