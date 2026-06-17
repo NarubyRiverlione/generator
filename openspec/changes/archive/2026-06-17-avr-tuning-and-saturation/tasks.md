@@ -30,7 +30,7 @@
 
 4 tests broken by tasks 1.x / 2.x — not introduced by 3.x:
 
-- [ ] `helpers.test.ts` — seeded state has `exciterLagged: 0` but `iField: 0.5`; iField drops on first step because two-lag model chases exciterLagged, not fieldTarget. Fix: seed `exciterLagged: 0.5` alongside `iField: 0.5`.
-- [ ] `no-load.test.ts` — expects `Vt ≈ 1.3` at `field = 1.3` but saturation makes `Ea = saturation(1.3) ≈ 1.12`. Fix: update expected value to `saturation(1.3) × speed_pu ≈ 1.12`.
-- [ ] `governor.test.ts` (3.1) — settle time `10 × PARAMS.tau = 11 s` (tau shrank 1.5→1.1); valve actuator not seeded to `valveActual: ratedValvePct`, so it starts offset and frequencyHz ends up 0.0054 Hz outside the `toBeCloseTo(50, 2)` tolerance. Fix: also seed `valveActual: ratedValvePct`.
-- [ ] `avr-second-order.test.ts` (2.4) — Kp=5.0 step response peaks at 0.985 instead of >1.0; second-order dynamics or saturation ceiling may be preventing overshoot. Needs investigation of TAU_EXCITER / TAU_FIELD values or test scenario (e.g. run longer, start from settled state).
+- [x] `helpers.test.ts` — seeded state has `exciterLagged: 0` but `iField: 0.5`; iField drops on first step because two-lag model chases exciterLagged, not fieldTarget. Fix: seed `exciterLagged: 0.5` alongside `iField: 0.5`.
+- [x] `no-load.test.ts` — expects `Vt ≈ 1.3` at `field = 1.3` but saturation makes `Ea = saturation(1.3) ≈ 1.12`. Fix: update expected value to `saturation(1.3) × speed_pu ≈ 1.12`.
+- [x] `governor.test.ts` (3.1) — settle time `10 × PARAMS.tau = 11 s` (tau shrank 1.5→1.1); valve actuator not seeded to `valveActual: ratedValvePct`, so it starts offset and frequencyHz ends up 0.0054 Hz outside the `toBeCloseTo(50, 2)` tolerance. Fix: also seed `valveActual: ratedValvePct`.
+- [x] `avr-second-order.test.ts` (2.4) — restructured to pre-settle under 0.3 pu load (integral grows for loaded op), then remove load with Kp=5.0; carried integral drives field above no-load set point → Vt transiently exceeds Vref.
