@@ -3,9 +3,9 @@
 - [ ] 1.1 Add `.round-bezel` class to `src/index.css` (same dark gradient and padding as `.sq-bezel`, `border-radius: 50%`, true square bounding box)
 - [ ] 1.2 Add `.round-face` class to `src/index.css` (`border-radius: 50%`, same `background: var(--dial)`)
 
-## 2. ValveDial component
+## 2. PositionIndicator component
 
-- [ ] 2.1 Create `src/components/ValveDial.tsx` with geometry constants: viewBox 130×130, center (65,65), radius 52, A_START at 225° (7 o'clock), A_END at 315° (5 o'clock), 270° sweep
+- [ ] 2.1 Create `src/components/PositionIndicator.tsx` with geometry constants: viewBox 130×130, center (65,65), radius 52, A_START at 225° (7 o'clock), A_END at 315° (5 o'clock), 270° sweep
 - [ ] 2.2 Implement `fracToXY(f)` helper mapping [0,1] to arc coordinates
 - [ ] 2.3 Implement `zonePath(f0, f1)` helper for coloured arc segments (single green zone 0→1 initially)
 - [ ] 2.4 Render dark base track arc and green zone arc
@@ -17,5 +17,5 @@
 
 ## 3. Wiring into App
 
-- [ ] 3.1 Import `ValveDial` in `src/App.tsx`
-- [ ] 3.2 Mount `ValveDial` in the switchboard grid, passing `setpoint` and `actual` props from simulation outputs (exact prop source determined by companion change — use placeholder values or `valvePct` for both until that change lands)
+- [ ] 3.1 Import `PositionIndicator` in `src/App.tsx`
+- [ ] 3.2 Mount `PositionIndicator` in the switchboard grid, passing `setpoint` and `actual` props from simulation outputs (exact prop source determined by companion change — use placeholder values or `valvePct` for both until that change lands)

@@ -5,7 +5,7 @@ The switchboard currently has square-bezel SVG arc gauges (Gauge.tsx, ~104° swe
 ## Goals / Non-Goals
 
 **Goals:**
-- New `ValveDial` component: circular bezel, 270° arc, two needles sharing a center pivot.
+- New `PositionIndicator` component: circular bezel, 270° arc, two needles sharing a center pivot.
 - Drop-in within the existing `gauge-col` 138px column — no grid changes.
 - Realistic twin-pointer convention: bold black actual + thin red open-tipped setpoint.
 - CSS-only circular bezel using `border-radius: 50%` on a true square bounding box.
@@ -13,7 +13,7 @@ The switchboard currently has square-bezel SVG arc gauges (Gauge.tsx, ~104° swe
 **Non-Goals:**
 - No changes to simulation physics or types.
 - No changes to existing `Gauge` component or its CSS classes.
-- This change does not decide what values the dial shows — the connected `valveSetpoint` and `valveActual` props are provided by the caller (decided in a separate change).
+- This change does not decide what values the `PositionIndicator` shows — the connected `valveSetpoint` and `valveActual` props are provided by the caller (decided in a separate change).
 
 ## Decisions
 
@@ -36,10 +36,10 @@ Both needles are SVG `<line>` elements from `(CX, CY)` to their respective tip p
 **Alternative considered:** Setpoint as a rim-riding "bug" index (Foxboro style). Rejected — user explicitly wants two needles from a shared pivot.
 
 ### D4 — Component receives two props, no internal state
-`ValveDial` accepts `setpoint: number` and `actual: number` (both in the same unit/range as the connected simulation values). No animation or lag inside the component — that belongs in the simulation hook.
+`PositionIndicator` accepts `setpoint: number` and `actual: number` (both in the same unit/range as the connected simulation values). No animation or lag inside the component — that belongs in the simulation hook.
 
 ### D5 — Shared `fracToXY` / `needleTip` geometry helpers
-Same helper pattern as `Gauge.tsx` but with updated constants. The helpers are local to `ValveDial.tsx` (no shared utility file) to keep the component self-contained, consistent with the existing `Gauge` approach.
+Same helper pattern as `Gauge.tsx` but with updated constants. The helpers are local to `PositionIndicator.tsx` (no shared utility file) to keep the component self-contained, consistent with the existing `Gauge` approach.
 
 ## Risks / Trade-offs
 

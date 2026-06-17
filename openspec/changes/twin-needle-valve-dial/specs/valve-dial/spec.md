@@ -1,14 +1,14 @@
 ## ADDED Requirements
 
-### Requirement: Twin-needle valve dial component
-The UI SHALL provide a `ValveDial` component that accepts a `setpoint` and an `actual` numeric value (same units, same range) and displays them as two distinct needles on a 270° SVG arc inside a circular bezel. The bezel SHALL fit within a 138px wide `gauge-col` column with no layout changes to the switchboard grid.
+### Requirement: Twin-needle position indicator component
+The UI SHALL provide a `PositionIndicator` component that accepts a `setpoint` and an `actual` numeric value (same units, same range) and displays them as two distinct needles on a 270° SVG arc inside a circular bezel. The bezel SHALL fit within a 138px wide `gauge-col` column with no layout changes to the switchboard grid.
 
 #### Scenario: Both needles render at correct positions
-- **WHEN** `ValveDial` is rendered with a given `setpoint` and `actual`
+- **WHEN** `PositionIndicator` is rendered with a given `setpoint` and `actual`
 - **THEN** the setpoint needle points to the arc position corresponding to `setpoint` and the actual needle points to the position corresponding to `actual`
 
 #### Scenario: Needles are visually distinguishable
-- **WHEN** `ValveDial` is rendered with `setpoint !== actual`
+- **WHEN** `PositionIndicator` is rendered with `setpoint !== actual`
 - **THEN** the actual needle is bold and black and the setpoint needle is thin and red with an open chevron tip, making the gap between them immediately readable
 
 #### Scenario: Needles overlap when values are equal
@@ -30,7 +30,7 @@ The arc SHALL sweep 270°, with the 90° dead zone at the bottom. Tick marks SHA
 - **THEN** five evenly-spaced tick marks with labels appear on the arc from the 7 o'clock to 5 o'clock positions
 
 ### Requirement: No external charting library
-The `ValveDial` component SHALL be hand-rolled SVG with no external chart or gauge library dependency, consistent with the existing `Gauge` component.
+The `PositionIndicator` component SHALL be hand-rolled SVG with no external chart or gauge library dependency, consistent with the existing `Gauge` component.
 
 #### Scenario: Bundle contains no new chart dependency
 - **WHEN** the project is built

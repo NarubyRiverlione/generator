@@ -4,7 +4,9 @@ An interactive single-page simulator for a synchronous generator with an exciter
 
 The goal is to build intuition for relationships that are hard to grasp from equations alone: why terminal voltage sags under load, what the AVR is actually doing, and why frequency and voltage are controlled by entirely separate physical inputs.
 
-Built with Vite + React + TypeScript. All physics in `src/core/` (pure functions, no React). Hand-rolled SVG gauges and a gray-steel switchboard aesthetic.
+Built with Vite + React + TypeScript. All physics in `src/core/` (pure functions, no React). Hand-rolled SVG instruments and a gray-steel switchboard aesthetic.
+
+See [`docs/naming.md`](docs/naming.md) for the canonical component names (`Gauge`, `PositionIndicator`, `Knob`, `SelectorSwitch`, `SpringLoadedSelector`) — these names must be used consistently in all new development, specs, and docs.
 
 ---
 
@@ -32,7 +34,7 @@ Prerequisite: Phase 1.
 - **RPM** (headline) and **Hz** readouts (Hz derived from RPM); valve-position readout; kinematic spin-up lag (τ ≈ 2.5 s)
 - Key learning: turbine controls frequency/P, exciter controls voltage/Q — independent channels
 
-> **Planned addition (branch `spec-twin-needle-valve-dial`):** a twin-needle dial gauge as the
+> **Planned addition (branch `spec-twin-needle-valve-dial`):** a `PositionIndicator` (twin-needle circular instrument) as the
 > primary readout for intake valve position — spec exists on that branch, not yet merged.
 
 ### Saturation & AVR tuning (planned — standalone, unscheduled)

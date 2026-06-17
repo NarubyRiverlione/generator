@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The simulator UI is the React front-end for the islanded synchronous generator simulator. It presents input controls (sliders, AVR toggle), drives the simulation loop via a custom React hook, displays generator output readouts as SVG arc gauges and numeric values, and surfaces stability warnings. All physics are delegated to the simulation core.
+The simulator UI is the React front-end for the islanded synchronous generator simulator. It presents input controls (rotary Knobs, a SelectorSwitch, and a SpringLoadedSelector), drives the simulation loop via a custom React hook, displays generator output readouts as SVG arc Gauges and numeric values, and surfaces stability warnings. All physics are delegated to the simulation core.
 ## Requirements
 ### Requirement: Input panel controls
 The UI SHALL present rotary **knobs** with numeric value labels for exciter field DC (0–1.5 pu,
