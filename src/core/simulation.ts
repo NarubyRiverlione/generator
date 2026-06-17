@@ -47,7 +47,9 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   } else {
     fieldTarget = inputs.fieldVoltage
     avrCommand = inputs.fieldVoltage
-    avrIntegral = 0
+    // Bumpless transfer: keep integral primed so AVR output = current fieldVoltage on engage.
+    const error = AVR_VREF - state.lastValidOutputs.vt
+    avrIntegral = params.ki !== 0 ? (inputs.fieldVoltage - params.kp * error) / params.ki : 0
   }
 
   // First-order field lag: iField chases target with time constant τ

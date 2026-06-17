@@ -106,7 +106,7 @@ export function Knob({
         <span>{scaleMax}</span>
       </div>
       <div className="plate">{display}</div>
-      {lockLabel && <div className="locktag">{lockLabel}</div>}
+      <div className="locktag">{lockLabel ?? ' '}</div>
     </div>
   )
 }
