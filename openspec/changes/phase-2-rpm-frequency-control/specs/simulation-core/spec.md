@@ -4,8 +4,8 @@
 The simulation core SHALL perform all internal computation in per-unit, using a single central base
 (S_base = 1 MVA, V_LL_base = 400 V, f_rated = 50 Hz) and fixed machine parameters (Xₛ = 1.2 pu,
 Rₐ = 0.05 pu). Conversion to real display units (V, kW, kVAR, A, Hz, RPM) SHALL occur only at readout
-time, never inside the solver. Rotor speed SHALL be treated as a variable (default 1.0 pu), driven by
-the turbine governor; it is no longer a fixed constant.
+time, never inside the solver. Rotor speed SHALL be treated as a variable (default ~0.9967 pu at
+initial valve ~93.1 %), driven by the turbine governor; it is no longer a fixed constant.
 
 #### Scenario: Internal math stays in per-unit
 - **WHEN** the core solves the circuit for any input set
@@ -13,7 +13,7 @@ the turbine governor; it is no longer a fixed constant.
 
 #### Scenario: Display conversion applied once at the edge
 - **WHEN** an output value is presented to the UI layer
-- **THEN** the per-unit value is multiplied by its base exactly once (e.g. Vₜ_pu × 400 V, P_pu × 1000 kW, speed_pu × 50 Hz → Hz, then × 30 → RPM)
+- **THEN** the per-unit value is multiplied by its base exactly once (e.g. Vₜ_pu × 400 V, P_pu × 1000 kW, rpm derived as valvePct × VALVE_RPM_MAX / 100, frequencyHz derived as rpm / 30)
 
 ### Requirement: Steady-state circuit solve
 The core SHALL solve the round-rotor machine equations for terminal voltage Vₜ and load angle δ from
@@ -39,16 +39,28 @@ active power, reactive power, and calculated power factor consistently from that
 
 ## ADDED Requirements
 
-### Requirement: Frequency and RPM outputs
-The simulation core SHALL include output frequency and shaft speed in `Outputs`: `frequencyHz` derived
-as `50 × speed_pu`, and `rpm` derived as `(120 / poles) × frequencyHz` for the fixed pole count
-(4 poles → `rpm = 30 × frequencyHz`, so 1500 rpm at 50 Hz). Both SHALL be computed each step from the
-lagged rotor speed and returned alongside Vₜ, P, Q, δ and the other existing outputs.
+### Requirement: RPM, frequency, and valve-position outputs
+The simulation core SHALL derive RPM, frequency, and valve position from the lagged speed state and
+return them in `Outputs`. The derivation direction SHALL be valve-first, shaft-primary:
 
-#### Scenario: Frequency and RPM track lagged speed
-- **WHEN** rotor speed corresponds to 47 Hz and the spin-up lag has settled
-- **THEN** `frequencyHz` ≈ 47 Hz and `rpm` ≈ 1410 (± tolerance)
+```
+rpmTarget   = (valvePct / 100) × VALVE_RPM_MAX    // valve drives RPM target
+speedLagged ← first-order lag toward (rpmTarget / RPM_RATED)   // spin-up lag
+rpm         = speedLagged × RPM_RATED              // actual RPM from lagged speed
+frequencyHz = rpm / 30                             // Hz derived last — shaft knows RPM, not Hz
+```
+
+Both `rpm` and `frequencyHz` SHALL be computed each step from the lagged rotor speed and returned
+alongside Vₜ, P, Q, δ and the other existing outputs.
+
+#### Scenario: RPM and Hz track lagged speed
+- **WHEN** rotor speed has settled at a given valve position
+- **THEN** `rpm` equals `speedLagged × 1500` and `frequencyHz` equals `rpm / 30`, consistent with each other
 
 #### Scenario: Rated readouts at rated speed
-- **WHEN** rotor speed is 1.0 pu (nominal valve)
+- **WHEN** rotor speed is 1.0 pu (valve at ~93.75 %)
 - **THEN** `frequencyHz` is 50 Hz and `rpm` is 1500, regardless of field or load settings
+
+#### Scenario: Zero valve targets zero RPM
+- **WHEN** valve position is held at 0 % long enough for the spin-up lag to settle
+- **THEN** `rpm` approaches 0 and `frequencyHz` approaches 0

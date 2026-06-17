@@ -1,16 +1,15 @@
 ## ADDED Requirements
 
-### Requirement: Turbine governor speed-changer and fine valve
-The system SHALL command rotor speed indirectly through the turbine's **fine** governor valve, not by
-setting frequency directly. A spring-return raise/lower speed-changer switch SHALL drive a
-motor-operated fine valve: while the switch is held off neutral the fine-valve position (0–100 %) SHALL
-change at a jog rate and SHALL hold its position when the switch returns to neutral. The switch SHALL
-provide two throw stages — an inner (slow) and an outer (fast) jog rate in each direction. Fine-valve
-position SHALL map linearly to a target rotor speed across the governable band: 0 % → 47 Hz (1410 rpm),
-50 % → 50 Hz (1500 rpm), 100 % → 53 Hz (1590 rpm). The 0 % position is the low end of the governable
-band, NOT a closed valve: base rotor speed is held by the coarse throttle valve (deferred to Phase 3;
-assumed at run speed here), so the machine starts already running at 1500 rpm and never falls to 0 rpm
-in this phase.
+### Requirement: Turbine governor speed-changer and intake valve
+The system SHALL command rotor speed indirectly through the turbine's intake valve, not by setting
+frequency directly. A spring-return raise/lower speed-changer switch SHALL drive a motor-operated valve:
+while the switch is held off neutral the valve position (0–100 %) SHALL change at a jog rate and SHALL
+hold its position when the switch returns to neutral. The switch SHALL provide two throw stages — an
+inner (slow) and an outer (fast) jog rate in each direction.
+
+Valve position SHALL map linearly to a target RPM: 0 % → 0 rpm (fully closed), 100 % → 1600 rpm
+(overspeed trip point, ~107 % of rated). Rated speed (1500 rpm / 50 Hz) occurs at ~93.75 % valve. The
+simulation SHALL start with the valve pre-set at ~93.1 % (giving ~1495 rpm — slightly sub-synchronous).
 
 #### Scenario: Holding raise opens the valve and lifts speed
 - **WHEN** the raise side of the switch is held
@@ -24,9 +23,13 @@ in this phase.
 - **WHEN** the outer (fast) position is held versus the inner (slow) position for the same time
 - **THEN** the valve moves a larger amount on the fast throw
 
-#### Scenario: Nominal valve is rated speed
-- **WHEN** valve position is 50 %
-- **THEN** the target rotor speed is 1500 rpm / 50 Hz, matching the Phase 1 baseline for the same field and load
+#### Scenario: Fully closed valve targets zero speed
+- **WHEN** valve position is 0 %
+- **THEN** the target rotor speed is 0 rpm / 0 Hz (the valve is physically closed)
+
+#### Scenario: Rated speed at ~93.75 % valve
+- **WHEN** valve position is ~93.75 %
+- **THEN** the target rotor speed is 1500 rpm / 50 Hz
 
 ### Requirement: Kinematic spin-up lag
 Rotor speed SHALL follow the valve-implied target through a first-order spin-up lag with time constant
@@ -44,7 +47,7 @@ power-balance / swing-equation integration in this phase.
 
 ### Requirement: Internal EMF scales with speed
 The internal EMF SHALL be scaled by per-unit rotor speed before the circuit solve:
-`Eₐ_pu = field_pu × speed_pu`, where `speed_pu = speedHz / 50`. A speed change SHALL therefore move
+`Eₐ_pu = field_pu × speed_pu`, where `speed_pu = rpm / 1500`. A speed change SHALL therefore move
 terminal voltage as well as frequency.
 
 #### Scenario: Speed reduction sags terminal voltage

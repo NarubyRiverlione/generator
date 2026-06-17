@@ -26,9 +26,10 @@ Fixed 50 Hz, single machine, no grid connection.
 Prerequisite: Phase 1.
 
 - Turbine governor **speed-changer** — spring-return raise/lower switch (two-stage slow/fast) driving
-  the **fine** governor valve within the 47–53 Hz band; machine starts already running at 1500 rpm
+  the intake valve (0–100 %, where 0 % = closed = 0 rpm, 100 % = 1600 rpm overspeed); sim starts at
+  ~93.1 % valve / ~1495 rpm (slightly sub-synchronous — valve almost fully open, as in a real plant)
 - Rotor speed scales internal EMF: `Eₐ = field × speed_pu`, so a speed change moves both frequency and voltage
-- **RPM** (headline) and **Hz** readouts, plus a fine-valve-position readout; kinematic spin-up lag (τ ≈ 2.5 s)
+- **RPM** (headline) and **Hz** readouts (Hz derived from RPM); valve-position readout; kinematic spin-up lag (τ ≈ 2.5 s)
 - Key learning: turbine controls frequency/P, exciter controls voltage/Q — independent channels
 
 ### Saturation & AVR tuning (planned — standalone, unscheduled)

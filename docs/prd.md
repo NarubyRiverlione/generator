@@ -193,17 +193,18 @@ Phases build on each other — concepts from earlier phases are prerequisites fo
 ### Phase 2 — RPM / Frequency control
 **Prerequisite:** Phase 1 complete
 
-> **Design insight (post-PRD):** speed is not commanded as "Hz". The turbine has a **coarse** throttle
-> valve (run-up from rest) and a **fine** governor valve (frequency trim). Phase 2 implements the
-> **fine** valve only, on a machine that starts already running at 1500 rpm. RPM is the headline
-> readout; Hz sits beside it. The coarse valve + run-up move to Phase 3. See the
-> `phase-2-rpm-frequency-control` change for the full design.
+> **Design insight (post-PRD):** speed is not commanded as "Hz". The operator commands the **intake
+> valve** (0–100 %), and the shaft produces RPM; Hz is a derived readout. 0 % = closed = 0 rpm;
+> 100 % = 1600 rpm (overspeed trip). Rated speed (1500 rpm) sits at ~93.75 % valve — almost fully
+> open at rated load, which matches real plant operation. The sim starts at ~93.1 % valve (~1495 rpm,
+> slightly sub-synchronous). RPM is the headline readout; Hz sits beside it. Shaft run-up from rest
+> is deferred to Phase 3. See `phase-2-rpm-frequency-control` change for the full design.
 
 - Add a **turbine governor speed-changer** — a spring-return raise/lower switch (two-stage slow/fast)
-  that drives the fine governor valve within the 47–53 Hz band (1410–1590 rpm)
+  that drives the intake valve (0–100 %, where 0 % = closed = 0 rpm, 100 % = 1600 rpm overspeed)
 - Rotor speed scales internal EMF (`Eₐ = field × speed_pu`), so a speed change moves both frequency and
   voltage; a kinematic spin-up lag (τ ≈ 2.5 s) makes the shaft ease to the new speed
-- Add **RPM** (headline) and **Hz** readouts, plus a fine-valve-position readout
+- Add **RPM** (headline) and **Hz** readouts, plus a valve-position readout; sim starts at ~1495 rpm
 - Key learning: frequency and voltage are independent — turbine controls P/frequency, exciter controls voltage/Q
 - This separation is the foundation needed before grid connection
 

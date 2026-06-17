@@ -25,14 +25,14 @@ switchboard: a spring-return **raise/lower speed-changer switch** drives a motor
 - Governor droop curve / steady-state droop coefficient — the valve maps directly to a target speed.
 - P–frequency droop model (Phase 3, grid-connected).
 - Load that depends on speed/frequency — the constant-power load model is unchanged.
-- **Coarse throttle valve and run-up from rest (0 → 1500 rpm)** — Phase 3. Phase 2 starts the machine
-  already running and only trims the fine valve within the governable band.
+- **Shaft run-up from rest (0 → operating RPM)** — Phase 3. Phase 2 starts with the valve pre-set at
+  the operating position; the operator trims from there.
 
 ## Decisions
 
 ### D1 — Speed scales Eₐ multiplicatively
 
-**Decision:** `Eₐ_pu = field_pu × speed_pu`, where `speed_pu = speedHz / 50`.
+**Decision:** `Eₐ_pu = field_pu × speed_pu`, where `speed_pu = rpm / 1500`.
 
 **Rationale:** Open-circuit EMF is proportional to both rotor flux (field current) and angular velocity
 (ω). Multiplying field by speed_pu is the minimal physically-correct model: a 5 % speed drop at rated
@@ -42,43 +42,51 @@ the *same* internal quantity through different channels.
 **Alternative considered:** Speed affects frequency only, voltage unaffected. Rejected — breaks the
 physics and hides the key teaching point.
 
-### D2 — Fine-valve kinematic speed: switch → fine-valve % → spin-up lag → speed
+### D2 — Single intake valve: valve % → RPM → Hz
 
-**Decision:** Real turbines have two intake valves — a **coarse** throttle (rollout / run-up from rest)
-and a **fine** governor valve (frequency trim around the operating point). Phase 2 implements only the
-**fine** valve; the coarse valve and run-up are deferred to Phase 3. The machine therefore starts
-already running at 1500 rpm (coarse valve at run speed), and the fine valve only moves speed within the
-narrow 47–53 Hz governable band.
+**Decision:** A single intake valve spanning 0–100 %, where 0 % = fully closed = 0 rpm and 100 % =
+1600 rpm (the overspeed trip point, ~107 % of rated). The map is linear:
 
-The raise/lower switch commands the motor-operated **fine** valve. While the switch is held off
-neutral, `valvePct` (fine-valve position) integrates at a jog rate; it holds when released. It maps
-linearly to a target speed within the band, and actual speed follows through a first-order spin-up lag.
+```
+rpmTarget   = (valvePct / 100) × 1600
+speed_pu    = rpmTarget / 1500
+frequencyHz = rpm / 30         ← derived last; the shaft knows only RPM
+```
 
-- Switch positions (spring-return to neutral): `⏪ ◀ ● ▶ ⏩`.
-  - inner `◀ ▶`: slow jog ≈ 9 rpm/s (≈ 0.3 Hz/s, ≈ 5 %/s fine valve)
-  - outer `⏪ ⏩`: fast jog ≈ 45 rpm/s (≈ 1.5 Hz/s, ≈ 25 %/s fine valve); full sweep ≈ 4 s
-- Fine-valve→speed map (4-pole, RPM = 30 × Hz), linear over the band: 0 % → 1410 rpm (47 Hz),
-  50 % → 1500 rpm (50 Hz), 100 % → 1590 rpm (53 Hz). 50 % is the nominal operating point.
-  **0 % is the low end of the trim band, NOT a closed valve** — base speed is held by the coarse valve
-  (assumed at run speed in Phase 2), so the machine never falls to 0 rpm here.
-- Spin-up lag τ_spinup = 2.5 s (slower than the field lag at 1.5 s — the shaft is the slow element).
+Rated speed (1500 rpm / 50 Hz) corresponds to ~93.75 % valve. In a real plant at full load the intake
+valve is ~90–95 % open; the last few percent are reserved for governor response headroom — this model
+reflects that honestly. The simulation starts with the valve pre-set at ~93.1 % (giving 1495 rpm,
+slightly sub-synchronous). The operator trims from there using the speed-changer switch.
 
-**Rationale:** This matches how an operator trims a running machine: nudge the fine valve, the shaft
-eases to the new speed. The two timescales (jog rate, then spin-up lag) reproduce "the valve moves,
-then the shaft takes even more time." It stays kinematic — no power balance — so the equilibrium is
-always well-defined and stable, and it keeps startup physics (which only the coarse valve needs) out of
-Phase 2. The coarse/fine split mirrors real two-valve turbine controls and hands run-up cleanly to
-Phase 3.
+The raise/lower switch commands the valve position. While held off neutral, `valvePct` integrates at
+a jog rate and holds when released (spring-return to neutral). Two throw stages:
+- inner (▼ ▲): slow jog — fine trim near the operating point
+- outer (▼▼ ▲▲): fast jog — larger movement
 
-**Alternative considered:** A single absolute 0–100 % intake valve where 0 % = closed = 0 rpm. Rejected
-for Phase 2 — it drags run-up/startup physics in (what does 0 % mean if the machine must keep running?).
-Splitting coarse (run-up) from fine (trim) defers that to Phase 3.
+**Direction of causality is shaft-first:** the shaft produces RPM, which implies Hz. Hz is never used
+as an intermediate variable in the calculation chain — only as a final display readout.
+
+**Why not a fine-trim band (47–53 Hz floor/ceiling)?** A band requires an artificial floor on valve
+position, making 0 % physically meaningless (a "low end of the band" rather than a closed valve). It
+also puts Hz in the driver's seat, which inverts the physics. The single-valve model is honest: 0 % =
+closed = 0 rpm. Phase 2 starts with the valve already at the operating point (machine delivered to the
+operator already running); Phase 3 models the startup sequence from 0 rpm, where the swing equation
+is needed to simulate run-up dynamics.
+
+**Spin-up lag τ_spinup = 2.5 s** (slower than the field lag at 1.5 s — the shaft is the slow element).
+
+**Rationale:** Starting at ~1495 rpm (slightly sub-synchronous) mirrors real operation: the turbine
+hasn't yet been trimmed to exact synchronous speed. The operator uses the speed-changer to reach
+1500 rpm before synchronising to the grid (Phase 3). The visual implication — the dial near its upper
+quarter at startup — is correct and teaches an important lesson: the valve is almost fully open at rated
+speed; there is little room above, and plenty of room below.
 
 ### D3 — RPM and frequency are derived readouts, not solved
 
-**Decision:** `frequencyHz = 50 × speed_pu` and `rpm = 30 × frequencyHz` (4-pole) are computed each
+**Decision:** `rpm = (valvePct / 100) × 1600` and `frequencyHz = rpm / 30` (4-pole) are computed each
 step from the lagged speed and returned in `Outputs`; `valvePct` is also surfaced for display. No
-separate solver step. RPM is the headline readout; Hz sits beside it.
+separate solver step. RPM is the headline readout; Hz sits beside it as the electrical/grid-relevant
+unit.
 
 **Rationale:** In an islanded machine, output frequency equals rotor speed; there is no slip or
 load-dependent frequency offset in the steady-state model. Users anchor on RPM (1500 rpm) intuitively;
@@ -94,39 +102,29 @@ physics that belong in Phase 3.
 
 ### D5 — UI: governor speed-changer switch + RPM/Hz/valve readouts in the switchboard grid
 
-**Decision:** Reuse the AVR selector-switch styling for the governor speed-changer (a spring-return
+**Decision:** Reuse the existing rotary-dial styling for the governor speed-changer (a spring-return
 raise/lower switch with a neutral centre and two-stage throw). Place it on the right-hand side of the
 existing switchboard grid as the speed/frequency bookend, mirroring the exciter-field control on the
 left — making the two independent channels legible from the panel itself. Add RPM (headline), Hz, and
 valve-position (%) readouts to the generator-output area.
-
-This supersedes the earlier 6-column / frequency-gauge sketch: the current panel is knob- and
-selector-based (not the old slider layout), the frequency is shown as a **numeric readout** (not a
-gauge), so no `grid-template-columns` change to a 6th column is required — the switch and readouts fit
-the existing grid. Exact cell placement to be settled during implementation against `App.tsx`.
 
 **Footer:** Update footer text from `PHASE 1 MVP` to `PHASE 2` once implemented.
 
 ## Risks / Trade-offs
 
 - **Risk:** `Eₐ = field × speed_pu` could push Eₐ above the solver's PV-nose at the extremes
-  (field 1.5 × speed 1.06 = 1.59 pu). Mitigation: the existing voltage-collapse handler freezes the
-  last valid point; test at the extremes.
-- **Risk (new — interaction with protection):** lowering the valve sags speed → `Eₐ = field × speed_pu`
+  (field 1.5 × speed_pu 1.067 at 100 % valve ≈ 1.6 pu). Mitigation: the existing voltage-collapse
+  handler freezes the last valid point; test at the extremes.
+- **Risk (interaction with protection):** lowering the valve sags speed → `Eₐ = field × speed_pu`
   drops → terminal voltage sags → if Vₜ crosses 0.85 pu the **ANSI-27 under-voltage relay trips and
-  sheds the load** (per the `2026-06-15-protection-and-stability` work). At 47 Hz (speed_pu ≈ 0.94)
-  with already-modest field this is reachable. This is a legitimate teaching moment (underspeed →
-  undervoltage trip), but Phase 2's "speed reduction sags Vₜ" scenarios MUST set field high enough that
-  Vₜ stays above 0.85, or they will trip the relay and shed the load mid-test. Decide per scenario
-  whether the trip is the point or an artefact.
+  sheds the load**. This is a legitimate teaching moment (underspeed → undervoltage trip), but test
+  scenarios that intend to demonstrate speed reduction WITHOUT tripping MUST set field high enough that
+  Vₜ stays above 0.85.
 - **Trade-off:** the kinematic spin-up lag is inertia-flavoured but is not a true swing equation, so
   the simulator does not yet show emergent frequency from power balance. Intentional; deferred to
   Phase 3.
 
 ## Open Questions
 
-- None blocking. Phase 3 (startup + synchronisation) introduces the coarse throttle valve and shaft
-  run-up from rest, the true swing equation, and how speed_pu interacts with the grid reference
-  frequency. (Note: this change's coarse/fine split and band-only scope diverge from the PRD's original
-  single "47–53 Hz governor slider" wording — the PRD/README/concept docs need a matching update,
-  tracked separately.)
+- None blocking. Phase 3 (startup + synchronisation) introduces shaft run-up from rest, the true swing
+  equation, and how speed_pu interacts with the grid reference frequency.
