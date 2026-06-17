@@ -104,7 +104,7 @@ export default function App() {
 
         {/* Row 3, col 3: AVR SelectorSwitch */}
         <div className="knob-cell" style={{ gridColumn: 3, gridRow: 3, alignSelf: 'start' }}>
-          <SelectorSwitch inputs={inputs} onSetInput={setInput} />
+          <SelectorSwitch label="AVR" value={inputs.avrOn} onChange={(v) => setInput('avrOn', v)} />
         </div>
 
         {/* Row 3, col 4: 27 relay reset */}
