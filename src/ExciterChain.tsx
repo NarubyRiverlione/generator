@@ -17,22 +17,22 @@ export function ExciterChain({ iFieldPu }: Props) {
       <Gauge
         value={acV}
         min={0}
-        max={150}
+        max={255}
         unit="V AC"
         label="EXCITER OUTPUT"
-        subLabel="0 – 150 V AC"
+        subLabel="0 – 255 V AC"
         zones={EXCITER_ZONES}
       />
       <Gauge
         value={dcV}
         min={0}
-        max={150}
+        max={230}
         unit="V DC"
         label="RECTIFIED OUTPUT"
-        subLabel="0 – 150 V DC"
+        subLabel="0 – 230 V DC"
         zones={EXCITER_ZONES}
       />
-      <Gauge value={iA} min={0} max={10} unit="A" label="MAIN FIELD" subLabel="0 – 10 A" zones={EXCITER_ZONES} />
+      <Gauge value={iA} min={0} max={12} unit="A" label="MAIN FIELD" subLabel="0 – 12 A" zones={EXCITER_ZONES} />
     </>
   )
 }

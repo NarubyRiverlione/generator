@@ -1,7 +1,8 @@
 /** Simulation step: field lag → AVR or manual target → machine solve. */
 
 import { stepAvr } from './avr'
-import { AVR_VREF, DEFAULT_INPUTS, JOG_FAST, JOG_SLOW, PARAMS, RPM_RATED, TAU_SPINUP, TAU_VALVE, VALVE_RPM_MAX } from './constants'
+import { AVR_VREF, DEFAULT_INPUTS, JOG_FAST, JOG_SLOW, PARAMS, RPM_RATED, TAU_EXCITER, TAU_SPINUP, TAU_VALVE, VALVE_RPM_MAX } from './constants'
+import { saturation } from './saturation'
 import { computeLoad } from './load'
 import { solveMachine } from './machine'
 import type { Inputs, Outputs, Params, SimState, ValveCommand } from './types'
@@ -54,6 +55,7 @@ export function initialState(): SimState {
 
   return {
     iField: inputs.fieldVoltage,
+    exciterLagged: inputs.fieldVoltage,
     avrIntegral: 0,
     valvePct: VALVE_PCT_INIT,
     valveActual: VALVE_PCT_INIT,
@@ -83,8 +85,9 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
     avrIntegral = params.ki !== 0 ? (inputs.fieldVoltage - params.kp * error) / params.ki : 0
   }
 
-  // First-order field lag: iField chases target with time constant τ
-  const iField = state.iField + (fieldTarget - state.iField) * (1 - Math.exp(-dt / params.tau))
+  // Two stacked first-order lags: exciter (TAU_EXCITER) → main field winding (params.tau).
+  const exciterLagged = state.exciterLagged + (fieldTarget - state.exciterLagged) * (1 - Math.exp(-dt / TAU_EXCITER))
+  const iField = state.iField + (exciterLagged - state.iField) * (1 - Math.exp(-dt / params.tau))
 
   // 2.1 Integrate valve: holds when valveCommand = 0, clamped to [0, 100]
   const valvePct = Math.min(100, Math.max(0, state.valvePct + jogRate(inputs.valveCommand) * dt))
@@ -100,8 +103,8 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   const effectiveTarget = speedTarget_pu - Pe_prev * params.govDroop
   const speedLagged = state.speedLagged + (effectiveTarget - state.speedLagged) * (1 - Math.exp(-dt / TAU_SPINUP))
 
-  // 2.3 Scale internal EMF by speed before circuit solve: Eₐ = field_lagged × speed_pu
-  const ea = iField * speedLagged
+  // 2.3 Scale internal EMF by speed before circuit solve: Eₐ = saturation(field_lagged) × speed_pu
+  const ea = saturation(iField) * speedLagged
 
   // 2.4 Derive readouts shaft-first: RPM → Hz (Hz is never an intermediate variable)
   const rpm = speedLagged * RPM_RATED
@@ -121,6 +124,7 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
 
   const nextState: SimState = {
     iField,
+    exciterLagged,
     avrIntegral,
     valvePct,
     valveActual,

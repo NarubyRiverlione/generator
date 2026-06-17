@@ -3,11 +3,11 @@
 export type ValveCommand = -2 | -1 | 0 | 1 | 2
 
 export type Inputs = {
-  /** Exciter field DC setpoint, per-unit [0.0, 1.5]. Read-only when AVR is on. */
+  /** Exciter field DC setpoint, per-unit [0.0, 1.7]. Read-only when AVR is on. */
   fieldVoltage: number
-  /** Active load, fraction of rated [0, 1]. */
+  /** Active load, fraction of rated [0, 1.5]. */
   loadFraction: number
-  /** Power factor magnitude [0.6, 1.0]. Sign determined by pfLag. */
+  /** Power factor magnitude: lagging [0.92, 1.0], leading [0.6, 1.0]. Sign determined by pfLag. */
   powerFactor: number
   /** true = lagging (inductive), false = leading (capacitive). */
   pfLag: boolean
@@ -20,6 +20,8 @@ export type Inputs = {
 export type SimState = {
   /** Lagged field current, per-unit. */
   iField: number
+  /** Exciter output after first-order exciter lag (τ_exciter); feeds the main field winding lag. */
+  exciterLagged: number
   /** AVR PI integrator accumulator. */
   avrIntegral: number
   /** Valve position, % of full travel [0, 100]; 0 = closed = 0 rpm; ~93.75 = rated (1500 rpm). */

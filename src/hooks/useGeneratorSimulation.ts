@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { DEFAULT_INPUTS, PARAMS, RELAY27_TRIP_VT } from '../core/constants'
 import { initialState, step } from '../core/simulation'
-import type { Inputs, Outputs, SimState, ValveCommand } from '../core/types'
+import type { Inputs, Outputs, Params, SimState, ValveCommand } from '../core/types'
 
 const MAX_DT = 0.1 // clamp large dt (e.g. tab refocus) to 100 ms
 const TARGET_DT = 0.033 // ~30 ms cadence
@@ -15,12 +15,18 @@ export type SimHook = {
   relay27Tripped: boolean
   resetRelay27: () => void
   setValveCommand: (cmd: ValveCommand) => void
+  kp: number
+  ki: number
+  setKp: (v: number) => void
+  setKi: (v: number) => void
 }
 
 export function useGeneratorSimulation(): SimHook {
   const [inputs, setInputs] = useState<Inputs>(DEFAULT_INPUTS)
   const [outputs, setOutputs] = useState<Outputs>(() => initialState().lastValidOutputs)
   const [relay27Tripped, setRelay27Tripped] = useState<boolean>(false)
+  const [kp, setKpState] = useState<number>(PARAMS.kp)
+  const [ki, setKiState] = useState<number>(PARAMS.ki)
 
   const stateRef = useRef<SimState>(initialState())
   const inputsRef = useRef<Inputs>(DEFAULT_INPUTS)
@@ -29,6 +35,9 @@ export function useGeneratorSimulation(): SimHook {
   const relay27ArmedRef = useRef<boolean>(false)
   const lastTimeRef = useRef<number | null>(null)
   const rafRef = useRef<number | null>(null)
+  // Kp/Ki refs so rAF loop always sees the latest value without re-subscribing
+  const kpRef = useRef<number>(PARAMS.kp)
+  const kiRef = useRef<number>(PARAMS.ki)
 
   useEffect(() => {
     inputsRef.current = inputs
@@ -58,7 +67,8 @@ export function useGeneratorSimulation(): SimHook {
           valveCommand: valveCommandRef.current,
           ...(relay27Ref.current ? { loadFraction: 0 } : {}),
         }
-        const result = step(stateRef.current, tickInputs, PARAMS, dt)
+        const tickParams: Params = { ...PARAMS, kp: kpRef.current, ki: kiRef.current }
+        const result = step(stateRef.current, tickInputs, tickParams, dt)
         stateRef.current = result.state
         setOutputs(result.outputs)
 
@@ -100,5 +110,15 @@ export function useGeneratorSimulation(): SimHook {
     valveCommandRef.current = cmd
   }, [])
 
-  return { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand }
+  const setKp = useCallback((v: number) => {
+    kpRef.current = v
+    setKpState(v)
+  }, [])
+
+  const setKi = useCallback((v: number) => {
+    kiRef.current = v
+    setKiState(v)
+  }, [])
+
+  return { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand, kp, ki, setKp, setKi }
 }

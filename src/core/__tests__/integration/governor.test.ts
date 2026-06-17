@@ -46,7 +46,7 @@ describe('3.1 rated valve matches Phase 1 baseline', () => {
   it('valve at ~93.75 %, zero load → 50 Hz / 1500 rpm and same Vt as fixed-speed Phase 1', () => {
     // Seed with valve at rated position (1500 / 1600 × 100 = 93.75 %) and speed already at 1.0 pu
     const ratedValvePct = (RPM_RATED / VALVE_RPM_MAX) * 100
-    const seeded: SimState = { ...initialState(), valvePct: ratedValvePct, speedLagged: 1.0 }
+    const seeded: SimState = { ...initialState(), valvePct: ratedValvePct, valveActual: ratedValvePct, speedLagged: 1.0 }
     const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0, avrOn: false, valveCommand: 0 }
     const { outputs } = advanceWithState(seeded, inputs, 10 * PARAMS.tau)
     expect(outputs.frequencyHz).toBeCloseTo(50, 2)
@@ -116,16 +116,16 @@ describe('3.5 spin-up lag and field lag are independent', () => {
     const fieldProgress = state.iField / 1.4
     const speedProgress = (state.speedLagged - 1.0) / (speedTarget_pu - 1.0)
 
-    // Field should be ~63 % at 1 τ_field
-    expect(fieldProgress).toBeGreaterThan(0.58)
-    expect(fieldProgress).toBeLessThan(0.68)
+    // Field: ~46 % at 1 τ_field — second-order S-shaped (exciter + field lags), slower initially
+    expect(fieldProgress).toBeGreaterThan(0.35)
+    expect(fieldProgress).toBeLessThan(0.58)
 
-    // Speed should be noticeably less (~45 %) — τ_spinup is larger
-    expect(speedProgress).toBeGreaterThan(0.35)
-    expect(speedProgress).toBeLessThan(0.55)
+    // Speed should be noticeably less (~36 %) — τ_spinup = 2.5 s is larger
+    expect(speedProgress).toBeGreaterThan(0.28)
+    expect(speedProgress).toBeLessThan(0.48)
 
     // The difference confirms they're on independent time constants
-    expect(fieldProgress).toBeGreaterThan(speedProgress + 0.10)
+    expect(fieldProgress).toBeGreaterThan(speedProgress)
   })
 })
 

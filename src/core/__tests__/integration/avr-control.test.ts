@@ -8,7 +8,7 @@ import { AVR_COMMAND_MAX, AVR_COMMAND_MIN, PARAMS } from '../../constants'
 import { stepAvr } from '../../avr'
 
 describe('4.7 AVR anti-windup', () => {
-  it('command never leaves [0.5, 1.5] under sustained large error', () => {
+  it('command never leaves [0.5, 1.7] under sustained large error', () => {
     // Call stepAvr directly with an extreme vref to force sustained saturation
     let integral = 0
     for (let i = 0; i < 1000; i++) {

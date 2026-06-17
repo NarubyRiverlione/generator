@@ -50,7 +50,7 @@ describe('helpers: advanceTime', () => {
 describe('helpers: advanceWithState', () => {
   it('preserves starting state and advances from it', () => {
     // Start from a specific state
-    const startState: SimState = { ...initialState(), iField: 0.5, speedLagged: 0.9 }
+    const startState: SimState = { ...initialState(), iField: 0.5, exciterLagged: 0.5, speedLagged: 0.9 }
     const inputs: Inputs = { ...DEFAULT_INPUTS, loadFraction: 0, fieldVoltage: 1.0, avrOn: false }
 
     const { state } = advanceWithState(startState, inputs, 0.01, 0.01)

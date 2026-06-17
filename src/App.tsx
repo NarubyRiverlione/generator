@@ -16,14 +16,17 @@ import { StatusDisplay } from './components/StatusDisplay'
 import { useGeneratorSimulation } from './hooks/useGeneratorSimulation'
 
 export default function App() {
-  const { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand } = useGeneratorSimulation()
+  const { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand, kp, ki, setKp, setKi } = useGeneratorSimulation()
 
   const fieldValue = inputs.avrOn ? outputs.avrCommand : inputs.fieldVoltage
   const pfSigned = inputs.pfLag ? inputs.powerFactor : -inputs.powerFactor
 
   function handlePfChange(v: number) {
     const abs = Math.abs(v)
-    setInput('powerFactor', abs < 0.6 ? 0.6 : parseFloat(abs.toFixed(10)))
+    // Lagging minimum 0.92 (100 % load is only achievable within this range);
+    // leading minimum stays at 0.6.
+    const min = v >= 0 ? 0.92 : 0.6
+    setInput('powerFactor', abs < min ? min : parseFloat(abs.toFixed(10)))
     setInput('pfLag', v >= 0)
   }
 
@@ -43,16 +46,16 @@ export default function App() {
           <Knob
             label="EXCITER FIELD DC"
             min={0}
-            max={1.5}
+            max={1.7}
             step={0.01}
             value={fieldValue}
             display={`${fieldValue.toFixed(2)} pu`}
             scaleMin="0"
-            scaleMax="1.5"
+            scaleMax="1.7"
             readOnly={inputs.avrOn}
             lockLabel={inputs.avrOn ? 'AVR COMMANDING' : undefined}
-            ptrRotation={-130 + (fieldValue / 1.5) * 260}
-            onChange={(v) => setInput('fieldVoltage', clamp(v, 0, 1.5))}
+            ptrRotation={-130 + (fieldValue / 1.7) * 260}
+            onChange={(v) => setInput('fieldVoltage', clamp(v, 0, 1.7))}
           />
         </div>
 
@@ -66,13 +69,13 @@ export default function App() {
           <Knob
             label="ACTIVE LOAD"
             min={0}
-            max={1}
+            max={1.5}
             step={0.01}
             value={inputs.loadFraction}
             display={`${Math.round(inputs.loadFraction * 100)} %`}
             scaleMin="0 %"
-            scaleMax="100 %"
-            ptrRotation={-130 + inputs.loadFraction * 260}
+            scaleMax="150 %"
+            ptrRotation={-130 + (inputs.loadFraction / 1.5) * 260}
             onChange={(v) => setInput('loadFraction', v)}
           />
         </div>
@@ -96,7 +99,7 @@ export default function App() {
             step={0.01}
             value={pfSigned}
             display={`${inputs.powerFactor.toFixed(2)} ${inputs.pfLag ? 'lag' : 'ld'}`}
-            scaleMin="0.6 lag"
+            scaleMin="0.92 lag"
             scaleMax="0.6 ld"
             ptrRotation={-130 + ((inputs.powerFactor - 0.6) / 0.4) * 260}
             onChange={(v) => handlePfChange(clamp(v, -1, 1))}
@@ -119,6 +122,38 @@ export default function App() {
             />
             <div className="card" style={{ marginTop: 4 }}>RESET</div>
           </div>
+        </div>
+
+        {/* Row 4, col 3: Kp knob — AVR proportional gain */}
+        <div className="knob-cell" style={{ gridColumn: 3, gridRow: 4, alignSelf: 'center' }}>
+          <Knob
+            label="AVR Kp"
+            min={0.5}
+            max={5.0}
+            step={0.01}
+            value={kp}
+            display={`${kp.toFixed(2)}`}
+            scaleMin="0.5"
+            scaleMax="5.0"
+            ptrRotation={-130 + ((kp - 0.5) / (5.0 - 0.5)) * 260}
+            onChange={(v) => setKp(clamp(v, 0.5, 5.0))}
+          />
+        </div>
+
+        {/* Row 4, col 4: Ki knob — AVR integral gain */}
+        <div className="knob-cell" style={{ gridColumn: 4, gridRow: 4, alignSelf: 'center' }}>
+          <Knob
+            label="AVR Ki"
+            min={0.1}
+            max={2.0}
+            step={0.01}
+            value={ki}
+            display={`${ki.toFixed(2)}`}
+            scaleMin="0.1"
+            scaleMax="2.0"
+            ptrRotation={-130 + ((ki - 0.1) / (2.0 - 0.1)) * 260}
+            onChange={(v) => setKi(clamp(v, 0.1, 2.0))}
+          />
         </div>
 
         {/* Row 1, col 6: valve position indicator */}

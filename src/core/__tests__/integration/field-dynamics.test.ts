@@ -9,8 +9,8 @@ import { step } from '../../simulation'
 import type { Inputs } from '../../types'
 import { advanceTime } from '../helpers'
 
-describe('4.2 field step settles over τ', () => {
-  it('~63 % of step completed after 1τ', () => {
+describe('4.2 field step settles over τ (second-order: exciter τ=0.4 s + field τ=1.1 s)', () => {
+  it('S-shaped response: progress at 1 τ_field is less than a single-lag would give', () => {
     const fieldStart = 1.0
     const fieldEnd = 1.4
 
@@ -18,7 +18,7 @@ describe('4.2 field step settles over τ', () => {
     const inputs0: Inputs = { ...DEFAULT_INPUTS, loadFraction: 0, fieldVoltage: fieldStart }
     const { state: settled } = advanceTime(inputs0, 10 * PARAMS.tau)
 
-    // Step to fieldEnd and advance 1τ
+    // Step to fieldEnd and advance 1 τ_field
     const inputsStep: Inputs = { ...DEFAULT_INPUTS, loadFraction: 0, fieldVoltage: fieldEnd }
     const dt = 0.01
     let state = settled
@@ -27,26 +27,24 @@ describe('4.2 field step settles over τ', () => {
       state = r.state
     }
 
-    const iField = state.iField
-    const delta = fieldEnd - fieldStart
-    const progress = (iField - fieldStart) / delta
-    // Should be ~63 % (1 - 1/e ≈ 0.632)
-    expect(progress).toBeGreaterThan(0.58)
-    expect(progress).toBeLessThan(0.68)
+    const progress = (state.iField - fieldStart) / (fieldEnd - fieldStart)
+    // Two stacked lags give S-shaped response: ~46 % at 1 τ_field (less than single-lag's ~63 %)
+    expect(progress).toBeGreaterThan(0.35)
+    expect(progress).toBeLessThan(0.58)
   })
 
-  it('essentially complete after 4τ (> 98 %)', () => {
+  it('essentially complete after 6 τ_field (> 98 %)', () => {
     const fieldStart = 1.0
     const fieldEnd = 1.4
 
-    // Pre-settle at fieldStart, then step to fieldEnd and advance 4τ
+    // Pre-settle at fieldStart, then step to fieldEnd and advance 6 τ_field
     const inputs0: Inputs = { ...DEFAULT_INPUTS, loadFraction: 0, fieldVoltage: fieldStart }
     const { state: settled } = advanceTime(inputs0, 10 * PARAMS.tau)
 
     const inputsStep: Inputs = { ...DEFAULT_INPUTS, loadFraction: 0, fieldVoltage: fieldEnd }
     const dt = 0.01
     let state = settled
-    for (let i = 0; i < Math.round((4 * PARAMS.tau) / dt); i++) {
+    for (let i = 0; i < Math.round((6 * PARAMS.tau) / dt); i++) {
       state = step(state, inputsStep, PARAMS, dt).state
     }
 

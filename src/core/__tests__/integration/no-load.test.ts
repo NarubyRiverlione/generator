@@ -18,9 +18,10 @@ describe('4.1 no-load edge', () => {
     expect(outputs.collapsed).toBe(false)
   })
 
-  it('no-load Vt tracks non-default field voltage', () => {
+  it('no-load Vt tracks non-default field voltage (saturation applies above knee)', () => {
     const inputs: Inputs = { ...DEFAULT_INPUTS, loadFraction: 0, avrOn: false, fieldVoltage: 1.3 }
     const { outputs } = advanceTime(inputs, 10 * PARAMS.tau)
-    expect(outputs.vt).toBeCloseTo(1.3, 2)
+    // saturation(1.3) = 1.0 + (1.3 − 1.0) × 0.4 = 1.12; speed ≈ 0.997 → Vt ≈ 1.116
+    expect(outputs.vt).toBeCloseTo(1.12, 2)
   })
 })
