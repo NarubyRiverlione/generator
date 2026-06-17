@@ -1,13 +1,13 @@
 /**
  * 6-column switchboard grid layout (col 6 = governor speed-changer bookend):
  *   Row 1: [AC OUTPUT] [RECT DC] [MAIN FIELD] [TERMINAL Vt] [ACTIVE POWER P] [-]
- *   Row 2: [exciter knob] [LCD col 2-4] [active load knob] [governor switch]
- *   Row 3: [lights 1-4] [LCD cont.] [AVR] [27 relay] [power factor knob] [governor switch]
+ *   Row 2: [exciter knob] [LCD col 2-4] [active load knob] [SpringLoadedSelector]
+ *   Row 3: [lights 1-4] [LCD cont.] [AVR SelectorSwitch] [27 relay] [power factor knob] [SpringLoadedSelector]
  */
 
-import { AvrControl } from './components/AvrControl'
+import { SelectorSwitch } from './components/SelectorSwitch'
 import { ExciterChain } from './ExciterChain'
-import { GovernorSwitch } from './components/GovernorSwitch'
+import { SpringLoadedSelector } from './components/SpringLoadedSelector'
 import { IndicatorLights } from './components/IndicatorLights'
 import { Knob, clamp } from './components/Knob'
 import { ReadoutPanel } from './components/ReadoutPanel'
@@ -102,9 +102,9 @@ export default function App() {
           />
         </div>
 
-        {/* Row 3, col 3: AVR controls */}
+        {/* Row 3, col 3: AVR SelectorSwitch */}
         <div className="knob-cell" style={{ gridColumn: 3, gridRow: 3, alignSelf: 'start' }}>
-          <AvrControl inputs={inputs} onSetInput={setInput} />
+          <SelectorSwitch inputs={inputs} onSetInput={setInput} />
         </div>
 
         {/* Row 3, col 4: 27 relay reset */}
@@ -120,9 +120,9 @@ export default function App() {
           </div>
         </div>
 
-        {/* Row 2, col 6: governor speed-changer dial — right-hand frequency bookend */}
+        {/* Row 2, col 6: governor SpringLoadedSelector — right-hand frequency bookend */}
         <div className="knob-cell" style={{ gridColumn: 6, gridRow: 2, alignSelf: 'center' }}>
-          <GovernorSwitch onCommand={setValveCommand} />
+          <SpringLoadedSelector onCommand={setValveCommand} />
         </div>
       </div>
 

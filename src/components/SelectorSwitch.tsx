@@ -1,4 +1,4 @@
-/** AVR selector switch and Vref knob. */
+/** SelectorSwitch — on/off selector for the automatic voltage regulator. */
 
 import type { Inputs } from '../core/types'
 
@@ -7,7 +7,7 @@ type Props = {
   onSetInput: <K extends keyof Inputs>(key: K, value: Inputs[K]) => void
 }
 
-export function AvrControl({ inputs, onSetInput }: Props) {
+export function SelectorSwitch({ inputs, onSetInput }: Props) {
   return (
     <div className="avr-section">
       <div className="sel-wrap">

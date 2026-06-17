@@ -1,7 +1,7 @@
 /**
- * Spring-return governor speed-changer dial.
- * Same knob-wrap layout as other dials; ptr snaps back to 0° (12 o'clock) on release.
- * Click zones mirror the existing Knob convention:
+ * SpringLoadedSelector — spring-return governor speed-changer.
+ * Same knob-wrap layout as Knob; ptr snaps back to 0° (12 o'clock) on release.
+ * Click zones mirror the Knob convention:
  *   top-left = slow lower (▼), bottom-left = fast lower (▼▼)
  *   top-right = slow raise (▲), bottom-right = fast raise (▲▲)
  */
@@ -16,7 +16,7 @@ const CMD_ANGLE: Record<ValveCommand, number> = { [-2]: -130, [-1]: -65, [0]: 0,
 
 type Props = { onCommand: (cmd: ValveCommand) => void }
 
-export function GovernorSwitch({ onCommand }: Props) {
+export function SpringLoadedSelector({ onCommand }: Props) {
   const [active, setActive] = useState<ValveCommand>(0)
 
   function handleMouseDown(e: React.MouseEvent<HTMLDivElement>) {
