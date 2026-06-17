@@ -192,13 +192,14 @@ Phases build on each other — concepts from earlier phases are prerequisites fo
 
 ### Phase 2 — RPM / Frequency control
 **Prerequisite:** Phase 1 complete
+**Status:** Spec and design complete — implementation not yet started
 
 > **Design insight (post-PRD):** speed is not commanded as "Hz". The operator commands the **intake
 > valve** (0–100 %), and the shaft produces RPM; Hz is a derived readout. 0 % = closed = 0 rpm;
 > 100 % = 1600 rpm (overspeed trip). Rated speed (1500 rpm) sits at ~93.75 % valve — almost fully
 > open at rated load, which matches real plant operation. The sim starts at ~93.1 % valve (~1495 rpm,
 > slightly sub-synchronous). RPM is the headline readout; Hz sits beside it. Shaft run-up from rest
-> is deferred to Phase 3. See `phase-2-rpm-frequency-control` change for the full design.
+> is deferred to Phase 3. See `phase-2-rpm-frequency-control` change (archived) for the full design.
 
 - Add a **turbine governor speed-changer** — a spring-return raise/lower switch (two-stage slow/fast)
   that drives the intake valve (0–100 %, where 0 % = closed = 0 rpm, 100 % = 1600 rpm overspeed)
@@ -207,6 +208,9 @@ Phases build on each other — concepts from earlier phases are prerequisites fo
 - Add **RPM** (headline) and **Hz** readouts, plus a valve-position readout; sim starts at ~1495 rpm
 - Key learning: frequency and voltage are independent — turbine controls P/frequency, exciter controls voltage/Q
 - This separation is the foundation needed before grid connection
+
+> **Planned addition (branch `spec-twin-needle-valve-dial`):** a twin-needle dial gauge as the
+> primary readout for intake valve position — spec exists on that branch, not yet merged into main.
 
 ### Saturation & AVR tuning (standalone — unscheduled)
 **Prerequisite:** Phase 2 complete (saturation scales the same Eₐ that speed scales)

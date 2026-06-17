@@ -21,7 +21,7 @@ Fixed 50 Hz, single machine, no grid connection.
 - Voltage stability margin (VSM) warning; 27-relay under-voltage trip
 - Fixed machine parameters (Xₛ = 1.2 pu, Rₐ = 0.05 pu); AVR reference fixed at rated (1.0 pu / 400 V)
 
-### Phase 2 — RPM / Frequency control (planned)
+### Phase 2 — RPM / Frequency control (spec complete — implementation pending)
 
 Prerequisite: Phase 1.
 
@@ -31,6 +31,9 @@ Prerequisite: Phase 1.
 - Rotor speed scales internal EMF: `Eₐ = field × speed_pu`, so a speed change moves both frequency and voltage
 - **RPM** (headline) and **Hz** readouts (Hz derived from RPM); valve-position readout; kinematic spin-up lag (τ ≈ 2.5 s)
 - Key learning: turbine controls frequency/P, exciter controls voltage/Q — independent channels
+
+> **Planned addition (branch `spec-twin-needle-valve-dial`):** a twin-needle dial gauge as the
+> primary readout for intake valve position — spec exists on that branch, not yet merged.
 
 ### Saturation & AVR tuning (planned — standalone, unscheduled)
 

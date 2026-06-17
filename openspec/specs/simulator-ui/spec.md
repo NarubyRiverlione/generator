@@ -7,16 +7,22 @@ The simulator UI is the React front-end for the islanded synchronous generator s
 ### Requirement: Input panel controls
 The UI SHALL present rotary **knobs** with numeric value labels for exciter field DC (0–1.5 pu,
 default 0), active load (0–100 %, default 0), and power factor (0.6 lag through 1.0 to 0.6 lead,
-default 0.85 lag), plus an AVR on/off selector switch (default off). The rotor speed / frequency
-SHALL be fixed at 50 Hz and SHALL NOT be exposed as a control.
+default 0.85 lag), an AVR on/off selector switch (default off), and a turbine governor
+**speed-changer**: a spring-return raise/lower switch (neutral centre, two-stage slow/fast throw)
+that drives the intake valve. The rotor speed is controlled via the valve position; the machine
+starts with the valve pre-set at ~93 % (giving ~1495 rpm).
 
 #### Scenario: Knobs show current value
 - **WHEN** the user turns any input knob
 - **THEN** the knob's numeric label updates to the current value in its unit
 
-#### Scenario: No rotor-speed control in MVP
+#### Scenario: Governor speed-changer present
 - **WHEN** the input panel is rendered
-- **THEN** there is no rotor-speed or frequency knob and no frequency readout
+- **THEN** a spring-return raise/lower speed-changer switch is present, and holding it raises or lowers the intake valve (and thereby rotor speed)
+
+#### Scenario: Governor at rated valve matches rated speed
+- **WHEN** the valve is at ~93.75 % (rated position)
+- **THEN** simulation output shows 1500 rpm / 50 Hz
 
 ### Requirement: AVR control behavior
 AVR SHALL be toggled by an on/off selector switch. The AVR voltage reference SHALL be fixed at rated
@@ -37,15 +43,22 @@ the field DC knob SHALL be user-adjustable.
 - **THEN** the AVR regulates terminal voltage to the fixed rated reference and no Vref control is shown
 
 ### Requirement: Generator output readouts
-The UI SHALL display terminal voltage (Vₜ) and active power (P) as SVG arc gauges and numeric values, and SHALL display reactive power (Q), load angle (δ), and calculated power factor as numeric values. Q SHALL be labelled "supplying" when positive and "absorbing" when negative.
+The UI SHALL display terminal voltage (Vₜ) and active power (P) as SVG arc gauges and numeric values,
+and SHALL display reactive power (Q), load angle (δ), calculated power factor, shaft speed in **RPM**
+(headline), output frequency in **Hz**, and the **valve position** (%) as numeric values. Q SHALL be
+labelled "supplying" when positive and "absorbing" when negative.
 
 #### Scenario: Gauges and numerics update as the simulation settles
 - **WHEN** the simulation state changes and settles
-- **THEN** the Vₜ and P gauges and all numeric readouts update continuously to reflect the current solved values
+- **THEN** the Vₜ and P gauges and all numeric readouts — including RPM, Hz, and valve position — update continuously to reflect the current solved values
 
 #### Scenario: Reactive power direction labelled
 - **WHEN** the solved Q is negative (leading/capacitive load)
 - **THEN** the Q readout is labelled "absorbing"; when Q is positive it is labelled "supplying"
+
+#### Scenario: RPM and frequency reflect the valve
+- **WHEN** the speed-changer is held lower until the valve and speed settle
+- **THEN** the RPM and Hz readouts fall together and the valve-position readout shows the reduced opening
 
 ### Requirement: SVG arc gauge with zones
 Each gauge SHALL be a hand-rolled SVG semicircular arc (~180° sweep) inside a square black-bezel frame, following the visual design in design.md D8. The arc SHALL have a dark base track and coloured zone arcs drawn on top at the same radius (no gap). Zone colours for Vₜ: amber / green / amber / red from low to high. Zone colours for P: green / red. No external charting or gauge library SHALL be used.
