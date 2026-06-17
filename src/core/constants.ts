@@ -28,6 +28,9 @@ export const JOG_FAST = 0.3125  // %/s = 5 rpm/s
 /** Spin-up lag time constant (s). Shaft is slower than the field lag (τ_field = 1.5 s). */
 export const TAU_SPINUP = 2.5
 
+/** Valve actuator lag time constant (s). Distinct from TAU_SPINUP: mechanical lag of the motor-operated intake valve tracking its setpoint. */
+export const TAU_VALVE = 2.0
+
 /** Pole count — 4-pole machine → 1500 rpm at 50 Hz. */
 export const POLES = 4
 

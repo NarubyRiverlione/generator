@@ -1,7 +1,7 @@
 /** Simulation step: field lag → AVR or manual target → machine solve. */
 
 import { stepAvr } from './avr'
-import { AVR_VREF, DEFAULT_INPUTS, JOG_FAST, JOG_SLOW, PARAMS, RPM_RATED, TAU_SPINUP, VALVE_RPM_MAX } from './constants'
+import { AVR_VREF, DEFAULT_INPUTS, JOG_FAST, JOG_SLOW, PARAMS, RPM_RATED, TAU_SPINUP, TAU_VALVE, VALVE_RPM_MAX } from './constants'
 import { computeLoad } from './load'
 import { solveMachine } from './machine'
 import type { Inputs, Outputs, Params, SimState, ValveCommand } from './types'
@@ -38,6 +38,7 @@ export function initialState(): SimState {
         frequencyHz: initHz,
         rpm: initRpm,
         valvePct: VALVE_PCT_INIT,
+        valveActual: VALVE_PCT_INIT,
       }
     : {
         ...result,
@@ -46,12 +47,14 @@ export function initialState(): SimState {
         frequencyHz: initHz,
         rpm: initRpm,
         valvePct: VALVE_PCT_INIT,
+        valveActual: VALVE_PCT_INIT,
       }
 
   return {
     iField: inputs.fieldVoltage,
     avrIntegral: 0,
     valvePct: VALVE_PCT_INIT,
+    valveActual: VALVE_PCT_INIT,
     speedLagged: SPEED_INIT_PU,
     lastValidOutputs: outputs,
   }
@@ -84,8 +87,11 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   // 2.1 Integrate valve: holds when valveCommand = 0, clamped to [0, 100]
   const valvePct = Math.min(100, Math.max(0, state.valvePct + jogRate(inputs.valveCommand) * dt))
 
+  // Valve actuator lag: physical valve position chases setpoint with τ_valve
+  const valveActual = Math.min(100, Math.max(0, state.valveActual + (valvePct - state.valveActual) * (1 - Math.exp(-dt / TAU_VALVE))))
+
   // 2.2 Valve → RPM (shaft-primary); advance spin-up lag (exact-exponential, same form as field lag)
-  const rpmTarget = (valvePct / 100) * VALVE_RPM_MAX
+  const rpmTarget = (valveActual / 100) * VALVE_RPM_MAX
   const speedTarget_pu = rpmTarget / RPM_RATED
   const speedLagged = state.speedLagged + (speedTarget_pu - state.speedLagged) * (1 - Math.exp(-dt / TAU_SPINUP))
 
@@ -102,16 +108,17 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
 
   let outputs: Outputs
   if (result.collapsed) {
-    // Freeze voltage outputs but keep shaft readouts live
-    outputs = { ...state.lastValidOutputs, avrCommand, collapsed: true, frequencyHz, rpm, valvePct }
+    // Freeze voltage outputs but keep shaft readouts live; valveActual is shaft-side — stays live
+    outputs = { ...state.lastValidOutputs, avrCommand, collapsed: true, frequencyHz, rpm, valvePct, valveActual }
   } else {
-    outputs = { ...result, avrCommand, collapsed: false, frequencyHz, rpm, valvePct }
+    outputs = { ...result, avrCommand, collapsed: false, frequencyHz, rpm, valvePct, valveActual }
   }
 
   const nextState: SimState = {
     iField,
     avrIntegral,
     valvePct,
+    valveActual,
     speedLagged,
     lastValidOutputs: result.collapsed ? state.lastValidOutputs : outputs,
   }

@@ -121,8 +121,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Row 1, col 6: valve position indicator — placeholder uses valvePct for both until companion change lands */}
-        <PositionIndicator setpoint={outputs.valvePct} actual={outputs.valvePct} />
+        {/* Row 1, col 6: valve position indicator */}
+        <PositionIndicator setpoint={outputs.valvePct} actual={outputs.valveActual} />
 
         {/* Row 2, col 6: governor SpringLoadedSelector — right-hand frequency bookend */}
         <div className="knob-cell" style={{ gridColumn: 6, gridRow: 2, alignSelf: 'center' }}>

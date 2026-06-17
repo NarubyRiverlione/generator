@@ -24,6 +24,8 @@ export type SimState = {
   avrIntegral: number
   /** Valve position, % of full travel [0, 100]; 0 = closed = 0 rpm; ~93.75 = rated (1500 rpm). */
   valvePct: number
+  /** Physical valve position (%), lags behind `valvePct` through actuator lag. */
+  valveActual: number
   /** Lagged rotor speed, per-unit; follows valve target through spin-up lag. */
   speedLagged: number
   /** Last valid outputs — frozen on collapse. */
@@ -59,6 +61,8 @@ export type Outputs = {
   rpm: number
   /** Valve position, % of full travel [0, 100]; mirrored from SimState. */
   valvePct: number
+  /** Physical valve position (%), sourced from actuator-lagged state. */
+  valveActual: number
 }
 
 export type Params = {
