@@ -3,7 +3,7 @@
 export type ValveCommand = -2 | -1 | 0 | 1 | 2
 
 export type Inputs = {
-  /** Exciter field DC setpoint, per-unit [0.5, 1.5]. Read-only when AVR is on. */
+  /** Exciter field DC setpoint, per-unit [0.0, 1.5]. Read-only when AVR is on. */
   fieldVoltage: number
   /** Active load, fraction of rated [0, 1]. */
   loadFraction: number
@@ -45,6 +45,8 @@ export type Outputs = {
   q: number
   /** Calculated power factor (signed: positive lag, negative lead). */
   pf: number
+  /** Lagged field current, per-unit; the same signal used by the solver (not the AVR command). */
+  iField: number
   /** AVR field command (per-unit); equals fieldVoltage when AVR off. */
   avrCommand: number
   /** true when load exceeds maximum loadability. */

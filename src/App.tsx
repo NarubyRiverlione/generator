@@ -35,7 +35,7 @@ export default function App() {
 
       <div className="switchboard-grid">
         {/* Row 1: gauges — auto-placed, pinned to row 1 via CSS */}
-        <ExciterChain iFieldPu={outputs.avrCommand} />
+        <ExciterChain iFieldPu={outputs.iField} />
         <ReadoutPanel outputs={outputs} />
 
         {/* Row 2, col 1: exciter field knob — vertically centered */}

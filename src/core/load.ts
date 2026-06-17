@@ -8,8 +8,10 @@ export type LoadDemand = { p: number; q: number }
  * Leading (capacitive) load: Q < 0.
  */
 export function computeLoad(loadFraction: number, powerFactor: number, pfLag: boolean): LoadDemand {
-  const p = loadFraction
-  const tanPhi = Math.tan(Math.acos(powerFactor))
+  const safeLf = isFinite(loadFraction) ? Math.max(0, loadFraction) : 0
+  const safePf = isFinite(powerFactor) ? Math.min(1, Math.max(0, powerFactor)) : 1
+  const p = safeLf
+  const tanPhi = Math.tan(Math.acos(safePf))
   const q = pfLag ? p * tanPhi : -p * tanPhi
   return { p, q }
 }

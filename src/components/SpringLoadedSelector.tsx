@@ -57,6 +57,7 @@ export function SpringLoadedSelector({ onCommand }: Props) {
           onCommand(cmd)
         }}
         onTouchEnd={handleRelease}
+        onTouchCancel={handleRelease}
         role="slider"
         aria-label="Governor speed-changer"
         aria-valuemin={-2}

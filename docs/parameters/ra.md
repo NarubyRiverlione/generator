@@ -30,7 +30,7 @@ Eₐ = Vₜ + Iₐ · (Rₐ + jXₛ)
 
 In practice, Rₐ is so much smaller than Xₛ that it has no meaningful impact on steady-state voltage, power, or stability. Its main real-world relevance is thermal — it determines copper losses and generator efficiency, which are outside the scope of this simulator.
 
-In the simulator, Rₐ is used only to compute armature current Iₐ magnitude in the phasor derivation. It is excluded from the power equation quadratic (the simplification costs 0.2% accuracy).
+In the simulator, Rₐ is excluded from all solver calculations — both the power-equation quadratic and the Iₐ magnitude derivation. Iₐ is computed from apparent power S = 3·Vₜ·Iₐ, which does not require Rₐ. At Rₐ/Xₛ ≈ 4%, the effect on Vₜ, P, Q, and Iₐ is less than 0.2% — below the resolution of the gauges.
 
 ## What to observe in the simulator
 

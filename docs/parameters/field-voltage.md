@@ -29,7 +29,7 @@ Set by the operator (manual mode) or the AVR (automatic mode). The physical limi
 
 ## Simulator value
 
-Range **0.5 – 1.5 pu**, default **1.0 pu**. When AVR is on, this input becomes read-only and the AVR commands it automatically.
+Range **0.0 – 1.5 pu**, default **0.0 pu** (machine starts de-energised). When AVR is on, this input becomes read-only and the AVR commands it automatically.
 
 ## Effect on the machine
 

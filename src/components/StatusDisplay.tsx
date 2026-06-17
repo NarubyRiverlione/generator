@@ -97,7 +97,7 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
               <span className="sticky-key">f</span> Output frequency — governed by turbine valve
             </div>
             <div className="sticky-line">
-              <span className="sticky-key">valve</span> Fine governor valve position (0–100 %; 50 % = rated)
+              <span className="sticky-key">valve</span> Governor valve position (0–100 %; ~93.75 % = rated)
             </div>
             <div className="sticky-line">
               <span className="sticky-key">δ</span> Load angle (classical limit ≈ 90° at unity PF)

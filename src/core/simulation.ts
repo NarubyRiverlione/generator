@@ -32,6 +32,7 @@ export function initialState(): SimState {
         p: 0,
         q: 0,
         pf: 1,
+        iField: inputs.fieldVoltage,
         avrCommand: inputs.fieldVoltage,
         collapsed: false,
         stabilityMargin: 0,
@@ -42,6 +43,7 @@ export function initialState(): SimState {
       }
     : {
         ...result,
+        iField: inputs.fieldVoltage,
         avrCommand: inputs.fieldVoltage,
         collapsed: false,
         frequencyHz: initHz,
@@ -90,7 +92,9 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   // Valve actuator lag: physical valve position chases setpoint with τ_valve
   const valveActual = Math.min(100, Math.max(0, state.valveActual + (valvePct - state.valveActual) * (1 - Math.exp(-dt / TAU_VALVE))))
 
-  // 2.2 Valve → RPM (shaft-primary); advance spin-up lag (exact-exponential, same form as field lag)
+  // 2.2 Valve → RPM (shaft-primary); advance spin-up lag (exact-exponential, same form as field lag).
+  // Speed is driven by valve position only — load changes do not feed back into shaft speed.
+  // There is no swing equation or droop; torque-balance feedback is a known simplification.
   const rpmTarget = (valveActual / 100) * VALVE_RPM_MAX
   const speedTarget_pu = rpmTarget / RPM_RATED
   const speedLagged = state.speedLagged + (speedTarget_pu - state.speedLagged) * (1 - Math.exp(-dt / TAU_SPINUP))
@@ -109,9 +113,9 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   let outputs: Outputs
   if (result.collapsed) {
     // Freeze voltage outputs but keep shaft readouts live; valveActual is shaft-side — stays live
-    outputs = { ...state.lastValidOutputs, avrCommand, collapsed: true, frequencyHz, rpm, valvePct, valveActual }
+    outputs = { ...state.lastValidOutputs, iField, avrCommand, collapsed: true, frequencyHz, rpm, valvePct, valveActual }
   } else {
-    outputs = { ...result, avrCommand, collapsed: false, frequencyHz, rpm, valvePct, valveActual }
+    outputs = { ...result, iField, avrCommand, collapsed: false, frequencyHz, rpm, valvePct, valveActual }
   }
 
   const nextState: SimState = {

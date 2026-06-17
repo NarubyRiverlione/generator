@@ -52,8 +52,12 @@ export function useGeneratorSimulation(): SimHook {
         lastTimeRef.current = timestamp
         lastScheduled = timestamp
 
-        // 4.2 Inject the current valve switch position into inputs each tick
-        const tickInputs: Inputs = { ...inputsRef.current, valveCommand: valveCommandRef.current }
+        // 4.2 Inject the current valve switch position; clamp load to 0 while relay is latched
+        const tickInputs: Inputs = {
+          ...inputsRef.current,
+          valveCommand: valveCommandRef.current,
+          ...(relay27Ref.current ? { loadFraction: 0 } : {}),
+        }
         const result = step(stateRef.current, tickInputs, PARAMS, dt)
         stateRef.current = result.state
         setOutputs(result.outputs)
