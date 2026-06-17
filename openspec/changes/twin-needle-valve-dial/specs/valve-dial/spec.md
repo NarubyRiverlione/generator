@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Twin-needle position indicator component
-The UI SHALL provide a `PositionIndicator` component that accepts a `setpoint` and an `actual` numeric value (same units, same range) and displays them as two distinct needles on a 270° SVG arc inside a circular bezel. The bezel SHALL fit within a 138px wide `gauge-col` column with no layout changes to the switchboard grid.
+The UI SHALL provide a `PositionIndicator` component that accepts a `setpoint` and an `actual` numeric value (same units, same range) and displays them as two distinct needles on a 270° SVG arc inside a circular bezel. It SHALL be mounted at row 1, column 6 of the switchboard grid — the free slot directly above the governor `SpringLoadedSelector` — fitting within the standard 138px wide `gauge-col` with no layout changes.
 
 #### Scenario: Both needles render at correct positions
 - **WHEN** `PositionIndicator` is rendered with a given `setpoint` and `actual`
@@ -19,14 +19,14 @@ The UI SHALL provide a `PositionIndicator` component that accepts a `setpoint` a
 The dial bezel SHALL be circular (`border-radius: 50%`) on a true square bounding box, visually distinct from the square `sq-bezel` gauges while using the same padding and dark background treatment.
 
 #### Scenario: Bezel renders as a circle
-- **WHEN** `ValveDial` is rendered
+- **WHEN** `PositionIndicator` is rendered
 - **THEN** the bezel appears as a circle inscribed in the 138px column width, not a rounded rectangle
 
 ### Requirement: 270° arc with tick marks
 The arc SHALL sweep 270°, with the 90° dead zone at the bottom. Tick marks SHALL appear at 0%, 25%, 50%, 75%, and 100% of the arc sweep, each labelled with its percentage value.
 
 #### Scenario: Arc and ticks render correctly
-- **WHEN** `ValveDial` is rendered
+- **WHEN** `PositionIndicator` is rendered
 - **THEN** five evenly-spaced tick marks with labels appear on the arc from the 7 o'clock to 5 o'clock positions
 
 ### Requirement: No external charting library

@@ -18,4 +18,4 @@
 ## 3. Wiring into App
 
 - [ ] 3.1 Import `PositionIndicator` in `src/App.tsx`
-- [ ] 3.2 Mount `PositionIndicator` in the switchboard grid, passing `setpoint` and `actual` props from simulation outputs (exact prop source determined by companion change — use placeholder values or `valvePct` for both until that change lands)
+- [ ] 3.2 Mount `PositionIndicator` at `gridColumn: 6, gridRow: 1` in the switchboard grid (the free slot above the governor), passing `setpoint` and `actual` props from simulation outputs (exact prop source determined by companion change — use placeholder values or `valvePct` for both until that change lands)

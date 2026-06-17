@@ -7,7 +7,7 @@ The existing simulator has no visual indication of valve position: the operator 
 - Add a new `PositionIndicator` SVG component: a circular-bezel indicator with a 270° arc, housing two concentric needles sharing a center pivot.
 - Setpoint needle (thin, red, open chevron tip) tracks the commanded valve position driven by the speed-changer control.
 - Actual needle (bold, black, solid) tracks the lagged valve position as it slowly follows the setpoint.
-- The `PositionIndicator` occupies a standard `gauge-col` (138 px wide) so the switchboard grid needs no layout changes.
+- The `PositionIndicator` occupies row 1, column 6 of the switchboard grid — the free slot directly above the governor `SpringLoadedSelector`. No layout changes are required; the slot is already a standard `gauge-col` (138 px wide).
 - The circular bezel is styled with `border-radius: 50%` on a true square bounding box, distinct from but consistent with the existing square-bezel Gauges.
 
 ## Capabilities
