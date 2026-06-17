@@ -1,15 +1,15 @@
 /**
- * Core physics tests — covers tasks 4.1–4.8.
+ * Core physics tests — covers tasks 4.1–4.8 and Phase 2 governor tasks 3.1–3.6.
  * All tests run in Vitest node environment; no React, no DOM.
  */
 
 import { describe, expect, it } from 'vitest'
-import { AVR_COMMAND_MAX, AVR_COMMAND_MIN, DEFAULT_INPUTS, PARAMS } from './constants'
+import { AVR_COMMAND_MAX, AVR_COMMAND_MIN, DEFAULT_INPUTS, PARAMS, TAU_SPINUP } from './constants'
 import { stepAvr } from './avr'
 import { computeLoad } from './load'
 import { solveMachine } from './machine'
 import { initialState, step } from './simulation'
-import type { Inputs } from './types'
+import type { Inputs, SimState } from './types'
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -268,3 +268,125 @@ describe('4.7 AVR anti-windup', () => {
 
 // ── 4.8  Coverage is confirmed by the test runner ────────────────────────────
 // (vitest --coverage enforces the 90% threshold configured in vitest.config.ts)
+
+// ── Phase 2 governor tests (tasks 3.1–3.6) ──────────────────────────────────
+
+// helpers shared across governor tests
+
+function advanceWithState(startState: SimState, inputs: Inputs, totalSeconds: number, dt = 0.01): { state: SimState; outputs: ReturnType<typeof step>['outputs'] } {
+  let state = startState
+  let outputs = state.lastValidOutputs
+  const n = Math.round(totalSeconds / dt)
+  for (let i = 0; i < n; i++) {
+    const r = step(state, inputs, PARAMS, dt)
+    state = r.state
+    outputs = r.outputs
+  }
+  return { state, outputs }
+}
+
+// 3.1  Rated speed → Phase 1 baseline Vₜ, P, Q
+describe('3.1 rated speed matches Phase 1 baseline', () => {
+  it('nominal valve (50 %) → 50 Hz / 1500 rpm and same Vt, P, Q as fixed-speed Phase 1', () => {
+    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0.5, powerFactor: 0.85, pfLag: true, avrOn: false, valveCommand: 0 }
+    // Settle over many τ; valve stays at 50 %, speedLagged stays 1.0
+    const { outputs } = advanceWithState(initialState(), inputs, 10 * PARAMS.tau)
+    expect(outputs.frequencyHz).toBeCloseTo(50, 2)
+    expect(outputs.rpm).toBeCloseTo(1500, 0)
+    // Compare against direct machine solve at speed=1.0 (Phase 1 reference)
+    const load = computeLoad(0.5, 0.85, true)
+    // field will have lagged to ~1.0 over 10τ; Vt should match solveMachine(1.0, ...)
+    const ref = solveMachine(1.0, load.p, load.q, PARAMS.xs)
+    expect(outputs.vt).toBeCloseTo(ref.vt, 2)
+    expect(outputs.p).toBeCloseTo(ref.p, 2)
+    expect(outputs.q).toBeCloseTo(ref.q, 2)
+  })
+})
+
+// 3.2  Valve held lower → speed settles to ~47 Hz / 1410 rpm
+describe('3.2 valve held lower → speed settles at low end of band', () => {
+  it('valve at 0 % after many τ_spinup → frequencyHz ≈ 47 and rpm ≈ 1410', () => {
+    // Seed state with valvePct already at 0 so we only wait on spin-up lag, not jog
+    const seeded: SimState = { ...initialState(), valvePct: 0 }
+    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.2, loadFraction: 0, avrOn: false, valveCommand: 0 }
+    const { outputs } = advanceWithState(seeded, inputs, 10 * TAU_SPINUP)
+    expect(outputs.frequencyHz).toBeCloseTo(47, 1)
+    expect(outputs.rpm).toBeCloseTo(1410, 0)
+  })
+})
+
+// 3.3  Valve step → after 1 τ_spinup, lagged speed ~63 % toward new target
+describe('3.3 spin-up lag: 63 % moved after 1 τ_spinup', () => {
+  it('speedLagged moves ~63 % toward the high-end target after 2.5 s', () => {
+    // Seed with valvePct = 100 so target is 1.06 pu; speedLagged still 1.0
+    const seeded: SimState = { ...initialState(), valvePct: 100, speedLagged: 1.0 }
+    const speedTarget_pu = 53 / 50 // = 1.06
+    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0, avrOn: false, valveCommand: 0 }
+    const { state } = advanceWithState(seeded, inputs, TAU_SPINUP)
+    const progress = (state.speedLagged - 1.0) / (speedTarget_pu - 1.0)
+    expect(progress).toBeGreaterThan(0.58)
+    expect(progress).toBeLessThan(0.68)
+  })
+})
+
+// 3.4  Speed reduction with AVR off → Vₜ falls (Eₐ scaled down); stays above 0.85 relay trip
+describe('3.4 speed reduction sags Vt with AVR off', () => {
+  it('lower speed → lower Vt; field high enough to stay above 0.85 relay trip', () => {
+    const inputs_rated: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.2, loadFraction: 0.3, avrOn: false, valveCommand: 0 }
+    const seeded_low: SimState = { ...initialState(), valvePct: 0 }
+    const inputs_low: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.2, loadFraction: 0.3, avrOn: false, valveCommand: 0 }
+
+    const { outputs: out_rated } = advanceWithState(initialState(), inputs_rated, 10 * PARAMS.tau)
+    const { outputs: out_low } = advanceWithState(seeded_low, inputs_low, 10 * TAU_SPINUP)
+
+    expect(out_low.vt).toBeLessThan(out_rated.vt)
+    expect(out_low.vt).toBeGreaterThan(0.85) // above relay trip
+  })
+})
+
+// 3.5  Spin-up lag and field lag are independent
+describe('3.5 spin-up lag and field lag are independent', () => {
+  it('speed and field each settle at their own τ without interference', () => {
+    // Seed: valve at 100 %, speed still at 1.0; iField starting from 0 with field target 1.4
+    const seeded: SimState = { ...initialState(), valvePct: 100, speedLagged: 1.0, iField: 0 }
+    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.4, loadFraction: 0, avrOn: false, valveCommand: 0 }
+    const speedTarget_pu = 53 / 50
+
+    // Measure both lags at a common time: 1.5 s (= τ_field, shorter than τ_spinup = 2.5 s)
+    // At 1.5 s: field progress ≈ 1 − 1/e ≈ 63 %; speed progress ≈ 1 − e^(−0.6) ≈ 45 %
+    const { state } = advanceWithState(seeded, inputs, PARAMS.tau)
+
+    const fieldProgress = state.iField / 1.4
+    const speedProgress = (state.speedLagged - 1.0) / (speedTarget_pu - 1.0)
+
+    // Field should be ~63 % at 1 τ_field
+    expect(fieldProgress).toBeGreaterThan(0.58)
+    expect(fieldProgress).toBeLessThan(0.68)
+
+    // Speed should be noticeably less (~45 %) — τ_spinup is larger
+    expect(speedProgress).toBeGreaterThan(0.35)
+    expect(speedProgress).toBeLessThan(0.55)
+
+    // The difference confirms they're on independent time constants
+    expect(fieldProgress).toBeGreaterThan(speedProgress + 0.10)
+  })
+})
+
+// 3.6  valveCommand = 0 holds valvePct constant
+describe('3.6 valveCommand = 0 holds valve; command integrates faster than inner lag', () => {
+  it('valve stays constant when command is 0', () => {
+    const seeded: SimState = { ...initialState(), valvePct: 70 }
+    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0, avrOn: false, valveCommand: 0 }
+    const { state } = advanceWithState(seeded, inputs, 5)
+    expect(state.valvePct).toBeCloseTo(70, 5)
+  })
+
+  it('fast jog changes valve faster than slow jog over the same time', () => {
+    const seeded: SimState = { ...initialState(), valvePct: 50 }
+    const inputsSlow: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0, avrOn: false, valveCommand: 1 }
+    const inputsFast: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0, avrOn: false, valveCommand: 2 }
+    const { state: slow } = advanceWithState(seeded, inputsSlow, 1)
+    const { state: fast } = advanceWithState(seeded, inputsFast, 1)
+    expect(fast.valvePct).toBeGreaterThan(slow.valvePct)
+  })
+})

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { DEFAULT_INPUTS, PARAMS, RELAY27_TRIP_VT } from '../core/constants'
 import { initialState, step } from '../core/simulation'
-import type { Inputs, Outputs, SimState } from '../core/types'
+import type { Inputs, Outputs, SimState, ValveCommand } from '../core/types'
 
 const MAX_DT = 0.1 // clamp large dt (e.g. tab refocus) to 100 ms
 const TARGET_DT = 0.033 // ~30 ms cadence
@@ -14,6 +14,7 @@ export type SimHook = {
   setInput: <K extends keyof Inputs>(key: K, value: Inputs[K]) => void
   relay27Tripped: boolean
   resetRelay27: () => void
+  setValveCommand: (cmd: ValveCommand) => void
 }
 
 export function useGeneratorSimulation(): SimHook {
@@ -33,6 +34,9 @@ export function useGeneratorSimulation(): SimHook {
     inputsRef.current = inputs
   }, [inputs])
 
+  // 4.1 valveCommand held in ref so press-and-hold updates bypass React state batching
+  const valveCommandRef = useRef<ValveCommand>(0)
+
   useEffect(() => {
     let lastScheduled = 0
 
@@ -48,7 +52,9 @@ export function useGeneratorSimulation(): SimHook {
         lastTimeRef.current = timestamp
         lastScheduled = timestamp
 
-        const result = step(stateRef.current, inputsRef.current, PARAMS, dt)
+        // 4.2 Inject the current valve switch position into inputs each tick
+        const tickInputs: Inputs = { ...inputsRef.current, valveCommand: valveCommandRef.current }
+        const result = step(stateRef.current, tickInputs, PARAMS, dt)
         stateRef.current = result.state
         setOutputs(result.outputs)
 
@@ -85,5 +91,10 @@ export function useGeneratorSimulation(): SimHook {
     setRelay27Tripped(false)
   }, [])
 
-  return { inputs, outputs, setInput, relay27Tripped, resetRelay27 }
+  // 4.3 Setter for the raise/lower switch; written directly to ref (no re-render needed)
+  const setValveCommand = useCallback((cmd: ValveCommand) => {
+    valveCommandRef.current = cmd
+  }, [])
+
+  return { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand }
 }

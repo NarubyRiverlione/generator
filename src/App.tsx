@@ -1,14 +1,13 @@
 /**
- * 5-column switchboard grid layout:
- *   Row 1: [AC OUTPUT] [RECT DC] [MAIN FIELD] [TERMINAL Vt] [ACTIVE POWER P]
- *   Row 2: [exciter knob] [LCD col 2-4] [active load knob]
- *   Row 3: [lights 1-4]   [LCD cont.]   [power factor knob]
- *   Row 4: [lights 5-8]   [LCD cont.]
- *   Row 5: [AVR controls full-width]
+ * 6-column switchboard grid layout (col 6 = governor speed-changer bookend):
+ *   Row 1: [AC OUTPUT] [RECT DC] [MAIN FIELD] [TERMINAL Vt] [ACTIVE POWER P] [-]
+ *   Row 2: [exciter knob] [LCD col 2-4] [active load knob] [governor switch]
+ *   Row 3: [lights 1-4] [LCD cont.] [AVR] [27 relay] [power factor knob] [governor switch]
  */
 
 import { AvrControl } from './components/AvrControl'
 import { ExciterChain } from './ExciterChain'
+import { GovernorSwitch } from './components/GovernorSwitch'
 import { IndicatorLights } from './components/IndicatorLights'
 import { Knob, clamp } from './components/Knob'
 import { ReadoutPanel } from './components/ReadoutPanel'
@@ -16,7 +15,7 @@ import { StatusDisplay } from './components/StatusDisplay'
 import { useGeneratorSimulation } from './hooks/useGeneratorSimulation'
 
 export default function App() {
-  const { inputs, outputs, setInput, relay27Tripped, resetRelay27 } = useGeneratorSimulation()
+  const { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand } = useGeneratorSimulation()
 
   const fieldValue = inputs.avrOn ? outputs.avrCommand : inputs.fieldVoltage
   const pfSigned = inputs.pfLag ? inputs.powerFactor : -inputs.powerFactor
@@ -120,8 +119,14 @@ export default function App() {
             <div className="card" style={{ marginTop: 4 }}>RESET</div>
           </div>
         </div>
+
+        {/* Row 2, col 6: governor speed-changer dial — right-hand frequency bookend */}
+        <div className="knob-cell" style={{ gridColumn: 6, gridRow: 2, alignSelf: 'center' }}>
+          <GovernorSwitch onCommand={setValveCommand} />
+        </div>
       </div>
 
+      <p className="footer">PHASE 2 · 400 V · 50 Hz · 1 MVA · ISLANDED · GOVERNOR + AVR</p>
     </div>
   )
 }

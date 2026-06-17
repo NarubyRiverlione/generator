@@ -1,19 +1,33 @@
 /** Shared rotary knob. Click left half to decrease, right half to increase. */
 
-// Tick positions at 25/50/75/100 % of the 260° sweep (-130° to +130°).
-// CX=65 (half of 130px wrap), CY=54 (knob-gap 10 + knob-radius 44).
-// R_IN=51 clears the 6px chrome shadow; R_OUT=58 gives a 7px tick.
-const TICK_LINES = [0.25, 0.5, 0.75, 1.0].map((pct) => {
-  const rad = (-130 + pct * 260) * (Math.PI / 180)
+// Tick geometry: CX=65, CY=54 (knob-gap 10 + knob-radius 44). R_IN=51, R_OUT=58.
+function tickLine(deg: number) {
+  const rad = deg * (Math.PI / 180)
   const s = Math.sin(rad)
   const c = Math.cos(rad)
   return { x1: 65 + 51 * s, y1: 54 - 51 * c, x2: 65 + 58 * s, y2: 54 - 58 * c }
-})
+}
+
+// Standard knob: ticks at 25/50/75/100 % of the 260° sweep (−130° to +130°).
+const TICK_LINES = [0.25, 0.5, 0.75, 1.0].map((pct) => tickLine(-130 + pct * 260))
 
 export function KnobTicks() {
   return (
     <svg className="knob-ticks" viewBox="0 0 130 108" aria-hidden="true">
       {TICK_LINES.map((t, i) => (
+        <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} />
+      ))}
+    </svg>
+  )
+}
+
+// Governor dial: 5 ticks at each of the five spring-return positions.
+const GOV_TICK_LINES = [-130, -65, 0, 65, 130].map(tickLine)
+
+export function GovernorTicks() {
+  return (
+    <svg className="knob-ticks" viewBox="0 0 130 108" aria-hidden="true">
+      {GOV_TICK_LINES.map((t, i) => (
         <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} />
       ))}
     </svg>

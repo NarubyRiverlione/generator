@@ -1,4 +1,6 @@
-/** Core domain types — all quantities in per-unit unless noted. Frequency-free per design D4. */
+/** Core domain types — all quantities in per-unit unless noted. */
+
+export type ValveCommand = -2 | -1 | 0 | 1 | 2
 
 export type Inputs = {
   /** Exciter field DC setpoint, per-unit [0.5, 1.5]. Read-only when AVR is on. */
@@ -11,6 +13,8 @@ export type Inputs = {
   pfLag: boolean
   /** AVR enabled. */
   avrOn: boolean
+  /** Raise/lower switch: ±1 slow jog, ±2 fast jog, 0 neutral (spring-return). */
+  valveCommand: ValveCommand
 }
 
 export type SimState = {
@@ -18,6 +22,10 @@ export type SimState = {
   iField: number
   /** AVR PI integrator accumulator. */
   avrIntegral: number
+  /** Fine-valve position, % of the governing band [0, 100]; 50 = nominal (1500 rpm). */
+  valvePct: number
+  /** Lagged rotor speed, per-unit; follows valve target through spin-up lag. */
+  speedLagged: number
   /** Last valid outputs — frozen on collapse. */
   lastValidOutputs: Outputs
 }
@@ -45,6 +53,25 @@ export type Outputs = {
    * Based on discriminant / D_no_load; independent of PF and load angle.
    */
   stabilityMargin: number
+  /** Output frequency, Hz; derived as 50 × speed_pu. */
+  frequencyHz: number
+  /** Shaft speed, RPM; derived as (120 / poles) × frequencyHz. */
+  rpm: number
+  /** Fine-valve position, % of governing band [0, 100]; mirrored from SimState. */
+  valvePct: number
+}
+
+export type Params = {
+  /** Synchronous reactance, per-unit. */
+  xs: number
+  /** Armature resistance, per-unit. */
+  ra: number
+  /** Field first-order time constant, seconds. */
+  tau: number
+  /** AVR proportional gain. */
+  kp: number
+  /** AVR integral gain. */
+  ki: number
 }
 
 export type Params = {

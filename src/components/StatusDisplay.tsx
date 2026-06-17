@@ -37,19 +37,21 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
       <div className="screen">
         <div className="l1">
           <span>Vt {vtV.toFixed(0)} V</span>
-          <span>f 50.0 Hz</span>
+          <span>{Math.round(outputs.rpm)} rpm</span>
         </div>
         <div className="l2">
           <span>δ {deltaDegs.toFixed(1)}°</span>
+          <span>f {outputs.frequencyHz.toFixed(1)} Hz</span>
+        </div>
+        <div className="l3">
           <span>
             Q {outputs.q >= 0 ? '+' : ''}
             {qKVAR.toFixed(0)} kVAR
           </span>
+          <span>valve {Math.round(outputs.valvePct)} %</span>
         </div>
-        <div className="l3">
-          <span className={marginRed ? 'warn-red' : marginWarn ? 'warn-amber' : ''}>
-            VSM {marginPct}%{marginWarn ? ' ⚠' : ''}
-          </span>
+        <div className={`l4 ${marginRed ? 'warn-red' : marginWarn ? 'warn-amber' : ''}`}>
+          <span>VSM {marginPct}%{marginWarn ? ' ⚠' : ''}</span>
           <span>
             PF {pfAbs} {pfSign}
           </span>
@@ -89,7 +91,13 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
               <span className="sticky-key">Vt</span> Terminal voltage (rated 400 V)
             </div>
             <div className="sticky-line">
-              <span className="sticky-key">f</span> Frequency — fixed 50 Hz (Phase 1)
+              <span className="sticky-key">rpm</span> Shaft speed (1500 = rated); Hz = rpm / 30
+            </div>
+            <div className="sticky-line">
+              <span className="sticky-key">f</span> Output frequency — governed by turbine valve
+            </div>
+            <div className="sticky-line">
+              <span className="sticky-key">valve</span> Fine governor valve position (0–100 %; 50 % = rated)
             </div>
             <div className="sticky-line">
               <span className="sticky-key">δ</span> Load angle (classical limit ≈ 90° at unity PF)
