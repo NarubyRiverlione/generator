@@ -36,8 +36,8 @@ function zonePath(f0: number, f1: number): string {
   return `M${x1.toFixed(2)},${y1.toFixed(2)} A${R},${R} 0 ${largeArc} 1 ${x2.toFixed(2)},${y2.toFixed(2)}`
 }
 
-const TICK_FRACS = [0, 0.25, 0.5, 0.75, 1.0]
-const TICK_LABELS = ['0', '25', '50', '75', '100']
+const TICK_FRACS = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+const TICK_LABELS = ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100']
 
 export function PositionIndicator({
   setpoint,
