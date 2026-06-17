@@ -22,8 +22,8 @@ export const VALVE_RPM_MAX = 1600  // rpm at 100 % valve (overspeed trip, ~107 %
 export const RPM_RATED = 1500      // synchronous speed, 4-pole @ 50 Hz
 
 /** Jog rates (valve %/s). Inner slow stage; outer fast stage. */
-export const JOG_SLOW = 5   // %/s  ≈ 80 rpm/s at rated speed
-export const JOG_FAST = 25  // %/s  ≈ 400 rpm/s; full range ≈ 4 s
+export const JOG_SLOW = 0.03125  // %/s = 0.5 rpm/s
+export const JOG_FAST = 0.3125   // %/s = 5 rpm/s
 
 /** Spin-up lag time constant (s). Shaft is slower than the field lag (τ_field = 1.5 s). */
 export const TAU_SPINUP = 2.5
