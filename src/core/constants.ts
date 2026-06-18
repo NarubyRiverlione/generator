@@ -45,10 +45,20 @@ export const JOG_FAST = 0.3125 // %/s = 5 rpm/s
 export const JOG_COARSE_SLOW = 0.625 // %/s = 10 rpm/s
 export const JOG_COARSE_FAST = 1.5625 // %/s = 25 rpm/s
 
+/**
+ * Minimum rotor speed (pu) before the AVR is allowed to arm.
+ * Below this threshold the AVR is inhibited (treated as off) to prevent
+ * standstill excitation — mirroring real underspeed protection on synchronous machines.
+ * 0.8 pu ≈ 1200 rpm (80 % of rated).
+ */
+export const OMEGA_AVR_ENABLE = 0.8
+
 /** Governor PI — isochronous, error in pu speed, command in valve %. */
 export const OMEGA_REF = 1.0
 export const GOV_KP = 100
 export const GOV_KI = 20
+/** Maximum governor valve rate of change (%/s). Prevents aggressive slams that stress the shaft. */
+export const GOV_RATE_LIMIT = 10
 
 /** Valve actuator lag time constant (s). Mechanical lag of the motor-operated intake valve. */
 export const TAU_VALVE = 2.0

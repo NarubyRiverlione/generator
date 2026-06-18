@@ -5,8 +5,10 @@ import { stepGovernor } from './governor'
 import {
   AVR_VREF,
   DEFAULT_INPUTS,
+  OMEGA_AVR_ENABLE,
   GOV_KI,
   GOV_KP,
+  GOV_RATE_LIMIT,
   INERTIA_H,
   JOG_COARSE_FAST,
   JOG_COARSE_SLOW,
@@ -122,7 +124,10 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   let avrCommand: number
   let avrIntegral: number
 
-  if (inputs.avrOn) {
+  // AVR is inhibited below OMEGA_AVR_ENABLE (underspeed lockout — no standstill excitation).
+  const avrArmed = inputs.avrOn && state.omega >= OMEGA_AVR_ENABLE
+
+  if (avrArmed) {
     const avr = stepAvr(AVR_VREF, state.lastValidOutputs.vt, state.avrIntegral, params.kp, params.ki, dt)
     fieldTarget = avr.command
     avrCommand = avr.command
@@ -146,8 +151,10 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
 
   if (inputs.governorOn) {
     const gov = stepGovernor(OMEGA_REF, state.omega, state.governorIntegral, GOV_KP, GOV_KI, dt)
-    valvePct = gov.command
-    governorCommand = gov.command
+    // Rate-limit the valve demand: max 10 %/s to prevent shaft-stressing slams.
+    const maxStep = GOV_RATE_LIMIT * dt
+    valvePct = Math.min(100, Math.max(0, state.valvePct + Math.min(maxStep, Math.max(-maxStep, gov.command - state.valvePct))))
+    governorCommand = valvePct
     governorIntegral = gov.integral
   } else {
     valvePct = Math.min(
