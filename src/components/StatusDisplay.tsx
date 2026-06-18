@@ -24,7 +24,8 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
   const qKVAR = puToKVAR(outputs.q)
   const deltaDegs = outputs.delta * DEG
   const satPct = Math.round(outputs.saturationFactor * 100)
-  const powerBalancePct = Math.round((outputs.pm - outputs.p) * 100) // (Pm - Pe) × 100 %
+  const powerBalanceRaw = (outputs.pm - outputs.p) * 100 // (Pm - Pe) × 100 %
+  const powerBalancePct = powerBalanceRaw.toFixed(1)
   const marginPct = Math.round(outputs.stabilityMargin * 100)
   const marginWarn = outputs.stabilityMargin < 0.2
   const marginRed = outputs.stabilityMargin < 0.08
@@ -51,7 +52,7 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
             {qKVAR.toFixed(0)} kVAR
           </span>
           <span>
-            ΔP {powerBalancePct > 0 ? '+' : ''}
+            ΔP {powerBalanceRaw > 0 ? '+' : ''}
             {powerBalancePct}%
           </span>
         </div>

@@ -13,9 +13,6 @@ export type PresetName = 'cold-dark' | 'spinning-dark' | 'live-loaded'
 // Shipped default start point — trivially overridden by changing this one line.
 export const BOOT_PRESET: PresetName = 'cold-dark'
 
-// Default boot values (mirrors simulation.ts internal constants).
-const VALVE_PCT_INIT = (1495 / VALVE_RPM_MAX) * 100 // ≈ 93.44 %
-const SPEED_INIT_PU = 1495 / RPM_RATED // ≈ 0.9967
 
 const PRESETS: Record<PresetName, StartPreset> = {
   // Deliberate change from today: fully at rest — natural Phase 3a run-up start.
@@ -30,7 +27,8 @@ const PRESETS: Record<PresetName, StartPreset> = {
     seed: {},
   },
 
-  // Settled islanded operating point: field up, near-synchronous, 0.5 pu load @ 0.85 pf lag.
+  // Settled islanded operating point: synchronous speed, valve trimmed so Pm = Pe = 0.5 pu,
+  // field up, 0.5 pu load @ 0.85 pf lag, AVR and governor off.
   'live-loaded': {
     inputs: {
       ...DEFAULT_INPUTS,
@@ -39,13 +37,15 @@ const PRESETS: Record<PresetName, StartPreset> = {
       powerFactor: 0.85,
       pfLag: true,
       avrOn: false,
+      governorOn: false,
     },
     seed: {
       iField: 1.1,
       exciterLagged: 1.1,
-      omega: SPEED_INIT_PU,
-      valvePct: VALVE_PCT_INIT,
-      valveActual: VALVE_PCT_INIT,
+      omega: 1.0,
+      // valve trimmed so Pm = (valveActual/100) * PM_MAX = 0.5 pu
+      valvePct: (0.5 * RPM_RATED / VALVE_RPM_MAX) * 100,   // 46.875 %
+      valveActual: (0.5 * RPM_RATED / VALVE_RPM_MAX) * 100,
       avrIntegral: 0,
     },
   },

@@ -47,7 +47,12 @@ needs to handle the slower, larger power-balance corrections.
 
 ## Simulator status
 
-The damping term (`D·(ω − ωref)`) is **not yet implemented** — tracked in
-`openspec/changes/phase-3c-damper-windings/`. Until it is, the simulator shows the undamped
-behaviour: load-step rpm drop is approximately proportional to load size, and there is no
-oscillation decay. This is Phase 3c work, prerequisite for Phase 3d grid synchronisation.
+The damping term (`D·(ω − ωref)`) is implemented with `DAMPING_D = 0.05` (Phase 3c). On an
+islanded machine with a constant-power load the effect is subtle — the damper slows the rate of
+frequency drift but cannot arrest it, because there is no oscillation to damp. Its educational
+value becomes clear in Phase 3d (grid synchronisation), where grid coupling introduces an
+oscillating restoring force and the damper prevents that oscillation from growing unstable.
+
+## Related
+
+- [Grid frequency limits](grid-frequency-limits.md) — protection and ride-through bands; why damping matters for staying connected

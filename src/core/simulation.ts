@@ -9,6 +9,7 @@ import {
   GOV_KI,
   GOV_KP,
   GOV_RATE_LIMIT,
+  DAMPING_D,
   INERTIA_H,
   JOG_COARSE_FAST,
   JOG_COARSE_SLOW,
@@ -180,10 +181,10 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   // On collapse: Pe = 0 (load rejection — no power transfer, rotor runs free).
   const Pe = state.collapsed ? 0 : state.lastValidOutputs.p
 
-  // Swing equation (undamped pure integrator — no D term):
-  //   dω/dt = (Pm − Pe) / (2H)
+  // Swing equation with amortisseur damping:
+  //   dω/dt = (Pm − Pe − D·(ω − ωref)) / (2H)
   // Clamped to [0, OMEGA_MAX] (no reverse spin; overspeed ceiling).
-  const omegaRaw = state.omega + ((Pm - Pe) / (2 * INERTIA_H)) * dt
+  const omegaRaw = state.omega + ((Pm - Pe - DAMPING_D * (state.omega - OMEGA_REF)) / (2 * INERTIA_H)) * dt
   const omega = Math.min(OMEGA_MAX, Math.max(0, omegaRaw))
 
   // Internal EMF scales with speed: Eₐ = saturation(field_lagged) × omega

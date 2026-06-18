@@ -37,6 +37,10 @@ export const PM_MAX = VALVE_RPM_MAX / RPM_RATED // ≈ 1.0667
  */
 export const INERTIA_H = 4
 
+/** Damper winding coefficient (pu). Viscous drag proportional to slip: D·(ω − ωref).
+ * Zero at synchronous speed; set to 0 to restore undamped pure-integrator behaviour. */
+export const DAMPING_D = 0.05
+
 /** Fine jog rates (valve %/s). Inner slow stage; outer fast stage. */
 export const JOG_SLOW = 0.03125 // %/s = 0.5 rpm/s
 export const JOG_FAST = 0.3125 // %/s = 5 rpm/s

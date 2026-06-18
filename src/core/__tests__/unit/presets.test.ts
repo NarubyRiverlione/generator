@@ -1,11 +1,11 @@
 /** Unit tests for the start-point preset registry. */
 
 import { describe, expect, it } from 'vitest'
-import { RPM_RATED } from '../../constants'
+import { RPM_RATED, VALVE_RPM_MAX } from '../../constants'
 import { initialState } from '../../simulation'
 import { BOOT_PRESET, resolvePreset } from '../../presets'
 
-const SPEED_INIT_PU = 1495 / RPM_RATED
+const LIVE_LOADED_VALVE = (0.5 * RPM_RATED / VALVE_RPM_MAX) * 100 // 46.875 %
 
 describe('resolvePreset — known names', () => {
   it('live-loaded resolves to its definition', () => {
@@ -13,7 +13,9 @@ describe('resolvePreset — known names', () => {
     expect(preset.inputs.fieldVoltage).toBe(1.1)
     expect(preset.inputs.loadFraction).toBe(0.5)
     expect(preset.seed.iField).toBe(1.1)
-    expect(preset.seed.omega).toBeCloseTo(SPEED_INIT_PU, 4)
+    expect(preset.seed.omega).toBe(1.0)
+    expect(preset.seed.valvePct).toBeCloseTo(LIVE_LOADED_VALVE, 4)
+    expect(preset.seed.valveActual).toBeCloseTo(LIVE_LOADED_VALVE, 4)
   })
 
   it('cold-dark resolves to at-rest seed', () => {

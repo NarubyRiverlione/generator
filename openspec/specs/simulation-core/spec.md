@@ -2,25 +2,26 @@
 
 ## Purpose
 
-The simulation core is the pure physics engine of the islanded synchronous generator simulator. It performs all computation in per-unit, models a constant-power load, solves steady-state machine equations, applies first-order exciter field lag, provides an optional AVR PI controller, and integrates rotor speed from the undamped swing equation. It has no UI dependencies and exposes no real-unit constants inside the solver.
+The simulation core is the pure physics engine of the islanded synchronous generator simulator. It performs all computation in per-unit, models a constant-power load, solves steady-state machine equations, applies first-order exciter field lag, provides an optional AVR PI controller, and integrates rotor speed from the damped swing equation. It has no UI dependencies and exposes no real-unit constants inside the solver.
 ## Requirements
 ### Requirement: Swing-equation rotor dynamics
 The simulation core SHALL evolve rotor speed `ω` (per-unit, 1.0 = `RPM_RATED`) by integrating the
-undamped swing equation each step, rather than gliding a kinematic speed target through a lag:
+damped swing equation each step:
 
 ```
-dω/dt = (Pm − Pe) / (2H)
+dω/dt = (Pm − Pe − D·(ω − ωref)) / (2H)
 ω ← ω + (dω/dt)·dt        // forward Euler, dt = real elapsed time
 ```
 
 where `Pm` is mechanical power in (from the valve, see "Valve commands mechanical power"), `Pe` is the
-active electrical power output, and `H` is the inertia constant (s). The equation SHALL NOT include a
-damping term `D·(ω − 1)`: such a term is a restoring force toward rated speed and would make the islanded
-machine self-regulate to a steady frequency without operator action — the self-regulation this stage
-deliberately omits (it belongs to the 3b governor and the 3c grid). `ω` SHALL be a genuinely integrated
-state field on `SimState` (named `omega`); it is no longer derived from the valve position by a lag.
-`RPM_RATED` and the readout derivations (`rpm = omega · RPM_RATED`, `frequencyHz = rpm / 30`) are
-unchanged.
+active electrical power output, `H` is the inertia constant (s), `D` is the damping coefficient
+`DAMPING_D` (pu), and `ωref = OMEGA_REF = 1.0` is the synchronous reference speed. `ω` SHALL be a
+genuinely integrated state field on `SimState` (named `omega`). `RPM_RATED` and the readout derivations
+(`rpm = omega · RPM_RATED`, `frequencyHz = rpm / 30`) are unchanged.
+
+`D·(ω − ωref)` models amortisseur (damper) winding braking: zero at synchronous speed, proportional
+viscous drag under any slip. At steady state `ω = ωref` so the term is zero and has no effect on the
+isochronous governor's ability to hold exactly 1500 rpm.
 
 `Pe` SHALL be taken from the previous step's active power output (`state.lastValidOutputs.p`), so the
 integration does not depend circularly on the current solve. The one-step delay is negligible at
@@ -30,11 +31,6 @@ added to this same expression.
 `ω` SHALL be floored at 0 (the rotor cannot spin backwards) and bounded at the existing overspeed
 ceiling: when `ω` reaches `VALVE_RPM_MAX / RPM_RATED` (~1.067), the core SHALL clamp `ω` at that ceiling
 rather than integrating without limit, consistent with the established overspeed concept.
-
-Because the islanded constant-power load makes `Pe` independent of `ω`, the equation is a **pure
-integrator**: there is **no restoring force** and **no equilibrium the rotor can reach on its own**, so
-a load step makes frequency **drift monotonically** until the operator acts. Damped oscillation and
-self-settling are out of scope for this stage.
 
 #### Scenario: Surplus mechanical power accelerates the rotor from rest
 - **WHEN** `omega` is 0, the load is disconnected (`Pe = 0`), and the valve commands a positive `Pm`
@@ -87,14 +83,27 @@ margin. `Pm` SHALL be treated as power directly and SHALL NOT depend on `ω`. `P
 
 ### Requirement: Inertia parameter
 The simulation core SHALL expose an inertia constant `H` (seconds of rated kinetic energy) as a machine
-parameter. `H` SHALL be a finite positive number. The swing equation in this stage SHALL be undamped:
-the core SHALL NOT introduce a damping coefficient `D` or any other restoring force toward rated speed,
-so that a fixed valve has no equilibrium speed within the operating band (self-regulation is deferred to
-the 3b governor and the 3c grid).
+parameter. `H` SHALL be a finite positive number. The swing equation SHALL use the damping coefficient
+`DAMPING_D` as a viscous-drag term proportional to slip (see "Swing-equation rotor dynamics" and
+"Damping coefficient"). Setting `DAMPING_D = 0` recovers the undamped pure-integrator behaviour.
 
-#### Scenario: Inertia parameter present and no damping term
+#### Scenario: Inertia parameter present
 - **WHEN** the simulation is initialised
-- **THEN** the inertia constant `H` is a finite positive number, and the swing equation contains no damping / restoring-force term
+- **THEN** the inertia constant `H` is a finite positive number
+
+### Requirement: Damping coefficient
+The simulation core SHALL define a named constant `DAMPING_D` in `src/core/constants.ts` representing
+the per-unit damping coefficient for the swing equation. `DAMPING_D` SHALL be a non-negative number.
+The default value SHALL be `0.05`. A value of `0` disables damping and restores the undamped swing
+equation.
+
+#### Scenario: Damping constant exported from constants
+- **WHEN** `DAMPING_D` is imported from `constants.ts`
+- **THEN** it is a number equal to `0.05` (the default starting value)
+
+#### Scenario: Zero damping restores pure-integrator behaviour
+- **WHEN** `DAMPING_D` is set to `0` and a constant power imbalance is held with governor off
+- **THEN** `omega` changes at an approximately constant rate `(Pm − Pe)/(2H)` with no overshoot or ringing — identical to the pre-damping behaviour
 
 ### Requirement: Per-unit base and fixed machine parameters
 The simulation core SHALL perform all internal computation in per-unit, using a single central base
