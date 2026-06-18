@@ -57,6 +57,9 @@ export function Gauge({ value, min, max, unit, label, subLabel, zones, children 
   const fraction = max > min ? (value - min) / (max - min) : 0
   const [lx, ly] = fracToXY(0)
   const [rx, ry] = fracToXY(1)
+  // Outline arc runs ~1px of arc length past each end so the black caps the band ends too
+  const [olx, oly] = fracToXY(-0.008)
+  const [orx, ory] = fracToXY(1.008)
   const [nx, ny] = needleTip(fraction)
 
   return (
@@ -69,24 +72,34 @@ export function Gauge({ value, min, max, unit, label, subLabel, zones, children 
       <div className="sq-bezel">
         <div className="sq-face">
           <svg viewBox="0 0 130 120" aria-label={`${label}: ${value.toFixed(1)} ${unit}`}>
-            {/* Dark base track — full arc */}
+            {/* Black outline — full arc, widest layer, extended past both ends to cap them */}
+            <path
+              d={`M${olx.toFixed(2)},${oly.toFixed(2)} A${R},${R} 0 0 1 ${orx.toFixed(2)},${ory.toFixed(2)}`}
+              fill="none"
+              stroke="#2a2a2a"
+              strokeWidth={12}
+            />
+
+            {/* Grey base track — full arc; fills wherever no coloured zone is drawn */}
             <path
               d={`M${lx.toFixed(2)},${ly.toFixed(2)} A${R},${R} 0 0 1 ${rx.toFixed(2)},${ry.toFixed(2)}`}
               fill="none"
-              stroke="#2a2a2a"
+              stroke="#cfcfc7"
               strokeWidth={10}
             />
 
-            {/* Coloured zone arcs on same radius — no gap */}
-            {zones.map((z, i) => (
-              <path
-                key={i}
-                d={zonePath(i === 0 ? 0 : zones[i - 1].end, z.end)}
-                fill="none"
-                stroke={z.color}
-                strokeWidth={8}
-              />
-            ))}
+            {/* Coloured zone arcs at the same width as grey → black outline shows all around */}
+            {zones.map((z, i) =>
+              z.color === 'transparent' ? null : (
+                <path
+                  key={i}
+                  d={zonePath(i === 0 ? 0 : zones[i - 1].end, z.end)}
+                  fill="none"
+                  stroke={z.color}
+                  strokeWidth={10}
+                />
+              ),
+            )}
 
             {/* Tick marks and value labels at 0, 25, 50, 75, 100% */}
             {TICK_FRACS.map((f) => {

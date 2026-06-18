@@ -6,9 +6,9 @@ import { Gauge } from './Gauge'
 
 type Props = { outputs: Outputs }
 
-// Range 0–420 V: 0–390 orange, 390–410 green, 410–420 red.
+// Range 0–420 V: 0–390 transparent (grey track shows), 390–410 green, 410–420 red.
 const VT_ZONES = [
-  { end: 390 / 420, color: '#e8a02a' },
+  { end: 390 / 420, color: 'transparent' },
   { end: 410 / 420, color: '#20c24a' },
   { end: 1.0, color: '#e23b2e' },
 ]
