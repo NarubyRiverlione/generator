@@ -1,0 +1,54 @@
+1. The "Voltage & Frequency" Group (The Basics)
+
+- ANSI 27 – Undervoltage: (The one you have). Trips if voltage drops (faults or overloads).
+
+- ANSI 59 – Overvoltage: Protects insulation if the AVR "runs away" or a large load is suddenly dropped.
+
+- ANSI 81O / 81U – Over/Under Frequency: Linked to your Governor. Trips if the RPM goes too high (1700+) or too low (1300-) to protect the turbine blades and connected motors.
+
+2. The "Magnetic & Field" Group (The Advanced)
+
+- ANSI 40 – Loss of Field: Detects when the exciter stops providing DC. It monitors the "VARs" flowing into the generator. This protects the Damper Wiring from the heat of asynchronous operation.
+
+- ANSI 78 – Out-of-Step (Pole Slip): Monitors the Power Angle (\(\delta\)). If \(\delta\) crosses \(90^\circ\) and the rotor "slips," this relay trips to prevent the massive mechanical torque from snapping the shaft.
+
+- ANSI 24 – Volts per Hertz (Overexcitation): Prevents the magnetic core from saturating. If you try to push 400V at 30Hz, the iron will melt. This relay ensures \(V/f\) remains constant.
+
+3. The "Current & Load" Group
+
+- ANSI 50/51 – Instantaneous / Time Overcurrent: The "Circuit Breaker" logic. Protects the Main Stator Wiring from melting during a short circuit.
+
+- ANSI 32 – Reverse Power: Detects if the generator starts acting like a motor (drawing Watts from the grid). Protects the engine/turbine from being "spun" by the grid.
+
+- ANSI 46 – Negative Sequence Current: Specifically protects the Rotor/Damper Wiring. It detects "Unbalanced Loads" (e.g., more load on Phase A than B). This creates a magnetic field that spins the wrong way and heats the rotor.
+
+4. The "Internal Health" Group
+
+- ANSI 87G – Differential Protection: The "Gold Standard." It compares the current at the Neutral vs. the Terminals. If they aren't identical, it means electricity is "leaking" inside the stator (a fire/short). It trips instantly.
+
+- ANSI 64G – Generator Ground Fault: Detects if any part of the high-voltage wiring is touching the metal frame/earth.
+
+- ANSI 49 – Stator Thermal Overload: A "virtual" relay that uses the RTD wiring to calculate if the internal windings are getting too hot based on current flow over time.
+
+5. The "Master" Components
+
+- ANSI 86 – Lockdown / Master Trip Relay: This is a physical "Lockout" relay. When any of the above relays trip, they send a signal to the 86. The 86 then:
+	1. Trips the Main Breaker.
+
+	2. Trips the Field/Exciter Breaker.
+
+	3. Closes the Intake Valve.
+
+	4. Stays tripped until a human physically resets it (safety first).
+
+
+- ANSI 25 – Synchronism Check: This is the "Gatekeeper." It prevents the operator from closing the breaker unless the Generator and Grid are perfectly matched in Voltage, Frequency, and Phase.
+
+Summary for your Simulator:
+
+Relay	Input Source	Logic Trigger	Effect
+27	PT (Voltage)	\(V < 360V\)	Trip Breaker
+32	CT/PT (Power)	\(Watts < -20kW\)	Close Intake Valve
+40	CT/PT (VARs)	\(VARs < -300kVAR\)	Trip Field & Breaker
+81	MPU (Speed)	\(RPM > 1650\)	Emergency Stop
+87	CTs (Differential)	\(I_{terminal} \neq I_{neutral}\)	Master Trip (86)
