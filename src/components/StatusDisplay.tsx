@@ -23,8 +23,6 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
   const vtV = puToVolts(outputs.vt)
   const qKVAR = puToKVAR(outputs.q)
   const deltaDegs = outputs.delta * DEG
-  const pfAbs = Math.abs(outputs.pf).toFixed(2)
-  const pfSign = outputs.pf < 0 ? 'lead' : 'lag'
   const satPct = Math.round(outputs.saturationFactor * 100)
   const droopRpm = Math.round(outputs.droopRpm)
   const marginPct = Math.round(outputs.stabilityMargin * 100)
@@ -50,16 +48,13 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
             Q {outputs.q >= 0 ? '+' : ''}
             {qKVAR.toFixed(0)} kVAR
           </span>
-          <span>SAT {satPct}%</span>
-          <span>DRP {droopRpm} rpm</span>
+          <span>Drop {droopRpm} rpm</span>
         </div>
         <div className={`l4 ${marginRed ? 'warn-red' : marginWarn ? 'warn-amber' : ''}`}>
           <span>
             VSM {marginPct}%{marginWarn ? ' ⚠' : ''}
           </span>
-          <span>
-            PF {pfAbs} {pfSign}
-          </span>
+          <span>SAT {satPct}%</span>
         </div>
       </div>
 
@@ -127,13 +122,10 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
               <span className="sticky-key">SAT</span> Saturation derate — 100 % unsaturated; &lt;100 % when field pushed above the knee
             </div>
             <div className="sticky-line">
-              <span className="sticky-key">DRP</span> Load-droop — rpm the active load pulls below the valve-only speed target
+              <span className="sticky-key">Drop</span> Load-droop — rpm the active load pulls below the valve-only speed target
             </div>
             <div className="sticky-line">
               <span className="sticky-key">VSM</span> Voltage stability margin — warn &lt;20%, danger &lt;8%
-            </div>
-            <div className="sticky-line">
-              <span className="sticky-key">PF</span> Power factor — lag = inductive, ld = capacitive
             </div>
           </div>
         )}

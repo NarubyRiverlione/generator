@@ -16,7 +16,7 @@ import { StatusDisplay } from './components/StatusDisplay'
 import { useGeneratorSimulation } from './hooks/useGeneratorSimulation'
 
 export default function App() {
-  const { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand, kp, ki, setKp, setKi } =
+  const { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand } =
     useGeneratorSimulation()
 
   const fieldValue = inputs.avrOn ? outputs.avrCommand : inputs.fieldVoltage
@@ -126,38 +126,6 @@ export default function App() {
               RESET
             </div>
           </div>
-        </div>
-
-        {/* Row 4, col 3: Kp knob — AVR proportional gain */}
-        <div className="knob-cell" style={{ gridColumn: 3, gridRow: 4, alignSelf: 'center' }}>
-          <Knob
-            label="AVR Kp"
-            min={0.5}
-            max={5.0}
-            step={0.01}
-            value={kp}
-            display={`${kp.toFixed(2)}`}
-            scaleMin="0.5"
-            scaleMax="5.0"
-            ptrRotation={-130 + ((kp - 0.5) / (5.0 - 0.5)) * 260}
-            onChange={(v) => setKp(clamp(v, 0.5, 5.0))}
-          />
-        </div>
-
-        {/* Row 4, col 4: Ki knob — AVR integral gain */}
-        <div className="knob-cell" style={{ gridColumn: 4, gridRow: 4, alignSelf: 'center' }}>
-          <Knob
-            label="AVR Ki"
-            min={0.1}
-            max={2.0}
-            step={0.01}
-            value={ki}
-            display={`${ki.toFixed(2)}`}
-            scaleMin="0.1"
-            scaleMax="2.0"
-            ptrRotation={-130 + ((ki - 0.1) / (2.0 - 0.1)) * 260}
-            onChange={(v) => setKi(clamp(v, 0.1, 2.0))}
-          />
         </div>
 
         {/* Row 1, col 6: valve position indicator */}

@@ -21,9 +21,9 @@ Fixed 50 Hz, single machine, no grid connection.
 - AVR with PI controller (Kp = 2.0, Ki = 0.5) and anti-windup
 - SVG arc gauges for Vt and P; LCD readout for Q, δ, VSM, PF
 - Voltage stability margin (VSM) warning; 27-relay under-voltage trip
-- Fixed machine parameters (Xₛ = 1.2 pu, Rₐ = 0.05 pu); AVR reference fixed at rated (1.0 pu / 400 V)
+- Fixed machine parameters (Xₛ = 0.8 pu, Rₐ = 0.05 pu); AVR reference fixed at rated (1.0 pu / 400 V)
 
-### Phase 2 — RPM / Frequency control (spec complete — implementation pending)
+### Phase 2 — RPM / Frequency control (complete)
 
 Prerequisite: Phase 1.
 
@@ -37,13 +37,14 @@ Prerequisite: Phase 1.
 > **Planned addition (branch `spec-twin-needle-valve-dial`):** a `PositionIndicator` (twin-needle circular instrument) as the
 > primary readout for intake valve position — spec exists on that branch, not yet merged.
 
-### Saturation & AVR tuning (planned — standalone, unscheduled)
+### Saturation & AVR tuning (complete)
 
 Carved out of Phase 2 (it concerns the voltage channel). Prerequisite: Phase 2.
 
-- Magnetic saturation: Ea/field curve flattens above ~1.1 pu; shows AVR ceiling under heavy load
-- Second field time constant: stacked τ_exciter + τ_field produces AVR overshoot and ringing
-- Kp/Ki become user-adjustable; tuning against the second-order saturating plant becomes meaningful
+- Magnetic saturation: Ea/field curve flattens above the knee; shows AVR ceiling under heavy load.
+  Surfaced live on the LCD as a saturation-derate (`SAT %`) readout
+- Second field time constant: stacked τ_exciter (0.4 s) + τ_field (1.1 s) produce AVR overshoot and ringing
+- Kp/Ki are user-adjustable; tuning against the second-order saturating plant is meaningful
 
 ### Phase 3 — Synchronisation to grid (planned)
 
