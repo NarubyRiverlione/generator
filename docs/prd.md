@@ -289,13 +289,27 @@ operation where the inter-machine coupling introduces oscillatory torque.
 
 #### Stage 3d — Cold-start load pickup
 **One concept: instantaneous load step onto an islanded machine.** Add a **load breaker** button that
-closes the building/ship load in a single step (no ramp). The machine must absorb the full Pe jump on
-inertia alone while the governor races to raise Pm. Too large a step = frequency collapse and stall.
-Key learning: why backup generators are oversized, what `H` and `TAU_VALVE` mean in practice, and why
-the governor speed matters more than its steady-state accuracy.
+closes the ship load in a single step (no ramp). The machine must absorb the full Pe jump on inertia
+alone while the governor races to raise Pm. Too large a step = frequency collapse and stall.
+Key learning: why tug generators are oversized, what `H` and `TAU_VALVE` mean in practice, and why
+governor response speed matters more than steady-state accuracy.
 
 Correction from Phase 3 assumptions: `TAU_VALVE` will be revised from 2.0 s (steam plant) to ~0.3 s
-(diesel/gas fuel rack) to reflect the ship generator reality.
+(diesel throttle) to reflect the tug generator reality.
+
+**Startup sequence and arming logic** (already implemented — surfaced as a teaching point here):
+The cold-start sequence makes the arming logic visceral and observable:
+
+1. Engine starts → shaft spins up from 0 rpm (cold-dark preset)
+2. Below **~1200 rpm (0.8 pu)** — AVR inhibited, governor inhibited; field cannot build, no frequency
+   control. The operator can only watch the shaft accelerate.
+3. At **~1200 rpm** — AVR arms; field can now be raised and terminal voltage builds
+4. At **~1500 rpm (rated)** — governor can engage; frequency regulation becomes available
+5. Load breaker closes — machine carries the ship load
+
+This mirrors real diesel generator startup procedure: the machine must reach idle speed before any
+electrical or control systems are permitted to operate. The arming thresholds are a safety feature,
+not a software convenience.
 
 #### Stage 3e — Overvoltage protection and load shedding
 **One concept: protection responding to two failure modes.** Adds two relays:
