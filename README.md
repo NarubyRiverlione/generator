@@ -6,14 +6,13 @@ The goal is to build intuition for relationships that are hard to grasp from equ
 
 ## Machine context
 
-The simulated machine is a **1 MVA ship's generator** — one unit in a vessel's isolated power plant. There is no shore connection, no infinite bus. The generators *are* the grid.
+The simulated vessel is a **harbour tug** with **two identical 1 MVA generators** on an isolated internal grid. There is no shore connection, no infinite bus. The generators *are* the grid.
 
-This framing is deliberate:
-- Realistic operating range is **40–70 % of rated** (oversized to absorb bow thruster starts, crane picks, galley peaks)
-- Load steps are ship-scale events — discrete, sudden, and consequential
-- A blackout is immediate and tangible — the stakes are real
-- Synchronisation happens between machines, not to an abstraction
-- The full story ends with multiple units running in parallel, sharing load, and a standby unit syncing in when a large consumer demands it
+The simulator teaches through two distinct scenarios:
+- **Manual unit, auto reference** — Generator 2 runs automatically, owns the frequency. The learner operates Generator 1 and syncs to it.
+- **Auto unit, manual reference** — Generator 1 is the running reference. Generator 2 starts automatically; the learner watches or assists the sync and parallel operation.
+
+Realistic operating range is **40–70 % per unit** — the machines are intentionally oversized so bow thruster starts and towing peaks stay within headroom.
 
 > **Branch point — utility grid variant:** the codebase at git tag `islanded-baseline` is the clean
 > starting point for a future utility-scale simulator (infinite bus, power station unit, grid operator

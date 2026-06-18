@@ -8,24 +8,32 @@ Parameters are chosen to reflect a real machine, not a textbook toy. Physics are
 
 ## Machine Context
 
-The simulated machine is a **1 MVA ship's generator** — one of several units in a vessel's power plant. The ship operates its own **isolated internal grid**: no shore connection, no infinite bus. The generators are the grid.
+The simulated vessel is a **harbour tug** with **two identical 1 MVA generators**. The tug operates its own **isolated internal grid**: no shore connection, no infinite bus. The generators are the grid.
 
 | Property | Value | Rationale |
 |---|---|---|
-| Rated power | 1 MVA | Mid-size vessel auxiliary unit |
+| Rated power per unit | 1 MVA | Typical harbour tug auxiliary |
+| Total installed | 2 x 1 MVA | Redundancy + load matching |
 | Rated voltage | 400 V L-L | Standard marine LV distribution |
 | Rated frequency | 50 Hz | European / international standard |
-| Normal operating range | 40–70 % of rated | Intentional oversizing for load spikes |
-| Connection | Ship's isolated grid | No external grid |
+| Normal operating range | 40-70 % per unit | Oversized for towing and thruster peaks |
+| Connection | Tug's isolated grid | No external grid |
 
-**Why a ship?** The ship's power plant is the ideal teaching environment:
+**Why a harbour tug?** The tug is the ideal teaching environment:
+- Small enough that 1 MVA per unit is entirely realistic
 - The grid is isolated and fully visible — no hidden infinite bus absorbing disturbances
-- New consumers (bow thruster, crane, galley load) are discrete, sudden, and relatable
-- A blackout is immediate and consequential — the stakes are tangible
-- Multiple generators must sync to each other, not to an abstraction
-- Maritime engineers learn exactly this way
+- Load events are discrete and relatable: towing winch, bow thruster, hotel load
+- A blackout during a towing operation is immediate and consequential
+- Two generators means synchronisation happens between machines you understand, not to an abstraction
 
-**Why 40–70 % operating range?** Ship generators are intentionally oversized. A vessel needing 600 kW of hotel load runs a 1 MVA unit so that bow thruster starts, crane picks, and galley peaks stay within headroom. Operating near 100 % is an emergency condition.
+**Why two units?** Load management on a tug is a real decision: one unit at 65% is more fuel-efficient than two at 30%. The load management system starts the second unit when demand rises, syncs it in, and shares load — then reverses when demand drops. This gives two distinct teaching scenarios with clear boundaries:
+
+| Scenario | Description |
+|---|---|
+| **Manual unit, auto reference** | Generator 2 runs automatically and owns the grid frequency. The learner operates Generator 1 and must sync to it before closing its breaker. |
+| **Auto unit, manual reference** | Generator 1 is the running reference. Generator 2 starts automatically, and the learner watches the sync and parallel operation. |
+
+**Why 40-70 % operating range?** Tug generators are intentionally oversized so that bow thruster starts and towing load peaks stay within headroom. Operating near 100 % is an emergency condition.
 
 > **Branch point — utility grid variant:** the codebase at git tag `islanded-baseline` is the
 > intended starting point for a future utility-scale simulator (infinite bus, power station unit,
