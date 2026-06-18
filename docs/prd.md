@@ -297,11 +297,16 @@ the governor speed matters more than its steady-state accuracy.
 Correction from Phase 3 assumptions: `TAU_VALVE` will be revised from 2.0 s (steam plant) to ~0.3 s
 (diesel/gas fuel rack) to reflect the ship generator reality.
 
-#### Stage 3e — Frequency collapse and load shedding
-**One concept: automatic load dropping under under-frequency.** When frequency falls below a threshold
-(e.g. 48.5 Hz), the ship's load management system automatically sheds non-essential consumers to
-prevent a blackout. Adds an under-frequency relay (ANSI-81) and a priority-ordered load shed sequence.
-Key learning: protection as a last line of defence, and why load hierarchy matters on a ship.
+#### Stage 3e — Overvoltage protection and load shedding
+**One concept: protection responding to two failure modes.** Adds two relays:
+- **ANSI-59 (overvoltage)**: when the load breaker opens (load rejection), Pm suddenly exceeds Pe and
+  voltage spikes as the rotor accelerates. The 59 trips the field if Vt exceeds its threshold, protecting
+  insulation. Natural companion to the existing ANSI-27.
+- **ANSI-81 (under-frequency)**: when frequency falls below threshold (e.g. 48.5 Hz), the ship's load
+  management system automatically sheds non-essential consumers to prevent a blackout.
+
+Key learning: protection as a last line of defence; why load rejection is as dangerous as overload;
+why load hierarchy matters on a ship.
 
 ### Phase 4 — Ship's parallel operation
 **Prerequisite:** Phase 3 complete
@@ -319,11 +324,16 @@ between the incoming unit and the running grid. A synchro-check (ANSI-25) gate g
 Closing into a large mismatch produces a visible rotor swing — now the damper winding's effect becomes
 dramatic and unmistakable.
 
-#### Stage 4c — Droop and load sharing
+#### Stage 4c — Droop, load sharing, and reverse power protection
 **One concept: parallel load sharing.** With two units running, the governor changes from isochronous
 (holds exact frequency alone) to droop mode (shares load proportionally). Each machine's governor
 droops its frequency setpoint as load increases, forcing automatic sharing. Key learning: why droop is
 essential for parallel operation and why two isochronous governors fight each other.
+
+Adds **ANSI-32 (reverse power)**: if one unit's governor fails or its fuel supply is cut while
+paralleled, it stops producing and starts motoring — drawing power from the other unit and spinning
+its engine backwards. The 32 relay detects negative active power and trips that unit's breaker before
+the engine is damaged. Only meaningful in parallel operation, so this is the correct stage for it.
 
 #### Stage 4d — Consumer-triggered standby start
 **One concept: automatic load management.** A large new consumer (bow thruster, crane) triggers

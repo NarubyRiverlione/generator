@@ -35,8 +35,8 @@ See [`docs/naming.md`](docs/naming.md) for the canonical component names (`Gauge
 | 3b | Automatic governor — PI frequency regulation | done |
 | 3c | Damper windings — passive rotor stabilisation | done |
 | 3d | Cold-start load pickup — load breaker, instantaneous step | planned |
-| 3e | Load shedding — ANSI-81 under-frequency relay | planned |
+| 3e | Overvoltage & load shedding — ANSI-59, ANSI-81 | planned |
 | 4a | Second generator startup | planned |
 | 4b | Synchronisation between units — synchroscope, ANSI-25 | planned |
-| 4c | Droop and load sharing — parallel governors | planned |
+| 4c | Droop, load sharing, reverse power — ANSI-32 | planned |
 | 4d | Consumer-triggered standby start | planned |
