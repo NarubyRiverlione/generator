@@ -2,9 +2,30 @@
 
 ## Overview
 
-An interactive single-page React application that simulates the steady-state behaviour of a synchronous generator with an exciter. The goal is educational: to build a deep, intuitive understanding of how a realistic European synchronous generator behaves — the kind you would find in a small-to-medium power plant or industrial installation operating on the 50 Hz European grid.
+An interactive single-page React application that simulates the behaviour of a synchronous generator with an exciter. The goal is educational: to build a deep, intuitive understanding of how a realistic standby generator behaves — the kind protecting a hospital, data centre, or industrial facility during a grid outage.
 
 Parameters are chosen to reflect a real machine, not a textbook toy. Physics are honest but not academically exhaustive.
+
+## Machine Context
+
+The simulated machine is a **1 MVA standby (backup) generator** operating **islanded** — no grid connection, no infinite bus. It carries its own load alone.
+
+| Property | Value | Rationale |
+|---|---|---|
+| Rated power | 1 MVA | Hospital / data-centre scale |
+| Rated voltage | 400 V L-L | European LV standard |
+| Rated frequency | 50 Hz | European standard |
+| Operating range | 40–70 % of rated | Intentional oversizing for load spikes |
+| Connection | Islanded only | No grid in this line |
+
+**Why islanded?** The backup generator's challenge is fundamentally different from grid-connected operation. There is no infinite bus to stabilise frequency — inertia, the damper winding, and the governor are the only defence against frequency collapse. The critical scenario is cold-start load pickup: the breaker closes onto a building load in one step, and the machine must absorb it alone.
+
+**Why 40–70 % operating range?** Backup generators are intentionally oversized. A building needing 600 kW gets a 1 MVA machine so that motor inrush, UPS transfers, and HVAC switching stay well within the machine's headroom. Operating near 100 % rated is an emergency condition, not normal practice.
+
+> **Branch point — grid-connected variant:** the codebase at git tag `islanded-baseline` is the
+> intended starting point for a future grid-connected simulator (infinite bus, synchroscope,
+> parallel operation, droop sharing). That variant follows a different operational philosophy and
+> should branch from that tag rather than extending this line.
 
 ---
 

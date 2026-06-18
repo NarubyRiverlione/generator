@@ -4,6 +4,21 @@ An interactive single-page simulator for a synchronous generator with an exciter
 
 The goal is to build intuition for relationships that are hard to grasp from equations alone: why terminal voltage sags under load, what the AVR is actually doing, and why frequency and voltage are controlled by entirely separate physical inputs.
 
+## Machine context
+
+The simulated machine is a **1 MVA standby (backup) generator** — the size you would find protecting a hospital, data centre, or industrial facility during a grid outage. It operates **islanded**: no grid connection, no infinite bus, carrying its own load alone.
+
+This framing is deliberate:
+- Realistic operating range is **40–70 % of rated** (the machine is intentionally oversized to absorb load spikes)
+- Load steps are building-scale events — motors starting, UPS transfers, HVAC switching
+- Frequency stability depends entirely on inertia, the damper winding, and the governor — there is no grid to help
+- The critical scenario is **cold-start load pickup**: breaker closes onto a building load in one step
+
+> **Branch point — grid-connected variant:** the codebase at git tag `islanded-baseline` is the clean
+> starting point for a future grid-connected variant (infinite bus, synchroscope, parallel operation).
+> That variant follows a different operational philosophy and should branch from that tag rather than
+> continuing this line.
+
 Built with Vite + React + TypeScript. All physics in `src/core/` (pure functions, no React). Hand-rolled SVG instruments and a gray-steel switchboard aesthetic. Uses **pnpm** as the package manager (`pnpm install`, `pnpm dev`, `pnpm vitest run --coverage`).
 
 See [`docs/naming.md`](docs/naming.md) for the canonical component names (`Gauge`, `PositionIndicator`, `Knob`, `SelectorSwitch`, `SpringLoadedSelector`) — these names must be used consistently in all new development, specs, and docs.
