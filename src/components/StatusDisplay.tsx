@@ -119,10 +119,12 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
               <span className="sticky-key">Q</span> Reactive power — + supplying, − absorbing
             </div>
             <div className="sticky-line">
-              <span className="sticky-key">SAT</span> Saturation derate — 100 % unsaturated; &lt;100 % when field pushed above the knee
+              <span className="sticky-key">SAT</span> Saturation derate — 100 % unsaturated; &lt;100 % when field pushed
+              above the knee
             </div>
             <div className="sticky-line">
-              <span className="sticky-key">Drop</span> Load-droop — rpm the active load pulls below the valve-only speed target
+              <span className="sticky-key">Drop</span> Load-droop — rpm the active load pulls below the valve-only speed
+              target
             </div>
             <div className="sticky-line">
               <span className="sticky-key">VSM</span> Voltage stability margin — warn &lt;20%, danger &lt;8%
