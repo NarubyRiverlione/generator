@@ -16,6 +16,7 @@ export type SimHook = {
   relay27Tripped: boolean
   resetRelay27: () => void
   setValveCommand: (cmd: ValveCommand) => void
+  setCoarseValveCommand: (cmd: ValveCommand) => void
 }
 
 export function useGeneratorSimulation(presetName?: string): SimHook {
@@ -40,8 +41,9 @@ export function useGeneratorSimulation(presetName?: string): SimHook {
     inputsRef.current = inputs
   }, [inputs])
 
-  // 4.1 valveCommand held in ref so press-and-hold updates bypass React state batching
+  // valveCommand refs held outside React state so press-and-hold updates bypass batching
   const valveCommandRef = useRef<ValveCommand>(0)
+  const coarseValveCommandRef = useRef<ValveCommand>(0)
 
   useEffect(() => {
     let lastScheduled = 0
@@ -58,10 +60,11 @@ export function useGeneratorSimulation(presetName?: string): SimHook {
         lastTimeRef.current = timestamp
         lastScheduled = timestamp
 
-        // 4.2 Inject the current valve switch position; clamp load to 0 while relay is latched
+        // Inject live switch positions; clamp load to 0 while relay is latched
         const tickInputs: Inputs = {
           ...inputsRef.current,
           valveCommand: valveCommandRef.current,
+          coarseValveCommand: coarseValveCommandRef.current,
           ...(relay27Ref.current ? { loadFraction: 0 } : {}),
         }
         const result = step(stateRef.current, tickInputs, PARAMS, dt)
@@ -101,10 +104,13 @@ export function useGeneratorSimulation(presetName?: string): SimHook {
     setRelay27Tripped(false)
   }, [])
 
-  // 4.3 Setter for the raise/lower switch; written directly to ref (no re-render needed)
   const setValveCommand = useCallback((cmd: ValveCommand) => {
     valveCommandRef.current = cmd
   }, [])
 
-  return { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand }
+  const setCoarseValveCommand = useCallback((cmd: ValveCommand) => {
+    coarseValveCommandRef.current = cmd
+  }, [])
+
+  return { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand, setCoarseValveCommand }
 }

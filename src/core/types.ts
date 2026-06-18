@@ -13,8 +13,12 @@ export type Inputs = {
   pfLag: boolean
   /** AVR enabled. */
   avrOn: boolean
-  /** Raise/lower switch: ±1 slow jog, ±2 fast jog, 0 neutral (spring-return). */
+  /** Governor enabled (isochronous PI on speed error → valve setpoint). */
+  governorOn: boolean
+  /** Fine raise/lower switch: ±1 slow jog, ±2 fast jog, 0 neutral (spring-return). */
   valveCommand: ValveCommand
+  /** Coarse raise/lower switch: ±1 slow jog, ±2 fast jog, 0 neutral (spring-return). Rates 2× / 5× fine fast. */
+  coarseValveCommand: ValveCommand
 }
 
 export type SimState = {
@@ -24,6 +28,8 @@ export type SimState = {
   exciterLagged: number
   /** AVR PI integrator accumulator. */
   avrIntegral: number
+  /** Governor PI integrator accumulator. */
+  governorIntegral: number
   /** Valve position, % of full travel [0, 100]; 0 = closed = 0 rpm; ~93.75 = rated (1500 rpm). */
   valvePct: number
   /** Physical valve position (%), lags behind `valvePct` through actuator lag. */
@@ -53,6 +59,8 @@ export type Outputs = {
   iField: number
   /** AVR field command (per-unit); equals fieldVoltage when AVR off. */
   avrCommand: number
+  /** Governor valve command (%), equals valvePct when governor off. */
+  governorCommand: number
   /** true when load exceeds maximum loadability. */
   collapsed: boolean
   /**

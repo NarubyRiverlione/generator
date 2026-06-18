@@ -21,13 +21,18 @@ two control channels.
 - **Add an automatic governor** to the simulation core: a controller that senses speed error
   `(ωref − ω)` and commands the valve / mechanical power `Pm` to hold rated frequency (50 Hz). Mirrors
   the AVR's PI structure and anti-windup.
-- **Default off**, toggled by a selector switch, exactly like the AVR. When **on**, the speed-changer
-  becomes read-only and displays the value the governor is commanding; when off, the speed-changer is
-  manual (Stage 3a behaviour).
+- **Default off**, toggled by a selector switch, exactly like the AVR. When **on**, both speed-changer
+  switches become read-only and display the valve position the governor is commanding; when off, the
+  speed-changers are manual (Stage 3a behaviour).
 - **Isochronous** characteristic — restores frequency to exactly 50 Hz (correct for a single islanded
   machine). Droop-mode load sharing is explicitly a Phase 4 concern.
 - **Governor-at-ceiling indicator** (valve can't open past 100 %) mirroring the existing
   field-at-ceiling indicator.
+- **Add a coarse speed-changer** — a second spring-return raise/lower switch alongside the existing
+  fine one, with jog rates 2× those of the fine switch (coarse slow = 1 rpm/s, coarse fast = 10 rpm/s).
+  Both switches contribute additively to the valve setpoint. The coarse switch allows fast repositioning
+  before trimming with the fine switch. Rates are anchored to the fine fast rate: coarse slow = 2× fine
+  fast (10 rpm/s), coarse fast = 5× fine fast (25 rpm/s).
 
 ## Non-goals
 
@@ -43,13 +48,14 @@ two control channels.
 
 - `simulation-core`: add the isochronous governor controller acting on speed error → Pm command, with
   default-off gating and anti-windup.
-- `simulator-ui`: add the governor on/off selector, make the speed-changer read-only when on (showing the
-  commanded value), and add a governor-at-ceiling indicator.
+- `simulator-ui`: add the governor on/off selector, add the coarse speed-changer switch, make both
+  speed-changers read-only when governor is on (showing the commanded value), and add a
+  governor-at-ceiling indicator.
 
 ## Impact
 
 - Affected specs: `simulation-core`, `simulator-ui`.
-- Affected code: `src/core/simulation.ts` (governor step, mirroring `stepAvr`), `src/core/constants.ts`
-  (governor gains, `ωref`), `src/core/types.ts` (`governorOn` input, governor state), the input panel and
-  status display components.
+- Affected code: `src/core/simulation.ts` (governor step, combined coarse+fine jog), `src/core/constants.ts`
+  (governor gains, `ωref`, `JOG_COARSE_SLOW`, `JOG_COARSE_FAST`), `src/core/types.ts` (`governorOn`,
+  `coarseValveCommand` inputs, governor state), the input panel and status display components.
 - Prerequisite: Stage 3a. Prerequisite for: full Phase 3 experience (sync with a regulated machine).

@@ -13,12 +13,18 @@ import type { ValveCommand } from '../core/types'
 // cmd → pointer rotation (matches KnobTicks: ticks at −65°, 0°, +65°, +130°)
 const CMD_ANGLE: Record<ValveCommand, number> = { [-2]: -130, [-1]: -65, [0]: 0, [1]: 65, [2]: 130 }
 
-type Props = { onCommand: (cmd: ValveCommand) => void }
+type Props = {
+  label?: string
+  onCommand: (cmd: ValveCommand) => void
+  readOnly?: boolean
+  lockLabel?: string
+}
 
-export function SpringLoadedSelector({ onCommand }: Props) {
+export function SpringLoadedSelector({ label = 'GOVERNOR', onCommand, readOnly = false, lockLabel }: Props) {
   const [active, setActive] = useState<ValveCommand>(0)
 
   function handleMouseDown(e: React.MouseEvent<HTMLDivElement>) {
+    if (readOnly) return
     const { offsetX, offsetY } = e.nativeEvent
     const { offsetWidth, offsetHeight } = e.currentTarget
     const left = offsetX < offsetWidth / 2
@@ -29,21 +35,24 @@ export function SpringLoadedSelector({ onCommand }: Props) {
   }
 
   function handleRelease() {
+    if (readOnly) return
     setActive(0)
     onCommand(0)
   }
 
-  const ptrRotation = CMD_ANGLE[active]
+  const ptrRotation = CMD_ANGLE[readOnly ? 0 : active]
 
   return (
     <div className="knob-wrap">
-      <div className="card">GOVERNOR</div>
+      <div className="card">{label}</div>
       <div
-        className="knob-hitbox knob-clickable"
+        className={`knob-hitbox${readOnly ? '' : ' knob-clickable'}`}
+        style={readOnly ? { cursor: 'default' } : undefined}
         onMouseDown={handleMouseDown}
         onMouseUp={handleRelease}
         onMouseLeave={handleRelease}
         onTouchStart={(e) => {
+          if (readOnly) return
           e.preventDefault()
           const t = e.touches[0]
           const rect = e.currentTarget.getBoundingClientRect()
@@ -56,10 +65,10 @@ export function SpringLoadedSelector({ onCommand }: Props) {
         onTouchEnd={handleRelease}
         onTouchCancel={handleRelease}
         role="slider"
-        aria-label="Governor speed-changer"
+        aria-label={`${label} speed-changer`}
         aria-valuemin={-2}
         aria-valuemax={2}
-        aria-valuenow={active}
+        aria-valuenow={readOnly ? 0 : active}
         tabIndex={0}
       >
         <GovernorTicks />
@@ -74,14 +83,14 @@ export function SpringLoadedSelector({ onCommand }: Props) {
       </div>
       {/* invisible spacers — match scale + plate + locktag height on Knob so alignSelf:center lands at the same knob height */}
       <div className="scale" style={{ visibility: 'hidden' }}>
-        <span>{' '}</span>
-        <span>{' '}</span>
+        <span>{' '}</span>
+        <span>{' '}</span>
       </div>
       <div className="plate" style={{ visibility: 'hidden' }}>
         -
       </div>
-      <div className="locktag" style={{ visibility: 'hidden' }}>
-        {' '}
+      <div className="locktag" style={{ visibility: lockLabel ? 'visible' : 'hidden' }}>
+        {lockLabel ?? ' '}
       </div>
     </div>
   )

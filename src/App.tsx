@@ -17,7 +17,7 @@ import { useGeneratorSimulation } from './hooks/useGeneratorSimulation'
 
 export default function App() {
   const startParam = new URLSearchParams(window.location.search).get('start') ?? undefined
-  const { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand } =
+  const { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand, setCoarseValveCommand } =
     useGeneratorSimulation(startParam)
 
   const fieldValue = inputs.avrOn ? outputs.avrCommand : inputs.fieldVoltage
@@ -85,12 +85,24 @@ export default function App() {
 
         {/* Row 3, col 1: indicator lights (top 4) — vertically centered */}
         <div style={{ gridColumn: 1, gridRow: 3, alignSelf: 'center' }}>
-          <IndicatorLights avrOn={inputs.avrOn} outputs={outputs} half="top" relay27Tripped={relay27Tripped} />
+          <IndicatorLights
+            avrOn={inputs.avrOn}
+            governorOn={inputs.governorOn}
+            outputs={outputs}
+            half="top"
+            relay27Tripped={relay27Tripped}
+          />
         </div>
 
         {/* Row 3, col 2: indicator lights (bottom 4) — vertically centered */}
         <div style={{ gridColumn: 2, gridRow: 3, alignSelf: 'center' }}>
-          <IndicatorLights avrOn={inputs.avrOn} outputs={outputs} half="bottom" relay27Tripped={relay27Tripped} />
+          <IndicatorLights
+            avrOn={inputs.avrOn}
+            governorOn={inputs.governorOn}
+            outputs={outputs}
+            half="bottom"
+            relay27Tripped={relay27Tripped}
+          />
         </div>
 
         {/* Row 3, col 5: power factor knob */}
@@ -132,13 +144,36 @@ export default function App() {
         {/* Row 1, col 6: valve position indicator */}
         <PositionIndicator setpoint={outputs.valvePct} actual={outputs.valveActual} />
 
-        {/* Row 2, col 6: governor SpringLoadedSelector — right-hand frequency bookend */}
+        {/* Row 2, col 6: fine governor speed-changer */}
         <div className="knob-cell" style={{ gridColumn: 6, gridRow: 2, alignSelf: 'center' }}>
-          <SpringLoadedSelector onCommand={setValveCommand} />
+          <SpringLoadedSelector
+            label="FINE"
+            onCommand={setValveCommand}
+            readOnly={inputs.governorOn}
+            lockLabel={inputs.governorOn ? 'GOV COMMANDING' : undefined}
+          />
+        </div>
+
+        {/* Row 3, col 6: coarse speed-changer + governor selector stacked */}
+        <div
+          className="knob-cell"
+          style={{ gridColumn: 6, gridRow: 3, alignSelf: 'start', flexDirection: 'column', gap: 12 }}
+        >
+          <SpringLoadedSelector
+            label="COARSE"
+            onCommand={setCoarseValveCommand}
+            readOnly={inputs.governorOn}
+            lockLabel={inputs.governorOn ? 'GOV COMMANDING' : undefined}
+          />
+          <SelectorSwitch
+            label="GOVERNOR"
+            value={inputs.governorOn}
+            onChange={(v) => setInput('governorOn', v)}
+          />
         </div>
       </div>
 
-      <p className="footer">PHASE 2 · 400 V · 50 Hz · 1 MVA · ISLANDED · GOVERNOR + AVR</p>
+      <p className="footer">PHASE 3B · 400 V · 50 Hz · 1 MVA · ISLANDED · AUTO GOVERNOR + AVR</p>
     </div>
   )
 }

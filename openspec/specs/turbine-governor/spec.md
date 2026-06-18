@@ -8,10 +8,13 @@ The turbine governor controls the intake valve of the prime mover, translating a
 
 ### Requirement: Turbine governor speed-changer and intake valve
 The system SHALL command rotor speed indirectly through the turbine's intake valve, not by setting
-frequency directly. A spring-return raise/lower speed-changer switch SHALL drive a motor-operated valve:
-while the switch is held off neutral the valve **setpoint** (`valvePct`, 0–100 %) SHALL change at a
-jog rate and SHALL hold its position when the switch returns to neutral. The switch SHALL provide two
-throw stages — an inner (slow) and an outer (fast) jog rate in each direction.
+frequency directly. **Two** spring-return raise/lower speed-changer switches SHALL drive the motor-operated
+valve additively: a **fine** switch (existing; slow = 0.5 rpm/s, fast = 5 rpm/s) and a new **coarse**
+switch (slow = 10 rpm/s, fast = 25 rpm/s). While either switch is held off neutral the valve **setpoint**
+(`valvePct`, 0–100 %) SHALL change at the combined jog rate of both switches and SHALL hold its position
+when both return to neutral. Each switch SHALL provide two throw stages — an inner (slow) and an outer
+(fast) jog rate in each direction. When `governorOn` is `true`, both switches are bypassed and the
+governor commands `valvePct` directly.
 
 The valve setpoint (`valvePct`) represents the governor demand position. The physical valve position
 (`valveActual`) lags behind the setpoint through a valve actuator lag (see "Valve actuator lag"
@@ -22,16 +25,20 @@ dynamics" requirement); the valve no longer maps to a speed target. The simulati
 shaft at rest (`omega = 0`) or pre-spun, depending on the selected start preset.
 
 #### Scenario: Holding raise opens the valve setpoint and lifts mechanical power
-- **WHEN** the raise side of the switch is held
-- **THEN** `valvePct` increases at the jog rate and, after the valve actuator lag, `Pm` rises, and the rotor accelerates through the swing equation when `Pm > Pe`
+- **WHEN** the raise side of either switch is held
+- **THEN** `valvePct` increases at that switch's jog rate and, after the valve actuator lag, `Pm` rises, and the rotor accelerates through the swing equation when `Pm > Pe`
 
-#### Scenario: Valve setpoint holds when the switch is released
-- **WHEN** the switch returns to neutral
+#### Scenario: Valve setpoint holds when both switches are released
+- **WHEN** both switches return to neutral
 - **THEN** `valvePct` stops changing and holds; `valveActual` continues closing the gap toward `valvePct` over the actuator time constant, and `Pm` settles at the corresponding value
 
-#### Scenario: Fast throw jogs faster than slow throw
-- **WHEN** the outer (fast) position is held versus the inner (slow) position for the same time
-- **THEN** `valvePct` moves a larger amount on the fast throw
+#### Scenario: Coarse switch jogs at 2× the fine fast rate
+- **WHEN** the coarse fast throw is held versus the fine fast throw for the same time
+- **THEN** `valvePct` moves approximately twice as far on the coarse throw
+
+#### Scenario: Both switches contribute additively
+- **WHEN** both fine and coarse switches are held in the raise direction simultaneously
+- **THEN** `valvePct` rises at the sum of both jog rates
 
 #### Scenario: Fully closed valve commands zero mechanical power
 - **WHEN** `valveActual` is 0 %

@@ -194,6 +194,54 @@ while the command is clamped. The AVR command SHALL still pass through the physi
 - **WHEN** the AVR runs under any input combination, including sustained large error
 - **THEN** the commanded field setpoint never leaves the range [0.5, 1.5] and the integrator remains bounded
 
+### Requirement: Isochronous governor PI regulation
+The core SHALL provide an optional isochronous governor implemented as a PI controller acting on the
+speed error `(ωref − ω)` and commanding the valve setpoint (`valvePct`, %) directly. The governor
+SHALL be implemented in a dedicated `governor.ts` file mirroring the structure of `avr.ts`, with a
+function `stepGovernor(omegaRef, omega, integralIn, kp, ki, dt) → { command, integral }`.
+
+The governor SHALL be gated by `inputs.governorOn` (default `false`). The PI integral and command
+SHALL carry the same anti-windup logic as the AVR: freeze the integral when the command is clamped and
+the unsaturated-raw error would deepen the saturation. The command SHALL be clamped to `[0, 100]`
+(valve percent). Fixed gains `GOV_KP` and `GOV_KI` and the reference constant `OMEGA_REF = 1.0` SHALL
+be defined in `constants.ts`.
+
+When `governorOn` is `true`:
+- The governor drives `valvePct` for this step; the valve jog from `inputs.valveCommand` is bypassed.
+- Bumpless transfer on engage: the integrator SHALL be primed so the governor output equals the current
+  `valvePct` at the moment of engagement:
+  `integral = (current_valvePct − GOV_KP × error) / GOV_KI`.
+
+When `governorOn` is `false`, `valvePct` evolves from the manual jog path as before.
+
+`governorIntegral` SHALL be carried in `SimState`. `governorCommand` (the clamped valve % commanded by
+the governor, equal to `inputs.valveCommand`-derived `valvePct` when governor is off) SHALL be exposed
+in `Outputs`.
+
+#### Scenario: Governor holds frequency under load increase
+- **WHEN** active load increases with the governor enabled
+- **THEN** `valvePct` rises automatically, `Pm` tracks `Pe`, and `frequencyHz` returns to 50 Hz
+
+#### Scenario: Governor is off — manual jog works unchanged
+- **WHEN** `governorOn` is `false`
+- **THEN** `valvePct` evolves from the speed-changer jog input exactly as in Stage 3a
+
+#### Scenario: Bumpless transfer on governor engage
+- **WHEN** the governor is switched on while the machine is running with a non-zero valve position
+- **THEN** `valvePct` does not jump on the first governor step — the first commanded value equals the current valve position
+
+#### Scenario: Governor command clamped at valve ceiling
+- **WHEN** speed error is large enough to demand more than 100 % valve opening
+- **THEN** `governorCommand` is clamped at 100 and the integrator is frozen (anti-windup)
+
+#### Scenario: Manual jog bypassed when governor is on
+- **WHEN** `governorOn` is `true` and `inputs.valveCommand` is non-zero
+- **THEN** the governor's PI output drives `valvePct`; the jog input has no effect
+
+#### Scenario: Default gains provide stable response
+- **WHEN** `GOV_KP` and `GOV_KI` are at their defaults and a step load increase is applied
+- **THEN** `frequencyHz` recovers to 50 Hz without sustained oscillation
+
 ### Requirement: Voltage stability margin
 The machine solver SHALL compute a voltage stability margin (VSM) from the discriminant of the
 Vₜ² quadratic and expose it as `stabilityMargin` in `Outputs`, normalised to [0, 1] where 1.0 is

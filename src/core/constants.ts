@@ -37,9 +37,18 @@ export const PM_MAX = VALVE_RPM_MAX / RPM_RATED // ≈ 1.0667
  */
 export const INERTIA_H = 4
 
-/** Jog rates (valve %/s). Inner slow stage; outer fast stage. */
+/** Fine jog rates (valve %/s). Inner slow stage; outer fast stage. */
 export const JOG_SLOW = 0.03125 // %/s = 0.5 rpm/s
 export const JOG_FAST = 0.3125 // %/s = 5 rpm/s
+
+/** Coarse jog rates (valve %/s). Slow = 2× fine fast; fast = 5× fine fast. */
+export const JOG_COARSE_SLOW = 0.625 // %/s = 10 rpm/s
+export const JOG_COARSE_FAST = 1.5625 // %/s = 25 rpm/s
+
+/** Governor PI — isochronous, error in pu speed, command in valve %. */
+export const OMEGA_REF = 1.0
+export const GOV_KP = 100
+export const GOV_KI = 20
 
 /** Valve actuator lag time constant (s). Mechanical lag of the motor-operated intake valve. */
 export const TAU_VALVE = 2.0
@@ -53,5 +62,7 @@ export const DEFAULT_INPUTS: Inputs = {
   powerFactor: 0.92,
   pfLag: true,
   avrOn: false,
+  governorOn: false,
   valveCommand: 0,
+  coarseValveCommand: 0,
 }

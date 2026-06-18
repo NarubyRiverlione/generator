@@ -1,12 +1,18 @@
 /** Simulation step: field lag → AVR or manual target → machine solve → swing equation. */
 
 import { stepAvr } from './avr'
+import { stepGovernor } from './governor'
 import {
   AVR_VREF,
   DEFAULT_INPUTS,
+  GOV_KI,
+  GOV_KP,
   INERTIA_H,
+  JOG_COARSE_FAST,
+  JOG_COARSE_SLOW,
   JOG_FAST,
   JOG_SLOW,
+  OMEGA_REF,
   PARAMS,
   PM_MAX,
   RPM_RATED,
@@ -24,6 +30,14 @@ function jogRate(cmd: ValveCommand): number {
   if (cmd === 1) return JOG_SLOW
   if (cmd === -1) return -JOG_SLOW
   if (cmd === -2) return -JOG_FAST
+  return 0
+}
+
+function coarseJogRate(cmd: ValveCommand): number {
+  if (cmd === 2) return JOG_COARSE_FAST
+  if (cmd === 1) return JOG_COARSE_SLOW
+  if (cmd === -1) return -JOG_COARSE_SLOW
+  if (cmd === -2) return -JOG_COARSE_FAST
   return 0
 }
 
@@ -63,6 +77,7 @@ export function initialState(inputs: Inputs = DEFAULT_INPUTS, seed?: Partial<Sim
         pf: 1,
         iField,
         avrCommand: inputs.fieldVoltage,
+        governorCommand: valvePct,
         collapsed: false,
         stabilityMargin: 0,
         frequencyHz,
@@ -76,6 +91,7 @@ export function initialState(inputs: Inputs = DEFAULT_INPUTS, seed?: Partial<Sim
         ...result,
         iField,
         avrCommand: inputs.fieldVoltage,
+        governorCommand: valvePct,
         collapsed: false,
         frequencyHz,
         rpm,
@@ -89,6 +105,7 @@ export function initialState(inputs: Inputs = DEFAULT_INPUTS, seed?: Partial<Sim
     iField,
     exciterLagged,
     avrIntegral: seed?.avrIntegral ?? 0,
+    governorIntegral: seed?.governorIntegral ?? 0,
     valvePct,
     valveActual,
     omega,
@@ -122,8 +139,26 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   const exciterLagged = state.exciterLagged + (fieldTarget - state.exciterLagged) * (1 - Math.exp(-dt / TAU_EXCITER))
   const iField = state.iField + (exciterLagged - state.iField) * (1 - Math.exp(-dt / params.tau))
 
-  // Integrate valve setpoint; holds when valveCommand = 0, clamped to [0, 100]
-  const valvePct = Math.min(100, Math.max(0, state.valvePct + jogRate(inputs.valveCommand) * dt))
+  // Valve setpoint: governor PI when on, else combined fine + coarse jog.
+  let valvePct: number
+  let governorCommand: number
+  let governorIntegral: number
+
+  if (inputs.governorOn) {
+    const gov = stepGovernor(OMEGA_REF, state.omega, state.governorIntegral, GOV_KP, GOV_KI, dt)
+    valvePct = gov.command
+    governorCommand = gov.command
+    governorIntegral = gov.integral
+  } else {
+    valvePct = Math.min(
+      100,
+      Math.max(0, state.valvePct + (jogRate(inputs.valveCommand) + coarseJogRate(inputs.coarseValveCommand)) * dt),
+    )
+    governorCommand = valvePct
+    // Bumpless transfer: prime integral so governor output = current valvePct on engage.
+    const error = OMEGA_REF - state.omega
+    governorIntegral = (valvePct - GOV_KP * error) / GOV_KI
+  }
 
   // Valve actuator lag: physical valve position chases setpoint with τ_valve
   const valveActual = Math.min(
@@ -165,6 +200,7 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
       ...state.lastValidOutputs,
       iField,
       avrCommand,
+      governorCommand,
       collapsed: true,
       frequencyHz,
       rpm,
@@ -178,6 +214,7 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
       ...result,
       iField,
       avrCommand,
+      governorCommand,
       collapsed: false,
       frequencyHz,
       rpm,
@@ -192,6 +229,7 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
     iField,
     exciterLagged,
     avrIntegral,
+    governorIntegral,
     valvePct,
     valveActual,
     omega,
