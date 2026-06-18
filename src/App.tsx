@@ -16,8 +16,9 @@ import { StatusDisplay } from './components/StatusDisplay'
 import { useGeneratorSimulation } from './hooks/useGeneratorSimulation'
 
 export default function App() {
+  const startParam = new URLSearchParams(window.location.search).get('start') ?? undefined
   const { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand } =
-    useGeneratorSimulation()
+    useGeneratorSimulation(startParam)
 
   const fieldValue = inputs.avrOn ? outputs.avrCommand : inputs.fieldVoltage
   const pfSigned = inputs.pfLag ? inputs.powerFactor : -inputs.powerFactor

@@ -26,18 +26,28 @@ function jogRate(cmd: ValveCommand): number {
   return 0
 }
 
-// Initial valve ~1495 rpm (slightly sub-synchronous; operator trims to 1500 for Phase 3 sync)
+// Default boot: shaft pre-spun to ~1495 rpm (slightly sub-synchronous); zero field (dark).
 const VALVE_PCT_INIT = (1495 / VALVE_RPM_MAX) * 100 // ≈ 93.44 %
 const SPEED_INIT_PU = 1495 / RPM_RATED // ≈ 0.9967
 
-export function initialState(): SimState {
-  const inputs = DEFAULT_INPUTS
+export function initialState(inputs: Inputs = DEFAULT_INPUTS, seed?: Partial<SimState>): SimState {
+  // Laggeds: take from seed when present, else derive from inputs.
+  const iField = seed?.iField ?? inputs.fieldVoltage
+  const exciterLagged = seed?.exciterLagged ?? inputs.fieldVoltage
+  const valvePct = seed?.valvePct ?? VALVE_PCT_INIT
+  const valveActual = seed?.valveActual ?? VALVE_PCT_INIT
+  const speedLagged = seed?.speedLagged ?? SPEED_INIT_PU
+
+  // Derive lastValidOutputs from the seeded laggeds (same path as step()) so the first
+  // painted frame is coherent with the seed — no needle-snap from zero.
+  const ea = saturation(iField) * speedLagged
   const load = computeLoad(inputs.loadFraction, inputs.powerFactor, inputs.pfLag)
-  const result = solveMachine(inputs.fieldVoltage * SPEED_INIT_PU, load.p, load.q, PARAMS.xs)
-  const initRpm = SPEED_INIT_PU * RPM_RATED
-  const initHz = initRpm / 30
-  const saturationFactor = inputs.fieldVoltage > 0 ? saturation(inputs.fieldVoltage) / inputs.fieldVoltage : 1
-  const outputs: Outputs = result.collapsed
+  const result = solveMachine(ea, load.p, load.q, PARAMS.xs)
+  const rpm = speedLagged * RPM_RATED
+  const frequencyHz = rpm / 30
+  const saturationFactor = iField > 0 ? saturation(iField) / iField : 1
+
+  const lastValidOutputs: Outputs = result.collapsed
     ? {
         vt: 0,
         ia: 0,
@@ -45,38 +55,38 @@ export function initialState(): SimState {
         p: 0,
         q: 0,
         pf: 1,
-        iField: inputs.fieldVoltage,
+        iField,
         avrCommand: inputs.fieldVoltage,
         collapsed: false,
         stabilityMargin: 0,
-        frequencyHz: initHz,
-        rpm: initRpm,
-        valvePct: VALVE_PCT_INIT,
-        valveActual: VALVE_PCT_INIT,
+        frequencyHz,
+        rpm,
+        valvePct,
+        valveActual,
         saturationFactor,
         droopRpm: 0,
       }
     : {
         ...result,
-        iField: inputs.fieldVoltage,
+        iField,
         avrCommand: inputs.fieldVoltage,
         collapsed: false,
-        frequencyHz: initHz,
-        rpm: initRpm,
-        valvePct: VALVE_PCT_INIT,
-        valveActual: VALVE_PCT_INIT,
+        frequencyHz,
+        rpm,
+        valvePct,
+        valveActual,
         saturationFactor,
         droopRpm: result.p * PARAMS.govDroop * RPM_RATED,
       }
 
   return {
-    iField: inputs.fieldVoltage,
-    exciterLagged: inputs.fieldVoltage,
-    avrIntegral: 0,
-    valvePct: VALVE_PCT_INIT,
-    valveActual: VALVE_PCT_INIT,
-    speedLagged: SPEED_INIT_PU,
-    lastValidOutputs: outputs,
+    iField,
+    exciterLagged,
+    avrIntegral: seed?.avrIntegral ?? 0,
+    valvePct,
+    valveActual,
+    speedLagged,
+    lastValidOutputs,
   }
 }
 

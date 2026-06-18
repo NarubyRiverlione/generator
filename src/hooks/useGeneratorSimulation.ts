@@ -1,7 +1,8 @@
 /** rAF-driven simulation loop. All physics delegated to core.step; no circuit math here. */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { DEFAULT_INPUTS, PARAMS, RELAY27_TRIP_VT } from '../core/constants'
+import { PARAMS, RELAY27_TRIP_VT } from '../core/constants'
+import { resolvePreset } from '../core/presets'
 import { initialState, step } from '../core/simulation'
 import type { Inputs, Outputs, SimState, ValveCommand } from '../core/types'
 
@@ -17,13 +18,18 @@ export type SimHook = {
   setValveCommand: (cmd: ValveCommand) => void
 }
 
-export function useGeneratorSimulation(): SimHook {
-  const [inputs, setInputs] = useState<Inputs>(DEFAULT_INPUTS)
-  const [outputs, setOutputs] = useState<Outputs>(() => initialState().lastValidOutputs)
+export function useGeneratorSimulation(presetName?: string): SimHook {
+  const preset = resolvePreset(presetName)
+  const seedInputs: Inputs = { ...preset.inputs } as Inputs
+  // Single call — reused for both outputs and stateRef so they never diverge.
+  const boot = initialState(seedInputs, preset.seed)
+
+  const [inputs, setInputs] = useState<Inputs>(seedInputs)
+  const [outputs, setOutputs] = useState<Outputs>(boot.lastValidOutputs)
   const [relay27Tripped, setRelay27Tripped] = useState<boolean>(false)
 
-  const stateRef = useRef<SimState>(initialState())
-  const inputsRef = useRef<Inputs>(DEFAULT_INPUTS)
+  const stateRef = useRef<SimState>(boot)
+  const inputsRef = useRef<Inputs>(seedInputs)
   const relay27Ref = useRef<boolean>(false)
   // Relay only arms once Vt has risen above the trip threshold (startup inhibit)
   const relay27ArmedRef = useRef<boolean>(false)
