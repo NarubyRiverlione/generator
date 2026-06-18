@@ -148,7 +148,9 @@
 /* Sticky-note placard */
 .sticky-note {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 1;
   background: #fefae8;
   border: 1px solid #d4c97a;
@@ -164,9 +166,8 @@
   color: #2a2510;
 }
 
-/* Tape strip at top */
-.sticky-note::before {
-  content: '';
+/* Tape strip at top — real element so it can be a click target */
+.sticky-tape {
   position: absolute;
   top: -7px;
   left: 50%;
@@ -176,6 +177,7 @@
   background: rgba(220, 210, 140, 0.55);
   border: 1px solid #c8ba60;
   border-radius: 1px;
+  cursor: pointer;
 }
 
 .sticky-line {

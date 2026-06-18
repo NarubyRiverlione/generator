@@ -45,7 +45,7 @@ export default function App() {
         <ReadoutPanel outputs={outputs} />
 
         {/* Row 2, col 1: exciter field knob — vertically centered */}
-        <div className="knob-cell" style={{ gridColumn: 1, gridRow: 2, alignSelf: 'center' }}>
+        <div className="knob-cell" style={{ gridColumn: 1, gridRow: 2, alignSelf: 'start' }}>
           <Knob
             label="EXCITER FIELD DC"
             min={0}
@@ -68,7 +68,7 @@ export default function App() {
         </div>
 
         {/* Row 2, col 5: active load knob — vertically centered */}
-        <div className="knob-cell" style={{ gridColumn: 5, gridRow: 2, alignSelf: 'center' }}>
+        <div className="knob-cell" style={{ gridColumn: 5, gridRow: 2, alignSelf: 'start' }}>
           <Knob
             label="ACTIVE LOAD"
             min={0}
@@ -145,7 +145,7 @@ export default function App() {
         <PositionIndicator setpoint={outputs.valvePct} actual={outputs.valveActual} />
 
         {/* Row 2, col 6: fine governor speed-changer */}
-        <div className="knob-cell" style={{ gridColumn: 6, gridRow: 2, alignSelf: 'center' }}>
+        <div className="knob-cell" style={{ gridColumn: 6, gridRow: 2, alignSelf: 'start' }}>
           <SpringLoadedSelector
             label="FINE"
             onCommand={setValveCommand}

@@ -108,6 +108,7 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
 
         {showNote && (
           <div className="sticky-note">
+            <div className="sticky-tape" onClick={() => setShowNote(false)} title="Close" />
             <div className="sticky-line">
               <span className="sticky-key">Vt</span> Terminal voltage (rated 400 V)
             </div>

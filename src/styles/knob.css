@@ -153,6 +153,7 @@
   color: var(--amber-d);
   letter-spacing: 0.5px;
   margin-top: 3px;
+  white-space: nowrap;
 }
 
 .vref-knob {
