@@ -49,16 +49,15 @@ describe('helpers: advanceTime', () => {
 
 describe('helpers: advanceWithState', () => {
   it('preserves starting state and advances from it', () => {
-    // Start from a specific state
-    const startState: SimState = { ...initialState(), iField: 0.5, exciterLagged: 0.5, speedLagged: 0.9 }
+    const startState: SimState = { ...initialState(), iField: 0.5, exciterLagged: 0.5, omega: 0.9 }
     const inputs: Inputs = { ...DEFAULT_INPUTS, loadFraction: 0, fieldVoltage: 1.0, avrOn: false }
 
     const { state } = advanceWithState(startState, inputs, 0.01, 0.01)
 
     // Should have advanced from 0.5, not started at 0
     expect(state.iField).toBeGreaterThan(0.5)
-    // speedLagged may change slightly due to dynamics; check it's close to initial
-    expect(state.speedLagged).toBeCloseTo(0.9, 1)
+    // omega changes slightly (swing equation) but stays close in 1 step
+    expect(state.omega).toBeCloseTo(0.9, 1)
   })
 
   it('different inputs produce different results from same start state', () => {

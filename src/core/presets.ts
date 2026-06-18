@@ -21,7 +21,7 @@ const PRESETS: Record<PresetName, StartPreset> = {
   // Deliberate change from today: fully at rest — natural Phase 3a run-up start.
   'cold-dark': {
     inputs: { ...DEFAULT_INPUTS },
-    seed: { iField: 0, exciterLagged: 0, speedLagged: 0, valvePct: 0, valveActual: 0 },
+    seed: { iField: 0, exciterLagged: 0, omega: 0, valvePct: 0, valveActual: 0 },
   },
 
   // Today's literal boot preserved as the regression anchor: shaft pre-spun, zero field.
@@ -43,7 +43,7 @@ const PRESETS: Record<PresetName, StartPreset> = {
     seed: {
       iField: 1.1,
       exciterLagged: 1.1,
-      speedLagged: SPEED_INIT_PU,
+      omega: SPEED_INIT_PU,
       valvePct: VALVE_PCT_INIT,
       valveActual: VALVE_PCT_INIT,
       avrIntegral: 0,

@@ -159,14 +159,16 @@ hold voltage.
 - **WHEN** AVR is enabled and its field command reaches the ceiling
 - **THEN** the field-at-ceiling indicator lights amber
 
-### Requirement: LCD saturation and load-droop readouts
-The LCD SHALL display the two diagnostic signals exported by the simulation core as numeric values, so a
-learner can see the new saturation and governor-droop physics directly:
+### Requirement: LCD saturation and power-balance readouts
+The LCD SHALL display diagnostic signals exported by the simulation core as numeric values, so a learner
+can see the saturation and rotor-dynamics physics directly:
 
 - the **saturation derate** — derived from `Outputs.saturationFactor` (e.g. shown as a percentage; 100 %
   = unsaturated, below 100 % when the field is pushed above the knee), and
-- the **load-droop RPM offset** — `Outputs.droopRpm`, the rpm the active load is pulling below the
-  valve-only speed target.
+- the **power balance** — the mechanical-vs-electrical power imbalance `Outputs.pm − Outputs.p`
+  (`Pm − Pe`, pu or kW), the quantity the swing equation integrates: positive accelerates the rotor,
+  negative decelerates it, zero holds frequency. This replaces the former load-droop RPM readout (no
+  droop model remains).
 
 These occupy the LCD slot previously used by the valve-position line (the valve retains its dedicated
 position indicator). The reference legend / sticky note SHALL describe both values.
@@ -175,24 +177,24 @@ position indicator). The reference legend / sticky note SHALL describe both valu
 - **WHEN** the field is driven above the saturation knee
 - **THEN** the LCD saturation-derate readout shows a value below 100 % consistent with `Outputs.saturationFactor`
 
-#### Scenario: Load-droop RPM shown on LCD
-- **WHEN** active load is applied at a fixed valve position
-- **THEN** the LCD shows a non-zero load-droop rpm consistent with `Outputs.droopRpm`, and the value is 0 at no load
+#### Scenario: Power balance shown on LCD
+- **WHEN** the load draws more active power than the valve commands (`Pe > Pm`)
+- **THEN** the LCD power-balance readout shows a negative imbalance consistent with `Outputs.pm − Outputs.p`, and reads ≈ 0 when the operator has rebalanced `Pm ≈ Pe`
 
-#### Scenario: Legend describes the new readouts
+#### Scenario: Legend describes the readouts
 - **WHEN** the user opens the LCD reference legend
-- **THEN** it includes entries explaining the saturation-derate and load-droop readouts
+- **THEN** it includes entries explaining the saturation-derate and power-balance readouts
 
 ### Requirement: Start-point preset registry
 The simulator SHALL provide a fixed, code-defined registry of named start-point presets, each defined as
 `{ inputs: Partial<Inputs>, seed: Partial<SimState> }`, plus a `BOOT_PRESET` const naming the
 compile-time default preset (shipping `cold-dark`). The registry SHALL include at least:
 - `cold-dark` — fully at rest: zero field, valve closed (`valveActual = 0`, `valveCommand = 0`),
-  `speedLagged = 0` (shaft not turning), no load. This is a *deliberate change* from today's boot, not a
-  reproduction of it.
-- `spinning-dark` — today's literal boot, preserved: shaft pre-spun to ~1495 rpm (`valveActual ≈ 93.4 %`,
-  `speedLagged ≈ 0.9967`), zero field (dark, Vt = 0), no load. Its empty seed reproduces the default
-  `initialState()` boot field-for-field (the regression anchor).
+  `omega = 0` (shaft not turning), no load. This is the deliberate cold-start point from which the
+  operator runs the shaft up under the swing equation.
+- `spinning-dark` — shaft pre-spun to ~1495 rpm (`valveActual ≈ 93.4 %`, `omega ≈ 0.9967`), zero field
+  (dark, Vt = 0), no load. Its empty seed reproduces the default `initialState()` boot field-for-field
+  (the regression anchor).
 - `live-loaded` — a settled, loaded islanded operating point: field built up (≈ rated), valve ≈ 93 %,
   near-synchronous speed, and some active load — booting already settled with no multi-second lag wait.
 

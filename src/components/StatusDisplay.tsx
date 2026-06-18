@@ -24,10 +24,12 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
   const qKVAR = puToKVAR(outputs.q)
   const deltaDegs = outputs.delta * DEG
   const satPct = Math.round(outputs.saturationFactor * 100)
-  const droopRpm = Math.round(outputs.droopRpm)
+  const powerBalancePct = Math.round((outputs.pm - outputs.p) * 100) // (Pm - Pe) × 100 %
   const marginPct = Math.round(outputs.stabilityMargin * 100)
   const marginWarn = outputs.stabilityMargin < 0.2
   const marginRed = outputs.stabilityMargin < 0.08
+  // Hz is a property of the electrical output — only show it when Vt is present.
+  const freqDisplay = outputs.vt > 0.01 ? `${outputs.frequencyHz.toFixed(1)} Hz` : '---'
 
   const level = faultLevel(relay27Tripped, outputs.stabilityMargin)
 
@@ -41,14 +43,17 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
         </div>
         <div className="l2">
           <span>δ {deltaDegs.toFixed(1)}°</span>
-          <span>f {outputs.frequencyHz.toFixed(1)} Hz</span>
+          <span>f {freqDisplay}</span>
         </div>
         <div className="l3">
           <span>
             Q {outputs.q >= 0 ? '+' : ''}
             {qKVAR.toFixed(0)} kVAR
           </span>
-          <span>Drop {droopRpm} rpm</span>
+          <span>
+            ΔP {powerBalancePct > 0 ? '+' : ''}
+            {powerBalancePct}%
+          </span>
         </div>
         <div className={`l4 ${marginRed ? 'warn-red' : marginWarn ? 'warn-amber' : ''}`}>
           <span>
@@ -123,8 +128,8 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
               above the knee
             </div>
             <div className="sticky-line">
-              <span className="sticky-key">Drop</span> Load-droop — rpm the active load pulls below the valve-only speed
-              target
+              <span className="sticky-key">ΔP</span> Power balance (Pm − Pe) — positive accelerates the rotor, negative
+              decelerates; zero holds frequency
             </div>
             <div className="sticky-line">
               <span className="sticky-key">VSM</span> Voltage stability margin — warn &lt;20%, danger &lt;8%

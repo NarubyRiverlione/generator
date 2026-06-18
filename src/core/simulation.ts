@@ -1,15 +1,16 @@
-/** Simulation step: field lag → AVR or manual target → machine solve. */
+/** Simulation step: field lag → AVR or manual target → machine solve → swing equation. */
 
 import { stepAvr } from './avr'
 import {
   AVR_VREF,
   DEFAULT_INPUTS,
+  INERTIA_H,
   JOG_FAST,
   JOG_SLOW,
   PARAMS,
+  PM_MAX,
   RPM_RATED,
   TAU_EXCITER,
-  TAU_SPINUP,
   TAU_VALVE,
   VALVE_RPM_MAX,
 } from './constants'
@@ -30,20 +31,25 @@ function jogRate(cmd: ValveCommand): number {
 const VALVE_PCT_INIT = (1495 / VALVE_RPM_MAX) * 100 // ≈ 93.44 %
 const SPEED_INIT_PU = 1495 / RPM_RATED // ≈ 0.9967
 
+// Overspeed ceiling in per-unit (same ratio as VALVE_RPM_MAX / RPM_RATED).
+const OMEGA_MAX = VALVE_RPM_MAX / RPM_RATED // ≈ 1.0667
+
 export function initialState(inputs: Inputs = DEFAULT_INPUTS, seed?: Partial<SimState>): SimState {
   // Laggeds: take from seed when present, else derive from inputs.
   const iField = seed?.iField ?? inputs.fieldVoltage
   const exciterLagged = seed?.exciterLagged ?? inputs.fieldVoltage
   const valvePct = seed?.valvePct ?? VALVE_PCT_INIT
   const valveActual = seed?.valveActual ?? VALVE_PCT_INIT
-  const speedLagged = seed?.speedLagged ?? SPEED_INIT_PU
+  const omega = seed?.omega ?? SPEED_INIT_PU
+
+  const pm = (valveActual / 100) * PM_MAX
 
   // Derive lastValidOutputs from the seeded laggeds (same path as step()) so the first
   // painted frame is coherent with the seed — no needle-snap from zero.
-  const ea = saturation(iField) * speedLagged
+  const ea = saturation(iField) * omega
   const load = computeLoad(inputs.loadFraction, inputs.powerFactor, inputs.pfLag)
   const result = solveMachine(ea, load.p, load.q, PARAMS.xs)
-  const rpm = speedLagged * RPM_RATED
+  const rpm = omega * RPM_RATED
   const frequencyHz = rpm / 30
   const saturationFactor = iField > 0 ? saturation(iField) / iField : 1
 
@@ -64,7 +70,7 @@ export function initialState(inputs: Inputs = DEFAULT_INPUTS, seed?: Partial<Sim
         valvePct,
         valveActual,
         saturationFactor,
-        droopRpm: 0,
+        pm,
       }
     : {
         ...result,
@@ -76,7 +82,7 @@ export function initialState(inputs: Inputs = DEFAULT_INPUTS, seed?: Partial<Sim
         valvePct,
         valveActual,
         saturationFactor,
-        droopRpm: result.p * PARAMS.govDroop * RPM_RATED,
+        pm,
       }
 
   return {
@@ -85,7 +91,8 @@ export function initialState(inputs: Inputs = DEFAULT_INPUTS, seed?: Partial<Sim
     avrIntegral: seed?.avrIntegral ?? 0,
     valvePct,
     valveActual,
-    speedLagged,
+    omega,
+    collapsed: false,
     lastValidOutputs,
   }
 }
@@ -115,7 +122,7 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   const exciterLagged = state.exciterLagged + (fieldTarget - state.exciterLagged) * (1 - Math.exp(-dt / TAU_EXCITER))
   const iField = state.iField + (exciterLagged - state.iField) * (1 - Math.exp(-dt / params.tau))
 
-  // 2.1 Integrate valve: holds when valveCommand = 0, clamped to [0, 100]
+  // Integrate valve setpoint; holds when valveCommand = 0, clamped to [0, 100]
   const valvePct = Math.min(100, Math.max(0, state.valvePct + jogRate(inputs.valveCommand) * dt))
 
   // Valve actuator lag: physical valve position chases setpoint with τ_valve
@@ -124,32 +131,36 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
     Math.max(0, state.valveActual + (valvePct - state.valveActual) * (1 - Math.exp(-dt / TAU_VALVE))),
   )
 
-  // 2.2 Valve → RPM (shaft-primary); droop-corrected first-order lag.
-  // Pe_prev from the previous step; one-step lag (~33 ms) is negligible at simulator cadence.
-  const Pe_prev = state.lastValidOutputs.p
-  const rpmTarget = (valveActual / 100) * VALVE_RPM_MAX
-  const speedTarget_pu = rpmTarget / RPM_RATED
-  const effectiveTarget = speedTarget_pu - Pe_prev * params.govDroop
-  const speedLagged = state.speedLagged + (effectiveTarget - state.speedLagged) * (1 - Math.exp(-dt / TAU_SPINUP))
+  // Mechanical power in from valve (linear mapping, pu).
+  const Pm = (valveActual / 100) * PM_MAX
 
-  // 2.3 Scale internal EMF by speed before circuit solve: Eₐ = saturation(field_lagged) × speed_pu
-  const ea = saturation(iField) * speedLagged
+  // Electrical power from previous step.
+  // On collapse: Pe = 0 (load rejection — no power transfer, rotor runs free).
+  const Pe = state.collapsed ? 0 : state.lastValidOutputs.p
 
-  // 2.4 Derive readouts shaft-first: RPM → Hz (Hz is never an intermediate variable)
-  const rpm = speedLagged * RPM_RATED
+  // Swing equation (undamped pure integrator — no D term):
+  //   dω/dt = (Pm − Pe) / (2H)
+  // Clamped to [0, OMEGA_MAX] (no reverse spin; overspeed ceiling).
+  const omegaRaw = state.omega + ((Pm - Pe) / (2 * INERTIA_H)) * dt
+  const omega = Math.min(OMEGA_MAX, Math.max(0, omegaRaw))
+
+  // Internal EMF scales with speed: Eₐ = saturation(field_lagged) × omega
+  const ea = saturation(iField) * omega
+
+  // Derive readouts shaft-first: RPM → Hz (Hz is never an intermediate variable)
+  const rpm = omega * RPM_RATED
   const frequencyHz = rpm / 30
 
   // Machine solve
   const load = computeLoad(inputs.loadFraction, inputs.powerFactor, inputs.pfLag)
   const result = solveMachine(ea, load.p, load.q, params.xs)
 
-  // Derived diagnostics: saturation derate (live with field) and load-droop rpm (tracks active power).
+  // Saturation derate diagnostic (live with field).
   const saturationFactor = iField > 0 ? saturation(iField) / iField : 1
 
   let outputs: Outputs
   if (result.collapsed) {
     // Freeze voltage outputs but keep shaft readouts live; valveActual is shaft-side — stays live
-    const droopRpm = state.lastValidOutputs.p * params.govDroop * RPM_RATED
     outputs = {
       ...state.lastValidOutputs,
       iField,
@@ -160,10 +171,9 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
       valvePct,
       valveActual,
       saturationFactor,
-      droopRpm,
+      pm: Pm,
     }
   } else {
-    const droopRpm = result.p * params.govDroop * RPM_RATED
     outputs = {
       ...result,
       iField,
@@ -174,7 +184,7 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
       valvePct,
       valveActual,
       saturationFactor,
-      droopRpm,
+      pm: Pm,
     }
   }
 
@@ -184,7 +194,8 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
     avrIntegral,
     valvePct,
     valveActual,
-    speedLagged,
+    omega,
+    collapsed: result.collapsed,
     lastValidOutputs: result.collapsed ? state.lastValidOutputs : outputs,
   }
 

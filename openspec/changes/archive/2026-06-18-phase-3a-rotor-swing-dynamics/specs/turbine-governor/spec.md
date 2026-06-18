@@ -1,10 +1,4 @@
-# Spec: Turbine Governor
-
-## Purpose
-
-The turbine governor controls the intake valve of the prime mover, translating a spring-return raise/lower speed-changer switch into a valve position that commands mechanical power into the rotor. The valve position maps linearly to mechanical power `Pm`, which drives rotor speed through the swing equation in the simulation core. The internal EMF scales with per-unit rotor speed.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Turbine governor speed-changer and intake valve
 The system SHALL command rotor speed indirectly through the turbine's intake valve, not by setting
@@ -41,19 +35,6 @@ shaft at rest (`omega = 0`) or pre-spun, depending on the selected start preset.
 - **WHEN** `valveActual` has settled at ~93.75 %
 - **THEN** `Pm` is approximately 1.0 pu
 
-### Requirement: Internal EMF scales with speed
-The internal EMF SHALL be scaled by per-unit rotor speed before the circuit solve:
-`Eₐ_pu = field_pu × speed_pu`, where `speed_pu = rpm / 1500`. A speed change SHALL therefore move
-terminal voltage as well as frequency.
-
-#### Scenario: Speed reduction sags terminal voltage
-- **WHEN** the valve (hence speed_pu) is reduced with AVR off and a non-zero field
-- **THEN** Eₐ_pu decreases and the solved terminal voltage Vₜ falls
-
-#### Scenario: Speed increase raises terminal voltage
-- **WHEN** the valve (hence speed_pu) is increased with AVR off
-- **THEN** Eₐ_pu increases and the solved terminal voltage Vₜ rises
-
 ### Requirement: Valve actuator lag
 The physical valve position (`valveActual`) SHALL follow the valve setpoint (`valvePct`) through a
 first-order lag with time constant τ_valve = 2.0 s, advanced by real elapsed time each step using the
@@ -85,3 +66,14 @@ Both `valvePct` and `valveActual` SHALL be exposed in `Outputs`.
 #### Scenario: Valve actual settles to setpoint after release
 - **WHEN** the speed-changer is released (neutral) and sufficient time passes
 - **THEN** `valveActual` converges to `valvePct` and the two needles on the `PositionIndicator` align
+
+## REMOVED Requirements
+
+### Requirement: Kinematic spin-up lag
+**Reason**: Replaced by real rotor dynamics. Rotor speed is now the integral of power imbalance over
+inertia (the swing equation), not a first-order lag gliding toward a droop-corrected kinematic target.
+The `τ_spinup` time constant and the `Pe × govDroop` droop correction no longer exist; the `2H`
+inertia term sets the run-up and response timescale.
+**Migration**: See the simulation-core "Swing-equation rotor dynamics" requirement. Remove `TAU_SPINUP`
+and the droop-corrected effective-target computation; integrate `omega` from `dω/dt = (Pm − Pe)/2H`
+(undamped — no `D` term).

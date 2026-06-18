@@ -28,8 +28,10 @@ export type SimState = {
   valvePct: number
   /** Physical valve position (%), lags behind `valvePct` through actuator lag. */
   valveActual: number
-  /** Lagged rotor speed, per-unit; follows valve target through spin-up lag. */
-  speedLagged: number
+  /** Integrated rotor speed, per-unit (1.0 = 1500 rpm). Evolved by the swing equation. */
+  omega: number
+  /** True when the previous solve was in the collapsed (voltage-collapse) state. Used to set Pe=0 (load rejection) in the swing equation so the rotor does not integrate against a phantom load. */
+  collapsed: boolean
   /** Last valid outputs — frozen on collapse. */
   lastValidOutputs: Outputs
 }
@@ -72,8 +74,8 @@ export type Outputs = {
    * 1.0 = field below the knee (no derate); <1.0 quantifies above-knee EMF-gain erosion.
    */
   saturationFactor: number
-  /** Load-induced speed drop, rpm; `p · govDroop · RPM_RATED`. 0 at no load. */
-  droopRpm: number
+  /** Mechanical power in (pu); derived from valve position. Together with `p` gives the power imbalance Pm − Pe that the swing equation integrates. */
+  pm: number
 }
 
 export type Params = {
@@ -87,6 +89,4 @@ export type Params = {
   kp: number
   /** AVR integral gain. */
   ki: number
-  /** Governor droop, dimensionless (pu speed drop per pu active load). 0.04 = 4 % droop. */
-  govDroop: number
 }

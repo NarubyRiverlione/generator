@@ -23,7 +23,9 @@ power-systems course teaches. It is the foundation for the rest of Phase 3.
   of power imbalance over inertia — a *result*, not an input.
 - **Re-aim the valve**: the speed-changer now commands **mechanical power in (Pm)**, not a speed target.
   `valveActual` maps to Pm; `speedLagged` is replaced by an integrated `ω`.
-- **Add the inertia constant `H`** (and a small damping term `D`) as machine parameters in `constants.ts`.
+- **Add the inertia constant `H`** as a machine parameter in `constants.ts`. The islanded swing equation
+  is **undamped** (no `D` term): a damping term is a restoring force toward rated speed that would let the
+  machine self-regulate, which is deferred to the 3b governor and the 3c grid.
 - **Add shaft run-up from rest** (0 → 1500 rpm): with the breaker open and `Pe ≈ 0`, surplus `Pm`
   accelerates the rotor through the swing equation.
 - **Keep the output surface stable**: RPM, Hz, valve readouts still read from `ω`; only what *produces*
@@ -57,8 +59,9 @@ power-systems course teaches. It is the foundation for the rest of Phase 3.
 
 ## Impact
 
-- Affected specs: `simulation-core` (RPM/frequency/valve requirement and the speed model), possibly
-  `simulator-ui` (readout copy, if any references "valve sets speed").
+- Affected specs: `simulation-core` (RPM/frequency/valve requirement and the speed model),
+  `turbine-governor` (kinematic spin-up lag removed, valve→Pm mapping), `simulator-ui` (load-droop
+  readout replaced with power-balance readout, preset seed field renamed).
 - Affected code: `src/core/simulation.ts` (integration step), `src/core/constants.ts` (`H`, `D`),
   `src/core/types.ts` (params/state for inertia).
 - Prerequisite for: Stages 3b, 3c, 3d.

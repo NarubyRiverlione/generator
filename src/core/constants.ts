@@ -8,7 +8,6 @@ export const PARAMS: Params = {
   tau: 1.1,
   kp: 2.0,
   ki: 0.5,
-  govDroop: 0.04,
 }
 
 /** Exciter first-order lag (s). Feeds into the main field winding lag (τ = PARAMS.tau). */
@@ -25,14 +24,24 @@ export const RELAY27_TRIP_VT = 0.85
 export const VALVE_RPM_MAX = 1600 // rpm at 100 % valve (overspeed trip, ~107 % rated)
 export const RPM_RATED = 1500 // synchronous speed, 4-pole @ 50 Hz
 
+/**
+ * Maximum mechanical power in (pu) at 100 % valve.
+ * Anchored so Pm = 1.0 pu at the rated valve position (RPM_RATED / VALVE_RPM_MAX = 93.75 %).
+ */
+export const PM_MAX = VALVE_RPM_MAX / RPM_RATED // ≈ 1.0667
+
+/**
+ * Rotor inertia constant (s of stored kinetic energy at rated speed).
+ * Sets the run-up timescale and frequency-drift rate under power imbalance.
+ * Feel-tunable: larger H = slower drift and longer run-up.
+ */
+export const INERTIA_H = 4
+
 /** Jog rates (valve %/s). Inner slow stage; outer fast stage. */
 export const JOG_SLOW = 0.03125 // %/s = 0.5 rpm/s
 export const JOG_FAST = 0.3125 // %/s = 5 rpm/s
 
-/** Spin-up lag time constant (s). Shaft is slower than the field lag (τ_field = 1.5 s). */
-export const TAU_SPINUP = 2.5
-
-/** Valve actuator lag time constant (s). Distinct from TAU_SPINUP: mechanical lag of the motor-operated intake valve tracking its setpoint. */
+/** Valve actuator lag time constant (s). Mechanical lag of the motor-operated intake valve. */
 export const TAU_VALVE = 2.0
 
 /** Pole count — 4-pole machine → 1500 rpm at 50 Hz. */

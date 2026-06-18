@@ -13,12 +13,12 @@ describe('resolvePreset — known names', () => {
     expect(preset.inputs.fieldVoltage).toBe(1.1)
     expect(preset.inputs.loadFraction).toBe(0.5)
     expect(preset.seed.iField).toBe(1.1)
-    expect(preset.seed.speedLagged).toBeCloseTo(SPEED_INIT_PU, 4)
+    expect(preset.seed.omega).toBeCloseTo(SPEED_INIT_PU, 4)
   })
 
   it('cold-dark resolves to at-rest seed', () => {
     const preset = resolvePreset('cold-dark')
-    expect(preset.seed.speedLagged).toBe(0)
+    expect(preset.seed.omega).toBe(0)
     expect(preset.seed.valveActual).toBe(0)
     expect(preset.seed.valvePct).toBe(0)
     expect(preset.seed.iField).toBe(0)
@@ -52,7 +52,7 @@ describe('spinning-dark reproduces no-arg initialState() field-for-field', () =>
 
     expect(fromPreset.iField).toBeCloseTo(baseline.iField, 8)
     expect(fromPreset.exciterLagged).toBeCloseTo(baseline.exciterLagged, 8)
-    expect(fromPreset.speedLagged).toBeCloseTo(baseline.speedLagged, 8)
+    expect(fromPreset.omega).toBeCloseTo(baseline.omega, 8)
     expect(fromPreset.valvePct).toBeCloseTo(baseline.valvePct, 8)
     expect(fromPreset.valveActual).toBeCloseTo(baseline.valveActual, 8)
     expect(fromPreset.avrIntegral).toBe(baseline.avrIntegral)
@@ -62,10 +62,10 @@ describe('spinning-dark reproduces no-arg initialState() field-for-field', () =>
 })
 
 describe('cold-dark produces fully at-rest state', () => {
-  it('speed and valve are zero', () => {
+  it('omega and valve are zero', () => {
     const preset = resolvePreset('cold-dark')
     const state = initialState({ ...preset.inputs } as Parameters<typeof initialState>[0], preset.seed)
-    expect(state.speedLagged).toBe(0)
+    expect(state.omega).toBe(0)
     expect(state.valveActual).toBe(0)
     expect(state.valvePct).toBe(0)
     expect(state.iField).toBe(0)
