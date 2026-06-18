@@ -22,7 +22,7 @@ export type MachineResult =
 export function solveMachine(ea: number, p: number, q: number, xs: number): MachineResult {
   const xs2 = xs * xs
   // Design D2 quadratic coefficients — the factor 9 comes from 3-phase power convention;
-  // gives P_max = 3·Eₐ²/(2·Xₛ) ≈ 1.25 pu at rated field, covering the full slider range.
+  // gives P_max = 3·Eₐ²/(2·Xₛ) ≈ 1.875 pu at rated field (Xₛ=0.8), covering the full slider range.
   const A = 9 / xs2
   const B = (6 * q) / xs - (9 * ea * ea) / xs2
   const C = p * p + q * q

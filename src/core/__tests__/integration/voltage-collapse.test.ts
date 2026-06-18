@@ -16,7 +16,7 @@ describe('4.6 voltage collapse', () => {
     const safeInputs: Inputs = { ...DEFAULT_INPUTS, loadFraction: 0.8, avrOn: false, fieldVoltage: 1.0 }
     const { state: safeState, outputs: safeOutputs } = advanceTime(safeInputs, 10 * PARAMS.tau)
 
-    // Now drive past the nose: very high load, unity PF → P_max ≈ 1.25 at Ea=1
+    // Now drive past the nose: very high load → P_max ≈ 1.875 at Ea=1 (xs=0.8)
     const collapseInputs: Inputs = { ...DEFAULT_INPUTS, loadFraction: 1.5, avrOn: false, fieldVoltage: 1.0 }
     const { outputs: colOut } = advanceN(
       collapseInputs,
@@ -32,13 +32,13 @@ describe('4.6 voltage collapse', () => {
     expect(Number.isNaN(colOut.q)).toBe(false)
   })
 
-  it('at unity PF, 100% load does NOT collapse (below P_max ≈ 1.25)', () => {
+  it('at unity PF, 100% load does NOT collapse (below P_max ≈ 1.875)', () => {
     const result = solveMachine(1.0, 1.0, 0, PARAMS.xs)
     expect(result.collapsed).toBe(false)
   })
 
-  it('at unity PF, 130% load collapses (above P_max ≈ 1.25)', () => {
-    const result = solveMachine(1.0, 1.3, 0, PARAMS.xs)
+  it('at unity PF, 200% load collapses (above P_max ≈ 1.875)', () => {
+    const result = solveMachine(1.0, 2.0, 0, PARAMS.xs)
     expect(result.collapsed).toBe(true)
   })
 

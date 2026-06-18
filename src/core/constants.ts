@@ -3,7 +3,7 @@
 import type { Inputs, Params } from './types'
 
 export const PARAMS: Params = {
-  xs: 1.2,
+  xs: 0.8,
   ra: 0.05,
   tau: 1.1,
   kp: 2.0,
