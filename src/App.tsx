@@ -16,7 +16,8 @@ import { StatusDisplay } from './components/StatusDisplay'
 import { useGeneratorSimulation } from './hooks/useGeneratorSimulation'
 
 export default function App() {
-  const { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand, kp, ki, setKp, setKi } = useGeneratorSimulation()
+  const { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand, kp, ki, setKp, setKi } =
+    useGeneratorSimulation()
 
   const fieldValue = inputs.avrOn ? outputs.avrCommand : inputs.fieldVoltage
   const pfSigned = inputs.pfLag ? inputs.powerFactor : -inputs.powerFactor
@@ -70,13 +71,13 @@ export default function App() {
           <Knob
             label="ACTIVE LOAD"
             min={0}
-            max={1.5}
+            max={1.2}
             step={0.01}
             value={inputs.loadFraction}
             display={`${Math.round(inputs.loadFraction * 100)} %`}
             scaleMin="0 %"
-            scaleMax="150 %"
-            ptrRotation={-130 + (inputs.loadFraction / 1.5) * 260}
+            scaleMax="120 %"
+            ptrRotation={-130 + (inputs.loadFraction / 1.2) * 260}
             onChange={(v) => setInput('loadFraction', v)}
           />
         </div>
@@ -121,7 +122,9 @@ export default function App() {
               onClick={relay27Tripped ? resetRelay27 : undefined}
               title={relay27Tripped ? '27 relay tripped — click to reset' : '27 relay normal'}
             />
-            <div className="card" style={{ marginTop: 4 }}>RESET</div>
+            <div className="card" style={{ marginTop: 4 }}>
+              RESET
+            </div>
           </div>
         </div>
 

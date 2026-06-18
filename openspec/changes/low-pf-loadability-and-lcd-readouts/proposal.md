@@ -33,7 +33,10 @@ Two bugs surfaced after the saturation / load-droop / governor work landed (see 
 
 - **#5 (PF floor removal)** — **implemented** (`App.tsx` `handlePfChange` floor → 0.6, `scaleMin` label,
   `types.ts` comment). Done ahead of formal approval at the user's direction.
-- **#6 (LCD readouts)** — **proposed, not yet implemented.**
+- **#6 (LCD readouts)** — **implemented.** Two derived `Outputs` (`saturationFactor`, `droopRpm`) added
+  in `types.ts` / `simulation.ts` (both `step` branches + `initialState`), covered by
+  `__tests__/integration/diagnostics.test.ts`; displayed on LCD `l3` as `SAT %` / `DRP rpm` with
+  sticky-note legend entries. Remaining: manual in-app verification (tasks 3.3, 4.2).
 
 ## Non-goals
 

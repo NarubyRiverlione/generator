@@ -7,7 +7,7 @@ import typescriptEslint from 'typescript-eslint'
 /** @type {import('eslint').Linter.Config[]} */
 export default [
   {
-    ignores: ['dist', 'coverage'],
+    ignores: ['dist', 'coverage', 'eslint.config.mjs'],
   },
   eslintjs.configs.recommended,
   ...typescriptEslint.configs.recommendedTypeChecked,
@@ -24,7 +24,12 @@ export default [
         ecmaVersion: 2020,
         sourceType: 'module',
         projectService: {
-          allowDefaultProject: ['src/core/*.test.ts'],
+          allowDefaultProject: [
+            'src/core/*.test.ts',
+            'src/core/__tests__/*.test.ts',
+            'src/core/__tests__/integration/*.test.ts',
+            'src/core/__tests__/unit/*.test.ts',
+          ],
         },
         tsconfigRootDir: import.meta.dirname,
       },
@@ -40,7 +45,7 @@ export default [
     },
   },
   {
-    files: ['src/core/*.test.ts'],
+    files: ['src/core/**/*.test.ts'],
     ...typescriptEslint.configs.disableTypeChecked,
   },
 ]

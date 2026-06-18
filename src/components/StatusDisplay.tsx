@@ -25,6 +25,8 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
   const deltaDegs = outputs.delta * DEG
   const pfAbs = Math.abs(outputs.pf).toFixed(2)
   const pfSign = outputs.pf < 0 ? 'lead' : 'lag'
+  const satPct = Math.round(outputs.saturationFactor * 100)
+  const droopRpm = Math.round(outputs.droopRpm)
   const marginPct = Math.round(outputs.stabilityMargin * 100)
   const marginWarn = outputs.stabilityMargin < 0.2
   const marginRed = outputs.stabilityMargin < 0.08
@@ -48,10 +50,13 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
             Q {outputs.q >= 0 ? '+' : ''}
             {qKVAR.toFixed(0)} kVAR
           </span>
-          <span>valve {Math.round(outputs.valvePct)} %</span>
+          <span>SAT {satPct}%</span>
+          <span>DRP {droopRpm} rpm</span>
         </div>
         <div className={`l4 ${marginRed ? 'warn-red' : marginWarn ? 'warn-amber' : ''}`}>
-          <span>VSM {marginPct}%{marginWarn ? ' ⚠' : ''}</span>
+          <span>
+            VSM {marginPct}%{marginWarn ? ' ⚠' : ''}
+          </span>
           <span>
             PF {pfAbs} {pfSign}
           </span>
@@ -63,25 +68,41 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
         <div className={`screen screen-fault screen-fault--${level}`}>
           {level === 'fault' && (
             <>
-              <div className="l1"><span>⚠ 27 RELAY TRIP</span></div>
-              <div className="l2"><span>UNDER-VOLTAGE</span></div>
-              <div className="l3"><span>LOAD DISCONNECTED</span></div>
+              <div className="l1">
+                <span>⚠ 27 RELAY TRIP</span>
+              </div>
+              <div className="l2">
+                <span>UNDER-VOLTAGE</span>
+              </div>
+              <div className="l3">
+                <span>LOAD DISCONNECTED</span>
+              </div>
             </>
           )}
           {level === 'danger' && (
             <>
-              <div className="l1"><span>⚠ STABILITY DANGER</span></div>
-              <div className="l2"><span>VSM {marginPct}% — NEAR COLLAPSE</span></div>
+              <div className="l1">
+                <span>⚠ STABILITY DANGER</span>
+              </div>
+              <div className="l2">
+                <span>VSM {marginPct}% — NEAR COLLAPSE</span>
+              </div>
             </>
           )}
           {level === 'warn' && (
             <>
-              <div className="l1"><span>⚠ STABILITY WARNING</span></div>
-              <div className="l2"><span>VSM {marginPct}% — MARGIN LOW</span></div>
+              <div className="l1">
+                <span>⚠ STABILITY WARNING</span>
+              </div>
+              <div className="l2">
+                <span>VSM {marginPct}% — MARGIN LOW</span>
+              </div>
             </>
           )}
           {level === 'ok' && (
-            <div className="l1 fault-ok"><span>ALL CLEAR</span></div>
+            <div className="l1 fault-ok">
+              <span>ALL CLEAR</span>
+            </div>
           )}
         </div>
 
@@ -97,13 +118,16 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
               <span className="sticky-key">f</span> Output frequency — governed by turbine valve
             </div>
             <div className="sticky-line">
-              <span className="sticky-key">valve</span> Governor valve position (0–100 %; ~93.75 % = rated)
-            </div>
-            <div className="sticky-line">
               <span className="sticky-key">δ</span> Load angle (classical limit ≈ 90° at unity PF)
             </div>
             <div className="sticky-line">
               <span className="sticky-key">Q</span> Reactive power — + supplying, − absorbing
+            </div>
+            <div className="sticky-line">
+              <span className="sticky-key">SAT</span> Saturation derate — 100 % unsaturated; &lt;100 % when field pushed above the knee
+            </div>
+            <div className="sticky-line">
+              <span className="sticky-key">DRP</span> Load-droop — rpm the active load pulls below the valve-only speed target
             </div>
             <div className="sticky-line">
               <span className="sticky-key">VSM</span> Voltage stability margin — warn &lt;20%, danger &lt;8%

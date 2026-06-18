@@ -9,6 +9,9 @@ dist/
 # Test / coverage
 coverage/
 
+# TypeScript incremental build info (from `tsc -b`)
+*.tsbuildinfo
+
 # Editor
 .vscode/
 .idea/

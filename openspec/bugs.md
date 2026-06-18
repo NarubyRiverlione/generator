@@ -18,9 +18,9 @@ But:
 
 **Conclusion**
 
-- **Max load 150 % → 120 %** — *easy bugfix, open.* UI clamp only, three spots in `App.tsx` (active-load knob `max`, `scaleMax`, `ptrRotation` divisor) + the `[0, 1.5]` comment in `types.ts`. Physics unaffected.
+- **Max load 150 % → 120 %** — *done.* UI clamp updated in `App.tsx` (active-load knob `max`, `scaleMax`, `ptrRotation` divisor) + the `[0, 1.5]` comment in `types.ts`. Physics unaffected.
 - **Power factor floor** — *tracked in the new change (#5); cap-removal already shipped.* The 0.92 floor was a real loadability limit, not an arbitrary lock: a probe of the core shows the saturation curve flat-caps EMF at Eₐ = 1.2, so full load collapses at 0.8 PF (0.85 PF already sags to 286 V, below the ANSI-27 trip). As an interim step the lagging floor was **removed (→ 0.6, symmetric with leading)** with no physics change — the knob now reaches low PF but the machine still collapses ~0.85–0.9 PF at full load. Making voltage actually *hold* at 0.8 PF (raise the saturation ceiling + default 0.95) remains in the change.
-- **Exciter / rectifier gauge maxes** — *easy bugfix, low priority.* Already sized for 1.7: AC max `255 = 1.7×150`, DC `230 ≈ 0.9×255`, field `12 A > 1.7×6.67`, all in `ExciterChain.tsx`. No correctness bug — the only nit is the needle pegs at the top at full command. Bump the maxes for visual headroom only if desired; otherwise nothing to do.
+- **Exciter / rectifier gauge maxes** — *done (no change needed).* Already sized for 1.7: AC max `255 = 1.7×150`, DC `230 ≈ 0.9×255`, field `12 A > 1.7×6.67`, all in `ExciterChain.tsx`. No correctness bug — the only nit is the needle pegs at the top at full command. Left as-is; bump the maxes for visual headroom only if desired.
 
 ## ACTIVE POWER gauge
 
@@ -28,7 +28,7 @@ rated 400 V output should show as green. Adjust the max value of the gauge to it
 Change color bands: 0-390 orange, 390-410 green, 410-420 red
 (think about if we need to change this to logarithmic scale )
 
-**Conclusion** — *easy bugfix, open.* Mislabeled: the 400 V content is the **TERMINAL Vₜ** gauge, not active power (confirmed with user). Fix in `ReadoutPanel.tsx`: `Gauge` `max` 500 → 420, and rezone `VT_ZONES`. Note the `Gauge` component takes zone `end` as a **0–1 fraction** of the range, so the volt thresholds convert to: 390→0.929 orange, 410→0.976 green, 420→1.0 red. The "logarithmic scale?" musing is a separate design question, not part of this fix.
+**Conclusion** — *done.* Mislabeled: the 400 V content is the **TERMINAL Vₜ** gauge, not active power (confirmed with user). Fixed in `ReadoutPanel.tsx`: `Gauge` `max` 500 → 420, and rezoned `VT_ZONES` (0–390 orange, 390–410 green, 410–420 red, expressed as `/420` fractions). The "logarithmic scale?" musing is a separate design question, not part of this fix.
 
 ## LCD
 
@@ -37,7 +37,7 @@ Change color bands: 0-390 orange, 390-410 green, 410-420 red
 
 **Conclusion**
 
-- **Remove valve position** — *easy bugfix, open.* Drop the `valve {valvePct}%` span in `StatusDisplay.tsx` `l3` and the matching sticky-note legend line. The valve keeps its dedicated `PositionIndicator`. This frees the `l3` slot for the new readouts below.
+- **Remove valve position** — *done.* Dropped the `valve {valvePct}%` span in `StatusDisplay.tsx` `l3` and the matching sticky-note legend line. The valve keeps its dedicated `PositionIndicator`. This frees the `l3` slot for the new readouts below (#6).
 - **New meaningful values (saturation, load droop)** — *tracked in the new change (#6).* Surface two derived signals: saturation derate (`saturation(iField)/iField`) and load-droop RPM (`Pe · govDroop · 1500`), both added to `Outputs` then shown on the LCD in the freed slot.
 
 ---

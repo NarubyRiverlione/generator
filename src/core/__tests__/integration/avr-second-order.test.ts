@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { AVR_VREF, DEFAULT_INPUTS, PARAMS } from '../../constants'
-import { initialState, step } from '../../simulation'
+import { step } from '../../simulation'
 import type { Inputs } from '../../types'
 import { advanceTime } from '../helpers'
 

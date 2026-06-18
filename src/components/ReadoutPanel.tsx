@@ -6,10 +6,10 @@ import { Gauge } from './Gauge'
 
 type Props = { outputs: Outputs }
 
+// Range 0–420 V: 0–390 orange, 390–410 green, 410–420 red.
 const VT_ZONES = [
-  { end: 0.25, color: '#e8a02a' },
-  { end: 0.85, color: '#20c24a' },
-  { end: 0.92, color: '#e8a02a' },
+  { end: 390 / 420, color: '#e8a02a' },
+  { end: 410 / 420, color: '#20c24a' },
   { end: 1.0, color: '#e23b2e' },
 ]
 
@@ -24,7 +24,7 @@ export function ReadoutPanel({ outputs }: Props) {
 
   return (
     <>
-      <Gauge value={vtV} min={0} max={500} unit="V" label="TERMINAL Vₜ" subLabel="0 – 500 V" zones={VT_ZONES} />
+      <Gauge value={vtV} min={0} max={420} unit="V" label="TERMINAL Vₜ" subLabel="0 – 420 V" zones={VT_ZONES} />
       <Gauge value={pKW} min={0} max={1000} unit="kW" label="ACTIVE POWER P" subLabel="0 – 1000 kW" zones={P_ZONES} />
     </>
   )

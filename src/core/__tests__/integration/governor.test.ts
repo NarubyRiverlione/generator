@@ -32,7 +32,14 @@ describe('relay-27 core conditions', () => {
 
   it('after load returns to 0.5 post-reset, simulation resumes normal operation', () => {
     // Simulate post-reset: relay cleared, field healthy, load restored
-    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0.5, powerFactor: 0.85, pfLag: true, avrOn: false }
+    const inputs: Inputs = {
+      ...DEFAULT_INPUTS,
+      fieldVoltage: 1.0,
+      loadFraction: 0.5,
+      powerFactor: 0.85,
+      pfLag: true,
+      avrOn: false,
+    }
     const { outputs } = advanceTime(inputs, 10 * PARAMS.tau)
     expect(outputs.collapsed).toBe(false)
     expect(outputs.vt).toBeGreaterThan(0.5)
@@ -46,7 +53,12 @@ describe('3.1 rated valve matches Phase 1 baseline', () => {
   it('valve at ~93.75 %, zero load → 50 Hz / 1500 rpm and same Vt as fixed-speed Phase 1', () => {
     // Seed with valve at rated position (1500 / 1600 × 100 = 93.75 %) and speed already at 1.0 pu
     const ratedValvePct = (RPM_RATED / VALVE_RPM_MAX) * 100
-    const seeded: SimState = { ...initialState(), valvePct: ratedValvePct, valveActual: ratedValvePct, speedLagged: 1.0 }
+    const seeded: SimState = {
+      ...initialState(),
+      valvePct: ratedValvePct,
+      valveActual: ratedValvePct,
+      speedLagged: 1.0,
+    }
     const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0, avrOn: false, valveCommand: 0 }
     const { outputs } = advanceWithState(seeded, inputs, 10 * PARAMS.tau)
     expect(outputs.frequencyHz).toBeCloseTo(50, 2)
@@ -89,7 +101,13 @@ describe('3.4 speed reduction sags Vt with AVR off', () => {
   it('lower speed → lower Vt; field high enough to stay above 0.85 relay trip', () => {
     // rated: initial state (~93.44 % valve → ~0.997 pu speed)
     // low: valve at 75 % → rpmTarget = 1200, speed_pu = 0.8, Eₐ = 1.3 × 0.8 = 1.04 (above relay)
-    const inputs_rated: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.3, loadFraction: 0, avrOn: false, valveCommand: 0 }
+    const inputs_rated: Inputs = {
+      ...DEFAULT_INPUTS,
+      fieldVoltage: 1.3,
+      loadFraction: 0,
+      avrOn: false,
+      valveCommand: 0,
+    }
     const seeded_low: SimState = { ...initialState(), valvePct: 75 }
     const inputs_low: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.3, loadFraction: 0, avrOn: false, valveCommand: 0 }
 
@@ -133,8 +151,21 @@ describe('3.5 spin-up lag and field lag are independent', () => {
 describe('3.3b governor droop: load drops RPM at fixed valve', () => {
   it('valve at rated, 0.5 pu load → settled RPM is lower than 1500 by ≈ 0.5 × govDroop × RPM_RATED', () => {
     const ratedValvePct = (RPM_RATED / VALVE_RPM_MAX) * 100
-    const seeded: SimState = { ...initialState(), valvePct: ratedValvePct, valveActual: ratedValvePct, speedLagged: 1.0 }
-    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0.5, powerFactor: 0.85, pfLag: true, avrOn: false, valveCommand: 0 }
+    const seeded: SimState = {
+      ...initialState(),
+      valvePct: ratedValvePct,
+      valveActual: ratedValvePct,
+      speedLagged: 1.0,
+    }
+    const inputs: Inputs = {
+      ...DEFAULT_INPUTS,
+      fieldVoltage: 1.0,
+      loadFraction: 0.5,
+      powerFactor: 0.85,
+      pfLag: true,
+      avrOn: false,
+      valveCommand: 0,
+    }
     const { outputs } = advanceWithState(seeded, inputs, 20 * TAU_SPINUP)
     const expectedDrop = 0.5 * PARAMS.govDroop * RPM_RATED
     expect(outputs.rpm).toBeLessThan(1500)
@@ -147,7 +178,12 @@ describe('3.3b governor droop: load drops RPM at fixed valve', () => {
 describe('3.3c governor droop: no-load RPM is not affected', () => {
   it('valve at rated, zero load → settled RPM ≈ 1500 (no droop offset)', () => {
     const ratedValvePct = (RPM_RATED / VALVE_RPM_MAX) * 100
-    const seeded: SimState = { ...initialState(), valvePct: ratedValvePct, valveActual: ratedValvePct, speedLagged: 1.0 }
+    const seeded: SimState = {
+      ...initialState(),
+      valvePct: ratedValvePct,
+      valveActual: ratedValvePct,
+      speedLagged: 1.0,
+    }
     const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0, avrOn: false, valveCommand: 0 }
     const { outputs } = advanceWithState(seeded, inputs, 20 * TAU_SPINUP)
     expect(outputs.rpm).toBeCloseTo(1500, 0)

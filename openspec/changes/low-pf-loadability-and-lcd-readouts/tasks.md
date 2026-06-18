@@ -7,19 +7,19 @@
 
 ## 2. New core outputs (#6 — physics)
 
-- [ ] 2.1 `core/types.ts` — add `saturationFactor: number` and `droopRpm: number` to `Outputs`
-- [ ] 2.2 `core/simulation.ts` — compute `saturationFactor = iField > 0 ? saturation(iField)/iField : 1` and `droopRpm = Pe · govDroop · RPM_RATED`; include in both the collapsed and normal output branches
-- [ ] 2.3 Tests: `saturationFactor` = 1.0 below knee, < 1.0 above knee; `droopRpm` = 0 at no load, = Pe·govDroop·1500 under load
+- [x] 2.1 `core/types.ts` — add `saturationFactor: number` and `droopRpm: number` to `Outputs`
+- [x] 2.2 `core/simulation.ts` — compute `saturationFactor = iField > 0 ? saturation(iField)/iField : 1` and `droopRpm = Pe · govDroop · RPM_RATED`; include in both the collapsed and normal output branches (plus both `initialState` branches)
+- [x] 2.3 Tests: `saturationFactor` = 1.0 below knee, < 1.0 above knee; `droopRpm` = 0 at no load, = Pe·govDroop·1500 under load (`__tests__/integration/diagnostics.test.ts`)
 
 ## 3. LCD readouts (#6 — UI)
 
-- [ ] 3.1 `components/StatusDisplay.tsx` — display saturation derate (as %) and load-droop rpm in the slot freed by the valve-position line
-- [ ] 3.2 Add matching sticky-note legend lines for both readouts
-- [ ] 3.3 Confirm the saturation/droop readouts update live and read 100 % / 0 rpm at rest
+- [x] 3.1 `components/StatusDisplay.tsx` — display saturation derate (`SAT %`) and load-droop rpm (`DRP rpm`) on `l3` alongside Q (three space-between spans on the wide cols 2-4 screen)
+- [x] 3.2 Add matching sticky-note legend lines for both readouts (`SAT`, `DRP`)
+- [x] 3.3 Confirm the saturation/droop readouts update live and read 100 % / 0 rpm at rest (verified in-app: `l3` reads `SAT 100%` / `DRP 0 rpm` at the field-0 start state; three-span layout clean against the two-span lines)
 
 ## 4. Verify
 
-- [ ] 4.1 `pnpm test` green (incl. new output tests), ~90 % core coverage
+- [x] 4.1 `pnpm test` green (69 tests incl. new diagnostics), core coverage 92.3 % (≥ 90 %)
 - [ ] 4.2 Manual: pull PF toward 0.8 lag at full load → voltage sags past the trip and collapses (expected); saturation-derate and droop readouts move sensibly
 
 ## Out of scope (separate bugfix pass)

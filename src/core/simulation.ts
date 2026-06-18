@@ -1,7 +1,18 @@
 /** Simulation step: field lag → AVR or manual target → machine solve. */
 
 import { stepAvr } from './avr'
-import { AVR_VREF, DEFAULT_INPUTS, JOG_FAST, JOG_SLOW, PARAMS, RPM_RATED, TAU_EXCITER, TAU_SPINUP, TAU_VALVE, VALVE_RPM_MAX } from './constants'
+import {
+  AVR_VREF,
+  DEFAULT_INPUTS,
+  JOG_FAST,
+  JOG_SLOW,
+  PARAMS,
+  RPM_RATED,
+  TAU_EXCITER,
+  TAU_SPINUP,
+  TAU_VALVE,
+  VALVE_RPM_MAX,
+} from './constants'
 import { saturation } from './saturation'
 import { computeLoad } from './load'
 import { solveMachine } from './machine'
@@ -16,8 +27,8 @@ function jogRate(cmd: ValveCommand): number {
 }
 
 // Initial valve ~1495 rpm (slightly sub-synchronous; operator trims to 1500 for Phase 3 sync)
-const VALVE_PCT_INIT = (1495 / VALVE_RPM_MAX) * 100   // ≈ 93.44 %
-const SPEED_INIT_PU = 1495 / RPM_RATED                // ≈ 0.9967
+const VALVE_PCT_INIT = (1495 / VALVE_RPM_MAX) * 100 // ≈ 93.44 %
+const SPEED_INIT_PU = 1495 / RPM_RATED // ≈ 0.9967
 
 export function initialState(): SimState {
   const inputs = DEFAULT_INPUTS
@@ -25,6 +36,7 @@ export function initialState(): SimState {
   const result = solveMachine(inputs.fieldVoltage * SPEED_INIT_PU, load.p, load.q, PARAMS.xs)
   const initRpm = SPEED_INIT_PU * RPM_RATED
   const initHz = initRpm / 30
+  const saturationFactor = inputs.fieldVoltage > 0 ? saturation(inputs.fieldVoltage) / inputs.fieldVoltage : 1
   const outputs: Outputs = result.collapsed
     ? {
         vt: 0,
@@ -41,6 +53,8 @@ export function initialState(): SimState {
         rpm: initRpm,
         valvePct: VALVE_PCT_INIT,
         valveActual: VALVE_PCT_INIT,
+        saturationFactor,
+        droopRpm: 0,
       }
     : {
         ...result,
@@ -51,6 +65,8 @@ export function initialState(): SimState {
         rpm: initRpm,
         valvePct: VALVE_PCT_INIT,
         valveActual: VALVE_PCT_INIT,
+        saturationFactor,
+        droopRpm: result.p * PARAMS.govDroop * RPM_RATED,
       }
 
   return {
@@ -93,7 +109,10 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   const valvePct = Math.min(100, Math.max(0, state.valvePct + jogRate(inputs.valveCommand) * dt))
 
   // Valve actuator lag: physical valve position chases setpoint with τ_valve
-  const valveActual = Math.min(100, Math.max(0, state.valveActual + (valvePct - state.valveActual) * (1 - Math.exp(-dt / TAU_VALVE))))
+  const valveActual = Math.min(
+    100,
+    Math.max(0, state.valveActual + (valvePct - state.valveActual) * (1 - Math.exp(-dt / TAU_VALVE))),
+  )
 
   // 2.2 Valve → RPM (shaft-primary); droop-corrected first-order lag.
   // Pe_prev from the previous step; one-step lag (~33 ms) is negligible at simulator cadence.
@@ -114,12 +133,39 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   const load = computeLoad(inputs.loadFraction, inputs.powerFactor, inputs.pfLag)
   const result = solveMachine(ea, load.p, load.q, params.xs)
 
+  // Derived diagnostics: saturation derate (live with field) and load-droop rpm (tracks active power).
+  const saturationFactor = iField > 0 ? saturation(iField) / iField : 1
+
   let outputs: Outputs
   if (result.collapsed) {
     // Freeze voltage outputs but keep shaft readouts live; valveActual is shaft-side — stays live
-    outputs = { ...state.lastValidOutputs, iField, avrCommand, collapsed: true, frequencyHz, rpm, valvePct, valveActual }
+    const droopRpm = state.lastValidOutputs.p * params.govDroop * RPM_RATED
+    outputs = {
+      ...state.lastValidOutputs,
+      iField,
+      avrCommand,
+      collapsed: true,
+      frequencyHz,
+      rpm,
+      valvePct,
+      valveActual,
+      saturationFactor,
+      droopRpm,
+    }
   } else {
-    outputs = { ...result, iField, avrCommand, collapsed: false, frequencyHz, rpm, valvePct, valveActual }
+    const droopRpm = result.p * params.govDroop * RPM_RATED
+    outputs = {
+      ...result,
+      iField,
+      avrCommand,
+      collapsed: false,
+      frequencyHz,
+      rpm,
+      valvePct,
+      valveActual,
+      saturationFactor,
+      droopRpm,
+    }
   }
 
   const nextState: SimState = {

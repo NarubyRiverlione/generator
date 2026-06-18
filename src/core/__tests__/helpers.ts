@@ -32,7 +32,7 @@ export function advanceWithState(
   startState: SimState,
   inputs: Inputs,
   totalSeconds: number,
-  dt = 0.01
+  dt = 0.01,
 ): { state: SimState; outputs: ReturnType<typeof step>['outputs'] } {
   let state = startState
   let outputs = state.lastValidOutputs

@@ -13,7 +13,6 @@ import type { ValveCommand } from '../core/types'
 // cmd → pointer rotation (matches KnobTicks: ticks at −65°, 0°, +65°, +130°)
 const CMD_ANGLE: Record<ValveCommand, number> = { [-2]: -130, [-1]: -65, [0]: 0, [1]: 65, [2]: 130 }
 
-
 type Props = { onCommand: (cmd: ValveCommand) => void }
 
 export function SpringLoadedSelector({ onCommand }: Props) {
@@ -24,9 +23,7 @@ export function SpringLoadedSelector({ onCommand }: Props) {
     const { offsetWidth, offsetHeight } = e.currentTarget
     const left = offsetX < offsetWidth / 2
     const top = offsetY < offsetHeight / 2
-    const cmd: ValveCommand = left
-      ? (top ? -1 : -2)
-      : (top ?  1 :  2)
+    const cmd: ValveCommand = left ? (top ? -1 : -2) : top ? 1 : 2
     setActive(cmd)
     onCommand(cmd)
   }
@@ -52,7 +49,7 @@ export function SpringLoadedSelector({ onCommand }: Props) {
           const rect = e.currentTarget.getBoundingClientRect()
           const left = t.clientX - rect.left < rect.width / 2
           const top = t.clientY - rect.top < rect.height / 2
-          const cmd: ValveCommand = left ? (top ? -1 : -2) : (top ? 1 : 2)
+          const cmd: ValveCommand = left ? (top ? -1 : -2) : top ? 1 : 2
           setActive(cmd)
           onCommand(cmd)
         }}
@@ -76,9 +73,16 @@ export function SpringLoadedSelector({ onCommand }: Props) {
         <span className="knob-corner br">▲▲</span>
       </div>
       {/* invisible spacers — match scale + plate + locktag height on Knob so alignSelf:center lands at the same knob height */}
-      <div className="scale" style={{ visibility: 'hidden' }}><span>{' '}</span><span>{' '}</span></div>
-      <div className="plate" style={{ visibility: 'hidden' }}>-</div>
-      <div className="locktag" style={{ visibility: 'hidden' }}>{' '}</div>
+      <div className="scale" style={{ visibility: 'hidden' }}>
+        <span>{' '}</span>
+        <span>{' '}</span>
+      </div>
+      <div className="plate" style={{ visibility: 'hidden' }}>
+        -
+      </div>
+      <div className="locktag" style={{ visibility: 'hidden' }}>
+        {' '}
+      </div>
     </div>
   )
 }

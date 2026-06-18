@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_INPUTS, PARAMS } from '../constants'
+import { DEFAULT_INPUTS } from '../constants'
 import { initialState } from '../simulation'
 import type { Inputs, SimState } from '../types'
 import { advanceN, advanceTime, advanceWithState, stepN } from './helpers'

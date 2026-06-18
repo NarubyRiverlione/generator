@@ -5,7 +5,7 @@ export type ValveCommand = -2 | -1 | 0 | 1 | 2
 export type Inputs = {
   /** Exciter field DC setpoint, per-unit [0.0, 1.7]. Read-only when AVR is on. */
   fieldVoltage: number
-  /** Active load, fraction of rated [0, 1.5]. */
+  /** Active load, fraction of rated [0, 1.2]. */
   loadFraction: number
   /** Power factor magnitude: [0.6, 1.0] both lagging and leading. Sign determined by pfLag. */
   powerFactor: number
@@ -67,6 +67,13 @@ export type Outputs = {
   valvePct: number
   /** Physical valve position (%), sourced from actuator-lagged state. */
   valveActual: number
+  /**
+   * Open-circuit saturation derate ratio `saturation(iField) / iField` (dimensionless).
+   * 1.0 = field below the knee (no derate); <1.0 quantifies above-knee EMF-gain erosion.
+   */
+  saturationFactor: number
+  /** Load-induced speed drop, rpm; `p · govDroop · RPM_RATED`. 0 at no load. */
+  droopRpm: number
 }
 
 export type Params = {
