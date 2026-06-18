@@ -225,13 +225,45 @@ concerns the *voltage* channel, not rotor speed. Slot into the roadmap when desi
 ### Phase 3 — Synchronisation to grid
 **Prerequisite:** Phase 2 complete
 
-- Add the **coarse throttle valve** and shaft **run-up from rest** (0 → 1500 rpm) — the startup that
-  Phase 2 assumes already done; introduce true rotor inertia (swing equation) here
-- Add a simulated grid reference (fixed 400V, 50Hz)
-- Add synchroscope — visual display of phase angle difference between generator and grid
-- User must match voltage (exciter), frequency (turbine), and phase angle before closing the breaker
-- Closing out of sync triggers a visible disturbance — teaches why synchronisation matters
-- Key learning: the procedure and the consequences of getting it wrong
+Phase 3 turns the rotor from a *kinematically-driven* shaft into a *dynamic body with inertia that can
+fall out of step*. Following the "one concept at a time" rule, it is split into four sequential stages,
+each its own OpenSpec change. Manual synchroscope artistry (hand-matching V/f/phase before close) is
+**deprioritised** — the breaker may close automatically once conditions are roughly met; the pedagogy
+moves to *staying in step* and *what happens when you don't*.
+
+#### Stage 3a — Rotor swing dynamics (`phase-3a-rotor-swing-dynamics`)
+**One concept: rotor inertia.** Replace the Phase 2 kinematic speed lag with the swing equation
+`2H·dω/dt = Pm − Pe`. The valve now commands **mechanical power in (Pm)**, not speed directly; speed
+*emerges* from the power balance. Adds shaft **run-up from rest** (0 → 1500 rpm) and the inertia
+constant `H`. Islanded only — no grid yet. Load steps now cause frequency to **dip, swing, and
+require the operator to rebalance** (constant-power load gives no self-regulation, so a fixed valve has
+no stable frequency after a load step — the operator must act). This is the foundation for everything
+after it.
+
+#### Stage 3b — Automatic governor (`phase-3b-automatic-governor`)
+**One concept: closed-loop frequency regulation.** The exact twin of the AVR: a default-off governor
+that senses speed error `(ωref − ω)` and commands the valve (Pm) to hold 50 Hz, mirroring how the AVR
+holds Vt. When on, the speed-changer goes read-only and shows the commanded value; a governor-at-ceiling
+indicator mirrors the field-at-ceiling one. Isochronous (restores exactly 50 Hz) — droop-mode sharing
+is a Phase 4 concern. The learner first holds frequency by hand (Stage 3a), then lets the regulator do
+the chase.
+
+#### Stage 3c — Grid synchronisation (`phase-3c-grid-synchronisation`)
+**One concept: coupling to an infinite bus.** Add a simulated grid reference (fixed 400 V / 50 Hz), the
+**breaker**, and the **power angle δ** (the integral of the generator–grid frequency difference). Closing
+the breaker couples the machine to the grid through the synchronising power `Pmax·sin(δ)`. A synchro-check
+(ANSI-25) gate guards the close; closing into a large mismatch produces a visible swing. No loss-of-step
+yet — δ is held below the pull-out angle.
+
+#### Stage 3d — Loss-of-synchronism (`phase-3d-loss-of-synchronism`)
+**One concept: pole slip / out-of-step.** Push Pm past the pull-out power (δ past ~90°) and the
+restoring force reverses — the rotor runs away and **slips a pole**. Adds out-of-step detection
+(ANSI-78) that trips the breaker and islands the machine, reusing the existing relay-27 arm/trip/latch/
+dome-reset pattern. The ride-through-vs-slip outcome is the equal-area criterion, which the swing
+equation already produces — this stage *detects* and *dramatises* it rather than faking it.
+
+> **Deprioritised (later refinement):** manual synchroscope hand-matching of V/f/phase. The instrument
+> and the manual close procedure can be layered on once the dynamics and protection are solid.
 
 ### Phase 4 — Grid-connected operation
 **Prerequisite:** Phase 3 complete
