@@ -2,30 +2,35 @@
 
 ## Overview
 
-An interactive single-page React application that simulates the behaviour of a synchronous generator with an exciter. The goal is educational: to build a deep, intuitive understanding of how a realistic standby generator behaves — the kind protecting a hospital, data centre, or industrial facility during a grid outage.
+An interactive single-page React application that simulates the power plant of a ship. The goal is educational: to build a deep, intuitive understanding of how a realistic synchronous generator behaves — from a single islanded unit keeping the lights on, to multiple units running in parallel on the ship's internal grid, to the synchronisation procedure required before a standby unit can join.
 
 Parameters are chosen to reflect a real machine, not a textbook toy. Physics are honest but not academically exhaustive.
 
 ## Machine Context
 
-The simulated machine is a **1 MVA standby (backup) generator** operating **islanded** — no grid connection, no infinite bus. It carries its own load alone.
+The simulated machine is a **1 MVA ship's generator** — one of several units in a vessel's power plant. The ship operates its own **isolated internal grid**: no shore connection, no infinite bus. The generators are the grid.
 
 | Property | Value | Rationale |
 |---|---|---|
-| Rated power | 1 MVA | Hospital / data-centre scale |
-| Rated voltage | 400 V L-L | European LV standard |
-| Rated frequency | 50 Hz | European standard |
-| Operating range | 40–70 % of rated | Intentional oversizing for load spikes |
-| Connection | Islanded only | No grid in this line |
+| Rated power | 1 MVA | Mid-size vessel auxiliary unit |
+| Rated voltage | 400 V L-L | Standard marine LV distribution |
+| Rated frequency | 50 Hz | European / international standard |
+| Normal operating range | 40–70 % of rated | Intentional oversizing for load spikes |
+| Connection | Ship's isolated grid | No external grid |
 
-**Why islanded?** The backup generator's challenge is fundamentally different from grid-connected operation. There is no infinite bus to stabilise frequency — inertia, the damper winding, and the governor are the only defence against frequency collapse. The critical scenario is cold-start load pickup: the breaker closes onto a building load in one step, and the machine must absorb it alone.
+**Why a ship?** The ship's power plant is the ideal teaching environment:
+- The grid is isolated and fully visible — no hidden infinite bus absorbing disturbances
+- New consumers (bow thruster, crane, galley load) are discrete, sudden, and relatable
+- A blackout is immediate and consequential — the stakes are tangible
+- Multiple generators must sync to each other, not to an abstraction
+- Maritime engineers learn exactly this way
 
-**Why 40–70 % operating range?** Backup generators are intentionally oversized. A building needing 600 kW gets a 1 MVA machine so that motor inrush, UPS transfers, and HVAC switching stay well within the machine's headroom. Operating near 100 % rated is an emergency condition, not normal practice.
+**Why 40–70 % operating range?** Ship generators are intentionally oversized. A vessel needing 600 kW of hotel load runs a 1 MVA unit so that bow thruster starts, crane picks, and galley peaks stay within headroom. Operating near 100 % is an emergency condition.
 
-> **Branch point — grid-connected variant:** the codebase at git tag `islanded-baseline` is the
-> intended starting point for a future grid-connected simulator (infinite bus, synchroscope,
-> parallel operation, droop sharing). That variant follows a different operational philosophy and
-> should branch from that tag rather than extending this line.
+> **Branch point — utility grid variant:** the codebase at git tag `islanded-baseline` is the
+> intended starting point for a future utility-scale simulator (infinite bus, power station unit,
+> grid operator context). That variant follows a different operational philosophy and should branch
+> from that tag rather than extending this line.
 
 ---
 
@@ -269,31 +274,53 @@ indicator mirrors the field-at-ceiling one. Isochronous (restores exactly 50 Hz)
 is a Phase 4 concern. The learner first holds frequency by hand (Stage 3a), then lets the regulator do
 the chase.
 
-#### Stage 3c — Grid synchronisation (`phase-3c-grid-synchronisation`)
-**One concept: coupling to an infinite bus.** Add a simulated grid reference (fixed 400 V / 50 Hz), the
-**breaker**, and the **power angle δ** (the integral of the generator–grid frequency difference). Closing
-the breaker couples the machine to the grid through the synchronising power `Pmax·sin(δ)`. A synchro-check
-(ANSI-25) gate guards the close; closing into a large mismatch produces a visible swing. No loss-of-step
-yet — δ is held below the pull-out angle.
+#### Stage 3c — Damper windings (`phase-3c-damper-windings`) ✓ complete
+**One concept: passive rotor stabilisation.** Added `D·(ω − ωref)` to the swing equation. Effect is
+subtle on an islanded constant-power load (no oscillation to damp), but is prerequisite for parallel
+operation where the inter-machine coupling introduces oscillatory torque.
 
-#### Stage 3d — Loss-of-synchronism (`phase-3d-loss-of-synchronism`)
-**One concept: pole slip / out-of-step.** Push Pm past the pull-out power (δ past ~90°) and the
-restoring force reverses — the rotor runs away and **slips a pole**. Adds out-of-step detection
-(ANSI-78) that trips the breaker and islands the machine, reusing the existing relay-27 arm/trip/latch/
-dome-reset pattern. The ride-through-vs-slip outcome is the equal-area criterion, which the swing
-equation already produces — this stage *detects* and *dramatises* it rather than faking it.
+#### Stage 3d — Cold-start load pickup
+**One concept: instantaneous load step onto an islanded machine.** Add a **load breaker** button that
+closes the building/ship load in a single step (no ramp). The machine must absorb the full Pe jump on
+inertia alone while the governor races to raise Pm. Too large a step = frequency collapse and stall.
+Key learning: why backup generators are oversized, what `H` and `TAU_VALVE` mean in practice, and why
+the governor speed matters more than its steady-state accuracy.
 
-> **Deprioritised (later refinement):** manual synchroscope hand-matching of V/f/phase. The instrument
-> and the manual close procedure can be layered on once the dynamics and protection are solid.
+Correction from Phase 3 assumptions: `TAU_VALVE` will be revised from 2.0 s (steam plant) to ~0.3 s
+(diesel/gas fuel rack) to reflect the ship generator reality.
 
-### Phase 4 — Grid-connected operation
+#### Stage 3e — Frequency collapse and load shedding
+**One concept: automatic load dropping under under-frequency.** When frequency falls below a threshold
+(e.g. 48.5 Hz), the ship's load management system automatically sheds non-essential consumers to
+prevent a blackout. Adds an under-frequency relay (ANSI-81) and a priority-ordered load shed sequence.
+Key learning: protection as a last line of defence, and why load hierarchy matters on a ship.
+
+### Phase 4 — Ship's parallel operation
 **Prerequisite:** Phase 3 complete
 
-- After breaker closes, grid locks frequency and voltage
-- Exciter knob now controls **reactive power (Q) flow** to/from grid instead of terminal voltage
-- Turbine governor now controls **active power (P) flow** to/from grid instead of frequency
-- Key learning: same physical controls, entirely different meaning when grid-connected vs islanded
-- Show P and Q flow direction (import/export) as primary readouts
+A second generator joins the ship's internal grid. This is where synchronisation finally appears —
+but to *another machine just like this one*, not to an abstract infinite bus.
+
+#### Stage 4a — Second generator startup
+Run a second unit up to speed and voltage alongside the first. The first generator is the reference —
+it owns the ship's frequency and voltage. The second must match before its breaker can close.
+
+#### Stage 4b — Synchronisation to the ship's grid
+**One concept: syncing to a live internal grid.** Add a synchroscope showing phase angle difference
+between the incoming unit and the running grid. A synchro-check (ANSI-25) gate guards the close.
+Closing into a large mismatch produces a visible rotor swing — now the damper winding's effect becomes
+dramatic and unmistakable.
+
+#### Stage 4c — Droop and load sharing
+**One concept: parallel load sharing.** With two units running, the governor changes from isochronous
+(holds exact frequency alone) to droop mode (shares load proportionally). Each machine's governor
+droops its frequency setpoint as load increases, forcing automatic sharing. Key learning: why droop is
+essential for parallel operation and why two isochronous governors fight each other.
+
+#### Stage 4d — Consumer-triggered standby start
+**One concept: automatic load management.** A large new consumer (bow thruster, crane) triggers
+automatic startup of the standby generator, synchronisation, and breaker close — the full sequence
+automated. Key learning: the load management controller as the brain of the ship's power plant.
 
 ---
 

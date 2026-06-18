@@ -6,18 +6,18 @@ The goal is to build intuition for relationships that are hard to grasp from equ
 
 ## Machine context
 
-The simulated machine is a **1 MVA standby (backup) generator** — the size you would find protecting a hospital, data centre, or industrial facility during a grid outage. It operates **islanded**: no grid connection, no infinite bus, carrying its own load alone.
+The simulated machine is a **1 MVA ship's generator** — one unit in a vessel's isolated power plant. There is no shore connection, no infinite bus. The generators *are* the grid.
 
 This framing is deliberate:
-- Realistic operating range is **40–70 % of rated** (the machine is intentionally oversized to absorb load spikes)
-- Load steps are building-scale events — motors starting, UPS transfers, HVAC switching
-- Frequency stability depends entirely on inertia, the damper winding, and the governor — there is no grid to help
-- The critical scenario is **cold-start load pickup**: breaker closes onto a building load in one step
+- Realistic operating range is **40–70 % of rated** (oversized to absorb bow thruster starts, crane picks, galley peaks)
+- Load steps are ship-scale events — discrete, sudden, and consequential
+- A blackout is immediate and tangible — the stakes are real
+- Synchronisation happens between machines, not to an abstraction
+- The full story ends with multiple units running in parallel, sharing load, and a standby unit syncing in when a large consumer demands it
 
-> **Branch point — grid-connected variant:** the codebase at git tag `islanded-baseline` is the clean
-> starting point for a future grid-connected variant (infinite bus, synchroscope, parallel operation).
-> That variant follows a different operational philosophy and should branch from that tag rather than
-> continuing this line.
+> **Branch point — utility grid variant:** the codebase at git tag `islanded-baseline` is the clean
+> starting point for a future utility-scale simulator (infinite bus, power station unit, grid operator
+> context). That variant follows a different operational philosophy and should branch from that tag.
 
 Built with Vite + React + TypeScript. All physics in `src/core/` (pure functions, no React). Hand-rolled SVG instruments and a gray-steel switchboard aesthetic. Uses **pnpm** as the package manager (`pnpm install`, `pnpm dev`, `pnpm vitest run --coverage`).
 
@@ -61,23 +61,21 @@ Carved out of Phase 2 (it concerns the voltage channel). Prerequisite: Phase 2.
 - Second field time constant: stacked τ_exciter (0.4 s) + τ_field (1.1 s) produce AVR overshoot and ringing
 - Kp/Ki are user-adjustable; tuning against the second-order saturating plant is meaningful
 
-### Phase 3 — Synchronisation to grid (planned)
+### Phase 3 — Dynamic islanded operation (in progress)
 
 Prerequisite: Phase 2.
 
-- **Coarse throttle valve and run-up from rest** (0 → 1500 rpm) — the startup Phase 2 assumes done; true rotor inertia (swing equation)
-- Simulated grid reference (fixed 400 V, 50 Hz)
-- Synchroscope showing phase angle difference between generator and grid
-- User must match voltage, frequency, and phase before closing the breaker
-- Closing out of sync triggers a visible disturbance
+- **3a** ✓ Rotor swing dynamics — swing equation, run-up from rest, inertia constant H
+- **3b** ✓ Automatic governor — PI frequency regulation, isochronous, anti-windup
+- **3c** ✓ Damper windings — `D·(ω − ωref)` passive rotor stabilisation
+- **3d** Cold-start load pickup — load breaker button, instantaneous step, survive or stall
+- **3e** Load shedding — ANSI-81 under-frequency relay, priority load shed sequence
 
-### Phase 4 — Grid-connected operation (planned)
+### Phase 4 — Ship's parallel operation (planned)
 
 Prerequisite: Phase 3.
 
-- Grid locks frequency and voltage after breaker closes
-- Exciter knob now commands reactive power (Q) flow to/from grid
-- Turbine governor now commands active power (P) flow to/from grid
-- Key learning: same physical controls, entirely different meaning when islanded vs. grid-connected
-- ZIP load model (constant-impedance + constant-current + constant-power mix): reveals self-regulating load behaviour vs. the worst-case constant-power model used in Phases 1–3
-- PV nose-point curve with proper stability margin in MW distance to collapse
+- **4a** Second generator startup alongside the running unit
+- **4b** Synchronisation to the ship's internal grid — synchroscope, ANSI-25 synchro-check, breaker close; damper winding effect becomes dramatic
+- **4c** Droop and load sharing — parallel governors, proportional load split
+- **4d** Consumer-triggered standby start — bow thruster / crane triggers automatic startup, sync, and close
