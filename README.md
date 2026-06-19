@@ -14,9 +14,12 @@ The simulator teaches through two distinct scenarios:
 
 Realistic operating range is **40–70 % per unit** — the machines are intentionally oversized so bow thruster starts and towing peaks stay within headroom.
 
-> **Branch point — utility grid variant:** the codebase at git tag `islanded-baseline` is the clean
-> starting point for a future utility-scale simulator (infinite bus, power station unit, grid operator
-> context). That variant follows a different operational philosophy and should branch from that tag.
+> **Branch point — utility grid variant:** the git tag **`islanded-baseline`** marks the fork point
+> for a future utility-scale simulator (infinite bus, power station unit, grid operator context). It
+> points at the complete islanded harbour-tug sim, so the grid variant inherits all the working physics
+> and swaps out the islanded-specific parts. When the time comes, fork from it with
+> `git checkout -b grid-variant islanded-baseline`. That variant follows a different operational
+> philosophy and should branch from this tag rather than extending this line.
 
 Built with Vite + React + TypeScript. All physics in `src/core/` (pure functions, no React). Hand-rolled SVG instruments and a gray-steel switchboard aesthetic. Uses **pnpm** as the package manager (`pnpm install`, `pnpm dev`, `pnpm vitest run --coverage`).
 
