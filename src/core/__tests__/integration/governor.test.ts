@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_INPUTS, INERTIA_H, PARAMS, PM_MAX, RELAY27_TRIP_VT, RPM_RATED, VALVE_RPM_MAX } from '../../constants'
+import { DEFAULT_INPUTS, GOV_KI, INERTIA_H, PARAMS, PM_MAX, RELAY27_TRIP_VT, RPM_RATED, VALVE_RPM_MAX, WINDAGE_K } from '../../constants'
 import { computeLoad } from '../../load'
 import { solveMachine } from '../../machine'
 import { initialState } from '../../simulation'
@@ -49,15 +49,21 @@ describe('relay-27 core conditions', () => {
 // dω/dt = (0 - 0) / 2H = 0 → omega stays at 1.0 → 1500 rpm / 50 Hz.
 
 describe('rated speed holds at omega=1.0 with balanced power', () => {
-  it('seeded omega=1.0, valve closed, no load → 50 Hz / 1500 rpm', () => {
+  it('governor maintains 50 Hz / 1500 rpm against windage at no load', () => {
+    // With windage always active, the governor must supply Pm = WINDAGE_K·ωref to hold speed.
+    // Seed the governor integral to its steady-state value so the PI starts at equilibrium
+    // rather than cold (cold start requires many seconds of winding to reach no-load Pm).
+    const valveSS = (WINDAGE_K / PM_MAX) * 100 // ≈ 4.69 % — windage equilibrium valve
+    const integralSS = valveSS / GOV_KI         // governor integral at steady state
     const seeded: SimState = {
       ...initialState(),
       omega: 1.0,
-      valvePct: 0,
-      valveActual: 0,
+      valvePct: valveSS,
+      valveActual: valveSS,
+      governorIntegral: integralSS,
       collapsed: false,
     }
-    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0, avrOn: false, valveCommand: 0 }
+    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0, avrOn: false, governorOn: true }
     const { outputs } = advanceWithState(seeded, inputs, 10 * PARAMS.tau)
     expect(outputs.frequencyHz).toBeCloseTo(50, 2)
     expect(outputs.rpm).toBeCloseTo(1500, 0)
@@ -69,18 +75,19 @@ describe('rated speed holds at omega=1.0 with balanced power', () => {
 })
 
 // ── Speed reduction sags Vt ──────────────────────────────────────────────────
-// Seed two states at different omega values; hold valve closed (Pm=0) and no load (Pe=0)
-// so dω/dt=0 and omega stays fixed. Vt depends on Ea = saturation(iField) × omega.
+// Seed two states at different omega values with iField pre-settled.
+// Run for a brief moment (windage barely moves omega over 0.1 s) to check Vt ordering.
 
 describe('speed reduction sags Vt with AVR off', () => {
   it('lower omega → lower Vt; field high enough to stay above the relay trip', () => {
     const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.3, loadFraction: 0, avrOn: false, valveCommand: 0 }
-    // Valve closed so Pm=0, Pe=0 → omega stays at seeded value
-    const seededHigh: SimState = { ...initialState(), omega: 1.0, valvePct: 0, valveActual: 0, collapsed: false }
-    const seededLow: SimState = { ...initialState(), omega: 0.8, valvePct: 0, valveActual: 0, collapsed: false }
+    // Pre-settle iField so the output reflects omega, not field lag.
+    // Run briefly: windage moves omega by < 0.1 % in 0.1 s, so the comparison stays valid.
+    const seededHigh: SimState = { ...initialState(), omega: 1.0, valvePct: 0, valveActual: 0, iField: 1.3, exciterLagged: 1.3, collapsed: false }
+    const seededLow: SimState = { ...initialState(), omega: 0.8, valvePct: 0, valveActual: 0, iField: 1.3, exciterLagged: 1.3, collapsed: false }
 
-    const { outputs: outHigh } = advanceWithState(seededHigh, inputs, 10 * PARAMS.tau)
-    const { outputs: outLow } = advanceWithState(seededLow, inputs, 10 * PARAMS.tau)
+    const { outputs: outHigh } = advanceWithState(seededHigh, inputs, 0.1)
+    const { outputs: outLow } = advanceWithState(seededLow, inputs, 0.1)
 
     expect(outLow.vt).toBeLessThan(outHigh.vt)
     expect(outLow.vt).toBeGreaterThan(0.85)

@@ -19,8 +19,8 @@ export type Inputs = {
   governorOn: boolean
   /** Fine raise/lower switch: ±1 slow jog, ±2 fast jog, 0 neutral (spring-return). */
   valveCommand: ValveCommand
-  /** Coarse raise/lower switch: ±1 slow jog, ±2 fast jog, 0 neutral (spring-return). Rates 2× / 5× fine fast. */
-  coarseValveCommand: ValveCommand
+  /** Momentary engine command: 'start' ramps throttle to idle; 'stop' opens breaker then ramps to 0. Cleared by the hook each tick. */
+  engineCommand: 'start' | 'stop' | null
 }
 
 export type SimState = {
