@@ -186,8 +186,12 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
 
   // Swing equation with amortisseur damping:
   //   dω/dt = (Pm − Pe − D·(ω − ωref)) / (2H)
+  // Damper term only applies when the load breaker is closed — damper windings produce torque only
+  // through electromagnetic interaction with armature currents; no load = no current = no damping.
+  // Without this gate, D·(ω − ωref) creates a phantom accelerating force from rest.
   // Clamped to [0, OMEGA_MAX] (no reverse spin; overspeed ceiling).
-  const omegaRaw = state.omega + ((Pm - Pe - DAMPING_D * (state.omega - OMEGA_REF)) / (2 * INERTIA_H)) * dt
+  const dampingTerm = inputs.loadBreaker ? DAMPING_D * (state.omega - OMEGA_REF) : 0
+  const omegaRaw = state.omega + ((Pm - Pe - dampingTerm) / (2 * INERTIA_H)) * dt
   const omega = Math.min(OMEGA_MAX, Math.max(0, omegaRaw))
 
   // Internal EMF scales with speed: Eₐ = saturation(field_lagged) × omega
@@ -205,8 +209,8 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   // Saturation derate diagnostic (live with field).
   const saturationFactor = iField > 0 ? saturation(iField) / iField : 1
 
-  // Damper winding torque: D·(ω − ωref). Zero at synchronous speed; spikes on load steps.
-  const dampingTorque = DAMPING_D * (omega - OMEGA_REF)
+  // Damper winding torque: D·(ω − ωref). Zero when breaker open (no armature current).
+  const dampingTorque = inputs.loadBreaker ? DAMPING_D * (omega - OMEGA_REF) : 0
 
   let outputs: Outputs
   if (result.collapsed) {

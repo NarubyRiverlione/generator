@@ -119,9 +119,10 @@ describe('dampingTorque output', () => {
   })
 
   it('is proportional to slip: dampingTorque = D·(omega_new − ωref)', () => {
-    // Use valve=0, no load so Pm=0, Pe=0.
+    // Use valve=0, breaker closed, no knob load so Pm=0, Pe=0.
     // dω/dt = (0 − 0 − D·slip) / 2H → omega changes only by the damping correction over one step.
     // Check that dampingTorque = D * (post-step omega − OMEGA_REF).
+    // Breaker must be closed: gating ensures damper torque only acts when armature current can flow.
     const slip = -0.05
     const seeded: SimState = {
       ...initialState(),
@@ -132,7 +133,7 @@ describe('dampingTorque output', () => {
       exciterLagged: 1.0,
       collapsed: false,
     }
-    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0, avrOn: false }
+    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 1.0, loadFraction: 0, loadBreaker: true, avrOn: false }
     const { outputs } = step(seeded, inputs, PARAMS, 0.033)
     // dampingTorque must equal D * (the omega that was actually used in this step)
     expect(outputs.dampingTorque).toBeCloseTo(DAMPING_D * (outputs.rpm / 1500 - OMEGA_REF), 6)

@@ -114,8 +114,8 @@ export default function App() {
             step={0.01}
             value={pfSigned}
             display={`${inputs.powerFactor.toFixed(2)} ${inputs.pfLag ? 'lag' : 'ld'}`}
-            scaleMin="0.6 lag"
-            scaleMax="0.6 ld"
+            scaleMin="0.6"
+            scaleMax="1.0"
             ptrRotation={-130 + ((inputs.powerFactor - 0.6) / 0.4) * 260}
             onChange={(v) => handlePfChange(clamp(v, -1, 1))}
           />
