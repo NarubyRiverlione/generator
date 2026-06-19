@@ -11,8 +11,6 @@ import {
   GOV_RATE_LIMIT,
   DAMPING_D,
   INERTIA_H,
-  JOG_COARSE_FAST,
-  JOG_COARSE_SLOW,
   JOG_FAST,
   JOG_SLOW,
   OMEGA_REF,
@@ -33,14 +31,6 @@ function jogRate(cmd: ValveCommand): number {
   if (cmd === 1) return JOG_SLOW
   if (cmd === -1) return -JOG_SLOW
   if (cmd === -2) return -JOG_FAST
-  return 0
-}
-
-function coarseJogRate(cmd: ValveCommand): number {
-  if (cmd === 2) return JOG_COARSE_FAST
-  if (cmd === 1) return JOG_COARSE_SLOW
-  if (cmd === -1) return -JOG_COARSE_SLOW
-  if (cmd === -2) return -JOG_COARSE_FAST
   return 0
 }
 
@@ -163,7 +153,7 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   } else {
     valvePct = Math.min(
       100,
-      Math.max(0, state.valvePct + (jogRate(inputs.valveCommand) + coarseJogRate(inputs.coarseValveCommand)) * dt),
+      Math.max(0, state.valvePct + jogRate(inputs.valveCommand) * dt),
     )
     governorCommand = valvePct
     // Bumpless transfer: prime integral so governor output = current valvePct on engage.

@@ -45,9 +45,14 @@ export const DAMPING_D = 0.05
 export const JOG_SLOW = 0.03125 // %/s = 0.5 rpm/s
 export const JOG_FAST = 0.3125 // %/s = 5 rpm/s
 
-/** Coarse jog rates (valve %/s). Slow = 2× fine fast; fast = 5× fine fast. */
+/** Coarse jog rates retained for reference (SpringLoadedSelector component kept, not mounted). */
 export const JOG_COARSE_SLOW = 0.625 // %/s = 10 rpm/s
 export const JOG_COARSE_FAST = 1.5625 // %/s = 25 rpm/s
+
+/** Idle speed target for the START button (rpm). Deliberately below the load-breaker arming threshold (~1425 rpm). */
+export const IDLE_RPM = 1400
+/** Valve position (%) corresponding to IDLE_RPM. START ramps the throttle to this point. */
+export const IDLE_VALVE_PCT = (IDLE_RPM / VALVE_RPM_MAX) * 100 // 87.5 %
 
 /**
  * Minimum rotor speed (pu) before the AVR is allowed to arm.
@@ -79,5 +84,5 @@ export const DEFAULT_INPUTS: Inputs = {
   avrOn: false,
   governorOn: false,
   valveCommand: 0,
-  coarseValveCommand: 0,
+  engineCommand: null,
 }

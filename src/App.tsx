@@ -1,8 +1,8 @@
 /**
- * 6-column switchboard grid layout (col 6 = governor speed-changer bookend):
+ * 6-column switchboard grid layout:
  *   Row 1: [AC OUTPUT] [RECT DC] [MAIN FIELD] [TERMINAL Vt] [ACTIVE POWER P] [LOAD BREAKER]
- *   Row 2: [exciter knob] [LCD col 2-4] [active load knob] [SpringLoadedSelector]
- *   Row 3: [lights 1-4] [LCD cont.] [AVR SelectorSwitch] [27 relay] [power factor knob] [SpringLoadedSelector+GOVERNOR]
+ *   Row 2: [exciter knob] [LCD col 2-4] [active load knob] [fine SpringLoadedSelector]
+ *   Row 3: [lights 1-4] [LCD cont.] [AVR SelectorSwitch] [27 relay] [power factor knob] [START/STOP + GOVERNOR]
  */
 
 import { LoadBreaker } from './components/LoadBreaker'
@@ -17,8 +17,11 @@ import { useGeneratorSimulation } from './hooks/useGeneratorSimulation'
 
 export default function App() {
   const startParam = new URLSearchParams(window.location.search).get('start') ?? undefined
-  const { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand, setCoarseValveCommand, setLoadBreaker } =
+  const { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand, setLoadBreaker, startEngine, stopEngine } =
     useGeneratorSimulation(startParam)
+
+  const engineRunning = outputs.rpm > 30
+  const engineAtIdle = outputs.rpm >= 1380
 
   const fieldValue = inputs.avrOn ? outputs.avrCommand : inputs.fieldVoltage
   const pfSigned = inputs.pfLag ? inputs.powerFactor : -inputs.powerFactor
@@ -156,17 +159,32 @@ export default function App() {
           />
         </div>
 
-        {/* Row 3, col 6: coarse speed-changer + governor selector stacked */}
+        {/* Row 3, col 6: START/STOP buttons + governor selector stacked */}
         <div
           className="knob-cell"
           style={{ gridColumn: 6, gridRow: 3, alignSelf: 'start', flexDirection: 'column', gap: 12 }}
         >
-          <SpringLoadedSelector
-            label="COARSE"
-            onCommand={setCoarseValveCommand}
-            readOnly={inputs.governorOn}
-            lockLabel={inputs.governorOn ? 'GOV COMMANDING' : undefined}
-          />
+          <div className="engine-start-stop">
+            <div className="card">ENGINE</div>
+            <div className="engine-btn-row">
+              <button
+                className="engine-btn engine-btn-start"
+                disabled={engineAtIdle}
+                onClick={startEngine}
+                title={engineAtIdle ? 'Engine already running' : 'Start engine — ramps to idle'}
+              >
+                <span className="engine-symbol">I</span>
+              </button>
+              <button
+                className="engine-btn engine-btn-stop"
+                disabled={!engineRunning}
+                onClick={stopEngine}
+                title={!engineRunning ? 'Engine already stopped' : 'Stop engine — opens breaker, cuts fuel'}
+              >
+                <span className="engine-symbol">O</span>
+              </button>
+            </div>
+          </div>
           <SelectorSwitch
             label="GOVERNOR"
             value={inputs.governorOn}

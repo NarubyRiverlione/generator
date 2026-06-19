@@ -1,0 +1,78 @@
+/* Engine START / STOP push-buttons — IEC 5007 / 5008 symbols. */
+
+.engine-start-stop {
+  text-align: center;
+  width: 90px;
+}
+
+.engine-btn-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin: 8px auto 0;
+}
+
+.engine-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 0 0 2px var(--chrome2),
+    0 3px 6px #0005,
+    inset 0 -3px 6px #0004;
+  transition:
+    opacity 0.15s,
+    transform 0.08s;
+}
+
+.engine-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.engine-btn:not(:disabled):active {
+  transform: scale(0.92);
+  box-shadow:
+    0 0 0 2px var(--chrome2),
+    0 1px 2px #0005,
+    inset 0 2px 6px #0006;
+}
+
+.engine-btn-start {
+  background: linear-gradient(160deg, #2a6a2a, #1a4a1a);
+}
+
+.engine-btn-start:not(:disabled) {
+  box-shadow:
+    0 0 0 2px var(--chrome2),
+    0 0 8px #40c04088,
+    0 3px 6px #0005,
+    inset 0 -3px 6px #0004;
+}
+
+.engine-btn-stop {
+  background: linear-gradient(160deg, #7a1a1a, #4a0a0a);
+}
+
+.engine-btn-stop:not(:disabled) {
+  box-shadow:
+    0 0 0 2px var(--chrome2),
+    0 0 8px #c0202088,
+    0 3px 6px #0005,
+    inset 0 -3px 6px #0004;
+}
+
+.engine-symbol {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+  letter-spacing: 0;
+  display: block;
+}

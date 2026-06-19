@@ -1,7 +1,7 @@
 /** rAF-driven simulation loop. All physics delegated to core.step; no circuit math here. */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { PARAMS, RELAY27_TRIP_VT } from '../core/constants'
+import { GOV_RATE_LIMIT, IDLE_VALVE_PCT, PARAMS, RELAY27_TRIP_VT } from '../core/constants'
 import { resolvePreset } from '../core/presets'
 import { initialState, step } from '../core/simulation'
 import type { Inputs, Outputs, SimState, ValveCommand } from '../core/types'
@@ -16,14 +16,14 @@ export type SimHook = {
   relay27Tripped: boolean
   resetRelay27: () => void
   setValveCommand: (cmd: ValveCommand) => void
-  setCoarseValveCommand: (cmd: ValveCommand) => void
   setLoadBreaker: (closed: boolean) => void
+  startEngine: () => void
+  stopEngine: () => void
 }
 
 export function useGeneratorSimulation(presetName?: string): SimHook {
   const preset = resolvePreset(presetName)
   const seedInputs: Inputs = { ...preset.inputs } as Inputs
-  // Single call — reused for both outputs and stateRef so they never diverge.
   const boot = initialState(seedInputs, preset.seed)
 
   const [inputs, setInputs] = useState<Inputs>(seedInputs)
@@ -33,18 +33,19 @@ export function useGeneratorSimulation(presetName?: string): SimHook {
   const stateRef = useRef<SimState>(boot)
   const inputsRef = useRef<Inputs>(seedInputs)
   const relay27Ref = useRef<boolean>(false)
-  // Relay only arms once Vt has risen above the trip threshold (startup inhibit)
   const relay27ArmedRef = useRef<boolean>(false)
   const lastTimeRef = useRef<number | null>(null)
   const rafRef = useRef<number | null>(null)
 
+  // valveCommand held outside React state so press-and-hold bypasses batching
+  const valveCommandRef = useRef<ValveCommand>(0)
+
+  // Auto-ramp target: null = idle, otherwise the target valve % (IDLE_VALVE_PCT or 0)
+  const autoRampTargetRef = useRef<number | null>(null)
+
   useEffect(() => {
     inputsRef.current = inputs
   }, [inputs])
-
-  // valveCommand refs held outside React state so press-and-hold updates bypass batching
-  const valveCommandRef = useRef<ValveCommand>(0)
-  const coarseValveCommandRef = useRef<ValveCommand>(0)
 
   useEffect(() => {
     let lastScheduled = 0
@@ -61,11 +62,35 @@ export function useGeneratorSimulation(presetName?: string): SimHook {
         lastTimeRef.current = timestamp
         lastScheduled = timestamp
 
-        // Inject live switch positions; clamp load to 0 while relay is latched
+        // Process momentary engine command — act then clear it immediately
+        const cmd = inputsRef.current.engineCommand
+        if (cmd === 'start') {
+          autoRampTargetRef.current = IDLE_VALVE_PCT
+          inputsRef.current = { ...inputsRef.current, engineCommand: null }
+          setInputs((prev) => ({ ...prev, engineCommand: null }))
+        } else if (cmd === 'stop') {
+          // Open breaker and disable governor immediately; then ramp throttle to 0
+          const stopped = { ...inputsRef.current, engineCommand: null, loadBreaker: false, governorOn: false }
+          inputsRef.current = stopped
+          setInputs(() => stopped)
+          autoRampTargetRef.current = 0
+        }
+
+        // Auto-ramp: move valvePct toward target at GOV_RATE_LIMIT %/s before calling step()
+        if (autoRampTargetRef.current !== null) {
+          const targetPct = autoRampTargetRef.current
+          const maxStep = GOV_RATE_LIMIT * dt
+          const diff = targetPct - stateRef.current.valvePct
+          const move = Math.sign(diff) * Math.min(Math.abs(diff), maxStep)
+          stateRef.current = { ...stateRef.current, valvePct: stateRef.current.valvePct + move }
+          if (Math.abs(diff) <= maxStep) {
+            autoRampTargetRef.current = null
+          }
+        }
+
         const tickInputs: Inputs = {
           ...inputsRef.current,
           valveCommand: valveCommandRef.current,
-          coarseValveCommand: coarseValveCommandRef.current,
           ...(relay27Ref.current ? { loadFraction: 0 } : {}),
         }
         const result = step(stateRef.current, tickInputs, PARAMS, dt)
@@ -109,10 +134,6 @@ export function useGeneratorSimulation(presetName?: string): SimHook {
     valveCommandRef.current = cmd
   }, [])
 
-  const setCoarseValveCommand = useCallback((cmd: ValveCommand) => {
-    coarseValveCommandRef.current = cmd
-  }, [])
-
   const setLoadBreaker = useCallback((closed: boolean) => {
     setInputs((prev) => {
       const next = { ...prev, loadBreaker: closed }
@@ -121,5 +142,21 @@ export function useGeneratorSimulation(presetName?: string): SimHook {
     })
   }, [])
 
-  return { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand, setCoarseValveCommand, setLoadBreaker }
+  const startEngine = useCallback(() => {
+    setInputs((prev) => {
+      const next = { ...prev, engineCommand: 'start' as const }
+      inputsRef.current = next
+      return next
+    })
+  }, [])
+
+  const stopEngine = useCallback(() => {
+    setInputs((prev) => {
+      const next = { ...prev, engineCommand: 'stop' as const }
+      inputsRef.current = next
+      return next
+    })
+  }, [])
+
+  return { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand, setLoadBreaker, startEngine, stopEngine }
 }
