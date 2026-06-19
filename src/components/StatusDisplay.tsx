@@ -26,6 +26,9 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
   const satPct = Math.round(outputs.saturationFactor * 100)
   const powerBalanceRaw = (outputs.pm - outputs.p) * 100 // (Pm - Pe) × 100 %
   const powerBalancePct = powerBalanceRaw.toFixed(1)
+  const throttlePct = outputs.valveActual.toFixed(1)
+  const dampingSign = outputs.dampingTorque >= 0 ? '+' : ''
+  const dampingDisplay = `${dampingSign}${outputs.dampingTorque.toFixed(3)}`
   const marginPct = Math.round(outputs.stabilityMargin * 100)
   const marginWarn = outputs.stabilityMargin < 0.2
   const marginRed = outputs.stabilityMargin < 0.08
@@ -61,6 +64,10 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
             VSM {marginPct}%{marginWarn ? ' ⚠' : ''}
           </span>
           <span>SAT {satPct}%</span>
+        </div>
+        <div className="l4">
+          <span>THR {throttlePct}%</span>
+          <span>DMP {dampingDisplay}</span>
         </div>
       </div>
 
@@ -135,6 +142,14 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
             </div>
             <div className="sticky-line">
               <span className="sticky-key">VSM</span> Voltage stability margin — warn &lt;20%, danger &lt;8%
+            </div>
+            <div className="sticky-line">
+              <span className="sticky-key">THR</span> Throttle / fuel rack position (%) — physical valve actual; governor
+              drives this toward the demand
+            </div>
+            <div className="sticky-line">
+              <span className="sticky-key">DMP</span> Damping torque D·(ω−ωref) pu — zero at synchronous speed; spikes
+              transiently on load steps; passive, no control loop
             </div>
           </div>
         )}

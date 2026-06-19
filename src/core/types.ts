@@ -11,6 +11,8 @@ export type Inputs = {
   powerFactor: number
   /** true = lagging (inductive), false = leading (capacitive). */
   pfLag: boolean
+  /** Load breaker closed. When false, Pe = 0 regardless of load Knob; closing applies the full Knob value as one instantaneous step. */
+  loadBreaker: boolean
   /** AVR enabled. */
   avrOn: boolean
   /** Governor enabled (isochronous PI on speed error → valve setpoint). */
@@ -84,6 +86,8 @@ export type Outputs = {
   saturationFactor: number
   /** Mechanical power in (pu); derived from valve position. Together with `p` gives the power imbalance Pm − Pe that the swing equation integrates. */
   pm: number
+  /** Instantaneous damper-winding braking torque: D·(ω − ωref) (pu). Zero at synchronous speed; spikes transiently during load steps proportional to slip. */
+  dampingTorque: number
 }
 
 export type Params = {

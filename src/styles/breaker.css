@@ -1,0 +1,60 @@
+/* Load breaker panel control — switchgear-style, not a logic switch. */
+
+.load-breaker {
+  text-align: center;
+  width: 90px;
+}
+
+.breaker-btn {
+  display: block;
+  width: 72px;
+  margin: 8px auto;
+  padding: 10px 0;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    background 0.1s,
+    box-shadow 0.1s,
+    opacity 0.15s;
+  box-shadow:
+    0 0 0 2px var(--chrome2),
+    0 3px 6px #0005,
+    inset 0 -3px 6px #0004;
+}
+
+.breaker-open {
+  background: linear-gradient(160deg, #4a5a4a, #2e3a2e);
+  color: var(--green);
+  box-shadow:
+    0 0 0 2px var(--chrome2),
+    0 3px 6px #0005,
+    inset 0 -3px 6px #0004;
+}
+
+.breaker-closed {
+  background: linear-gradient(160deg, #5a3a2e, #3a1e14);
+  color: #ff9070;
+  box-shadow:
+    0 0 0 2px var(--chrome2),
+    0 0 10px #c04020aa,
+    0 3px 6px #0005,
+    inset 0 -3px 6px #0004;
+}
+
+.breaker-disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.breaker-btn:not(.breaker-disabled):active {
+  transform: scale(0.96);
+}
+
+.breaker-state {
+  display: block;
+}

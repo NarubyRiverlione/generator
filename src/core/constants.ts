@@ -64,8 +64,8 @@ export const GOV_KI = 20
 /** Maximum governor valve rate of change (%/s). Prevents aggressive slams that stress the shaft. */
 export const GOV_RATE_LIMIT = 10
 
-/** Valve actuator lag time constant (s). Mechanical lag of the motor-operated intake valve. */
-export const TAU_VALVE = 2.0
+/** Valve actuator lag time constant (s). Diesel fuel rack (~0.3 s); a steam intake valve would be ~2.0 s. */
+export const TAU_VALVE = 0.3
 
 /** Pole count — 4-pole machine → 1500 rpm at 50 Hz. */
 export const POLES = 4
@@ -75,6 +75,7 @@ export const DEFAULT_INPUTS: Inputs = {
   loadFraction: 0,
   powerFactor: 0.92,
   pfLag: true,
+  loadBreaker: false,
   avrOn: false,
   governorOn: false,
   valveCommand: 0,

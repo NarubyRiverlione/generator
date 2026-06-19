@@ -15,7 +15,7 @@ import { advanceTime, advanceWithState } from '../helpers'
 
 describe('relay-27 core conditions', () => {
   it('Vt falls below trip threshold when field drops to zero with load', () => {
-    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 0, loadFraction: 0.5, avrOn: false }
+    const inputs: Inputs = { ...DEFAULT_INPUTS, fieldVoltage: 0, loadFraction: 0.5, loadBreaker: true, avrOn: false }
     const { outputs } = advanceTime(inputs, 10 * PARAMS.tau)
     expect(outputs.vt).toBeLessThan(RELAY27_TRIP_VT)
   })
@@ -32,6 +32,7 @@ describe('relay-27 core conditions', () => {
       ...DEFAULT_INPUTS,
       fieldVoltage: 1.0,
       loadFraction: 0.5,
+      loadBreaker: true,
       powerFactor: 0.85,
       pfLag: true,
       avrOn: false,
@@ -142,6 +143,7 @@ describe('fixed valve has no stable frequency after a load step', () => {
       ...DEFAULT_INPUTS,
       fieldVoltage: 1.2,
       loadFraction: 0.5,
+      loadBreaker: true,
       powerFactor: 0.85,
       pfLag: true,
       avrOn: false,
@@ -171,6 +173,7 @@ describe('raising the valve after a load step arrests and reverses the drift', (
       ...DEFAULT_INPUTS,
       fieldVoltage: 1.2,
       loadFraction: 0.5,
+      loadBreaker: true,
       powerFactor: 0.85,
       pfLag: true,
       avrOn: false,
@@ -243,6 +246,7 @@ describe('Pe = 0 on collapse: rotor accelerates (load rejection)', () => {
       ...DEFAULT_INPUTS,
       fieldVoltage: 0,
       loadFraction: 0.5,
+      loadBreaker: true,
       avrOn: false,
       valveCommand: 0,
     }

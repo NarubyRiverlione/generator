@@ -10,7 +10,7 @@ import { advanceTime } from '../helpers'
 
 describe('4.3 load increase with AVR off', () => {
   it('Vt drops as load increases', () => {
-    const base: Inputs = { ...DEFAULT_INPUTS, avrOn: false, fieldVoltage: 1.0, powerFactor: 0.85, pfLag: true }
+    const base: Inputs = { ...DEFAULT_INPUTS, avrOn: false, fieldVoltage: 1.0, powerFactor: 0.85, pfLag: true, loadBreaker: true }
     const low: Inputs = { ...base, loadFraction: 0.2 }
     const high: Inputs = { ...base, loadFraction: 0.8 }
 
@@ -31,6 +31,7 @@ describe('4.3 load increase with AVR off', () => {
         loadFraction: lf,
         powerFactor: 1.0,
         pfLag: true,
+        loadBreaker: true,
       }
       const { outputs } = advanceTime(inputs, 10 * PARAMS.tau)
       return outputs.delta
@@ -51,6 +52,7 @@ describe('4.4 load increase with AVR on', () => {
       loadFraction: 0.6,
       powerFactor: 1.0,
       pfLag: true,
+      loadBreaker: true,
     }
     // Settle over many τ; AVR has time to converge
     const { outputs } = advanceTime(inputs, 30 * PARAMS.tau)

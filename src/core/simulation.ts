@@ -64,7 +64,8 @@ export function initialState(inputs: Inputs = DEFAULT_INPUTS, seed?: Partial<Sim
   // Derive lastValidOutputs from the seeded laggeds (same path as step()) so the first
   // painted frame is coherent with the seed — no needle-snap from zero.
   const ea = saturation(iField) * omega
-  const load = computeLoad(inputs.loadFraction, inputs.powerFactor, inputs.pfLag)
+  const loadRaw = computeLoad(inputs.loadFraction, inputs.powerFactor, inputs.pfLag)
+  const load = inputs.loadBreaker ? loadRaw : { p: 0, q: 0 }
   const result = solveMachine(ea, load.p, load.q, PARAMS.xs)
   const rpm = omega * RPM_RATED
   const frequencyHz = rpm / 30
@@ -89,6 +90,7 @@ export function initialState(inputs: Inputs = DEFAULT_INPUTS, seed?: Partial<Sim
         valveActual,
         saturationFactor,
         pm,
+        dampingTorque: 0,
       }
     : {
         ...result,
@@ -102,6 +104,7 @@ export function initialState(inputs: Inputs = DEFAULT_INPUTS, seed?: Partial<Sim
         valveActual,
         saturationFactor,
         pm,
+        dampingTorque: 0,
       }
 
   return {
@@ -194,12 +197,16 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   const rpm = omega * RPM_RATED
   const frequencyHz = rpm / 30
 
-  // Machine solve
-  const load = computeLoad(inputs.loadFraction, inputs.powerFactor, inputs.pfLag)
+  // Machine solve — load is gated by the breaker; open breaker = zero demand, Vt → Ea.
+  const loadRaw = computeLoad(inputs.loadFraction, inputs.powerFactor, inputs.pfLag)
+  const load = inputs.loadBreaker ? loadRaw : { p: 0, q: 0 }
   const result = solveMachine(ea, load.p, load.q, params.xs)
 
   // Saturation derate diagnostic (live with field).
   const saturationFactor = iField > 0 ? saturation(iField) / iField : 1
+
+  // Damper winding torque: D·(ω − ωref). Zero at synchronous speed; spikes on load steps.
+  const dampingTorque = DAMPING_D * (omega - OMEGA_REF)
 
   let outputs: Outputs
   if (result.collapsed) {
@@ -216,6 +223,7 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
       valveActual,
       saturationFactor,
       pm: Pm,
+      dampingTorque,
     }
   } else {
     outputs = {
@@ -230,6 +238,7 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
       valveActual,
       saturationFactor,
       pm: Pm,
+      dampingTorque,
     }
   }
 

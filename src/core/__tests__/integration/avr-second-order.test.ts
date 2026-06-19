@@ -16,7 +16,7 @@ describe('2.4 high Kp causes Vt overshoot with second-order plant', () => {
     // Then remove load + switch to Kp=5.0: integral is still calibrated for loaded operation,
     // field command stays high → second-order plant drives iField above no-load set point
     // → Vt transiently exceeds Vref before the integral corrects down.
-    const loadInputs: Inputs = { ...DEFAULT_INPUTS, avrOn: true, loadFraction: 0.3, fieldVoltage: 0 }
+    const loadInputs: Inputs = { ...DEFAULT_INPUTS, avrOn: true, loadFraction: 0.3, loadBreaker: true, fieldVoltage: 0 }
     const { state: settled } = advanceTime(loadInputs, 30)
 
     const highKpParams = { ...PARAMS, kp: 5.0 }

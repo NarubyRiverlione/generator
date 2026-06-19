@@ -12,14 +12,14 @@ import { advanceTime, advanceWithState } from '../helpers'
 
 describe('saturation derate factor', () => {
   it('is 1.0 when field is below the knee', () => {
-    const inputs: Inputs = { ...DEFAULT_INPUTS, avrOn: false, fieldVoltage: 0.8, loadFraction: 0.2 }
+    const inputs: Inputs = { ...DEFAULT_INPUTS, avrOn: false, fieldVoltage: 0.8, loadFraction: 0.2, loadBreaker: true }
     const { outputs } = advanceTime(inputs, 30 * PARAMS.tau)
     expect(outputs.iField).toBeLessThanOrEqual(1.0)
     expect(outputs.saturationFactor).toBe(1.0)
   })
 
   it('falls below 1.0 above the knee and equals saturation(iField)/iField', () => {
-    const inputs: Inputs = { ...DEFAULT_INPUTS, avrOn: false, fieldVoltage: 1.7, loadFraction: 0.2 }
+    const inputs: Inputs = { ...DEFAULT_INPUTS, avrOn: false, fieldVoltage: 1.7, loadFraction: 0.2, loadBreaker: true }
     const { outputs } = advanceTime(inputs, 30 * PARAMS.tau)
     expect(outputs.iField).toBeGreaterThan(1.0)
     expect(outputs.saturationFactor).toBeLessThan(1.0)
@@ -76,6 +76,7 @@ describe('mechanical power output (pm)', () => {
       loadFraction: 0.5,
       powerFactor: 0.85,
       pfLag: true,
+      loadBreaker: true,
     }
     const { outputs } = advanceWithState(seeded, inputs, 1)
     expect(outputs.pm - outputs.p).toBeLessThan(0)

@@ -27,6 +27,7 @@ describe('4.5 power factor sign', () => {
       pfLag: true,
       powerFactor: 0.85,
       loadFraction: 0.5,
+      loadBreaker: true,
       avrOn: false,
     }
     const { outputs } = advanceTime(inputs, 10 * PARAMS.tau)
@@ -40,6 +41,7 @@ describe('4.5 power factor sign', () => {
       pfLag: false,
       powerFactor: 0.85,
       loadFraction: 0.5,
+      loadBreaker: true,
       avrOn: false,
     }
     const { outputs } = advanceTime(inputs, 10 * PARAMS.tau)

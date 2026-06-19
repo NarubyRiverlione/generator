@@ -1,11 +1,11 @@
 /**
  * 6-column switchboard grid layout (col 6 = governor speed-changer bookend):
- *   Row 1: [AC OUTPUT] [RECT DC] [MAIN FIELD] [TERMINAL Vt] [ACTIVE POWER P] [-]
+ *   Row 1: [AC OUTPUT] [RECT DC] [MAIN FIELD] [TERMINAL Vt] [ACTIVE POWER P] [LOAD BREAKER]
  *   Row 2: [exciter knob] [LCD col 2-4] [active load knob] [SpringLoadedSelector]
- *   Row 3: [lights 1-4] [LCD cont.] [AVR SelectorSwitch] [27 relay] [power factor knob] [SpringLoadedSelector]
+ *   Row 3: [lights 1-4] [LCD cont.] [AVR SelectorSwitch] [27 relay] [power factor knob] [SpringLoadedSelector+GOVERNOR]
  */
 
-import { PositionIndicator } from './components/PositionIndicator'
+import { LoadBreaker } from './components/LoadBreaker'
 import { SelectorSwitch } from './components/SelectorSwitch'
 import { ExciterChain } from './ExciterChain'
 import { SpringLoadedSelector } from './components/SpringLoadedSelector'
@@ -17,7 +17,7 @@ import { useGeneratorSimulation } from './hooks/useGeneratorSimulation'
 
 export default function App() {
   const startParam = new URLSearchParams(window.location.search).get('start') ?? undefined
-  const { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand, setCoarseValveCommand } =
+  const { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand, setCoarseValveCommand, setLoadBreaker } =
     useGeneratorSimulation(startParam)
 
   const fieldValue = inputs.avrOn ? outputs.avrCommand : inputs.fieldVoltage
@@ -141,8 +141,10 @@ export default function App() {
           </div>
         </div>
 
-        {/* Row 1, col 6: valve position indicator */}
-        <PositionIndicator setpoint={outputs.valvePct} actual={outputs.valveActual} />
+        {/* Row 1, col 6: load breaker (replaces PositionIndicator; component retained in codebase) */}
+        <div className="gauge-col" style={{ gridColumn: 6, gridRow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <LoadBreaker closed={inputs.loadBreaker} rpm={outputs.rpm} onToggle={setLoadBreaker} />
+        </div>
 
         {/* Row 2, col 6: fine governor speed-changer */}
         <div className="knob-cell" style={{ gridColumn: 6, gridRow: 2, alignSelf: 'start' }}>
@@ -173,7 +175,7 @@ export default function App() {
         </div>
       </div>
 
-      <p className="footer">PHASE 3B · 400 V · 50 Hz · 1 MVA · ISLANDED · AUTO GOVERNOR + AVR</p>
+      <p className="footer">PHASE 3D · 400 V · 50 Hz · 1 MVA · ISLANDED · AUTO GOVERNOR + AVR</p>
     </div>
   )
 }

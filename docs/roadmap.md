@@ -157,7 +157,7 @@ per-unit internally; display is converted to real units (V, Hz, kW, kVAR) only a
 | Damper coefficient (D) | 0.05 pu | Viscous drag ∝ slip; zero at synchronous speed |
 | Governor Kp / Ki | 100 / 20 | Isochronous PI; fixed (PID sliders are a planned change) |
 | Governor rate limit | 10 %/s | Max valve slew under the governor |
-| Valve actuator lag (τ_valve) | 2.0 s | Mechanical lag of the intake valve (Stage 3d will revise to ~0.3 s) |
+| Valve actuator lag (τ_valve) | 0.3 s | Diesel fuel rack (revised from 2.0 s steam-plant value in Stage 3d) |
 | Fine jog rates | 0.5 / 5 rpm/s | Slow / fast stages of the fine speed-changer |
 | Coarse jog rates | 10 / 25 rpm/s | Slow / fast stages of the coarse speed-changer |
 
@@ -175,6 +175,7 @@ rest); the `?start=` URL parameter selects other presets (`spinning-dark`, `live
 
 | Input | Control | Range | Default (cold-dark) | Notes |
 |---|---|---|---|---|
+| Load breaker | Button | open / closed | open | Closes ship load as single instantaneous step; armed at ≥ 0.95 pu (~1425 rpm) |
 | Exciter field DC | `Knob` | 0 – 1.7 pu | 0 | Read-only when AVR on (shows AVR command) |
 | Active load (P) | `Knob` | 0 – 120 % | 0 | Fraction of rated |
 | Power factor | `Knob` | 0.6 lag – 1.0 – 0.6 lead | 0.92 lag | Signed: lag (inductive) / lead (capacitive) |
@@ -215,9 +216,9 @@ All readouts update continuously as the simulation settles. Show current value a
 | Power factor (calculated) | — | Numeric | |
 
 **Current state:** Vₜ and active power (P) are `Gauge` instruments; the remaining readouts (Q, δ, RPM,
-Hz, plus power balance ΔP, voltage stability margin VSM, and saturation SAT) live on the `StatusDisplay`
-LCD with a fault/warning screen and a toggleable legend. The valve position is shown on a
-`PositionIndicator` (slated for removal in Stage 3d — see roadmap).
+Hz, plus power balance ΔP, voltage stability margin VSM, saturation SAT, throttle % THR, and damping
+torque DMP) live on the `StatusDisplay` LCD with a fault/warning screen and a toggleable legend. The
+`PositionIndicator` (twin-needle valve dial) has been removed from the panel (component retained).
 
 ### Gauge design
 
@@ -230,12 +231,12 @@ Simple SVG arc gauge — 270° sweep, coloured fill based on value relative to r
 Six-column switchboard panel, three rows. Columns are fixed-width (138 px); responsive breakpoints scale them down at 960 / 820 / 540 px. No stacked mobile layout — the grid stays 6-wide and shrinks.
 
 **Title bar:** `SYNCHRONOUS GENERATOR · 400 V · 50 Hz · 1 MVA · ISLANDED`
-**Footer:** `PHASE 3B · 400 V · 50 Hz · 1 MVA · ISLANDED · AUTO GOVERNOR + AVR`
+**Footer:** `PHASE 3D · 400 V · 50 Hz · 1 MVA · ISLANDED · AUTO GOVERNOR + AVR`
 
 ```
 ┌──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
-│ AC OUT   │ RECT DC  │ MAIN FLD │ TERM. Vt │ ACTIVE P │ VALVE    │
-│ (Gauge)  │ (Gauge)  │ (Gauge)  │ (Gauge)  │ (Gauge)  │ (PositionIndicator) │
+│ AC OUT   │ RECT DC  │ MAIN FLD │ TERM. Vt │ ACTIVE P │ LOAD     │
+│ (Gauge)  │ (Gauge)  │ (Gauge)  │ (Gauge)  │ (Gauge)  │ BREAKER  │
 ├──────────┼──────────┴──────────┴──────────┼──────────┼──────────┤
 │ EXCITER  │  StatusDisplay / LCD                       │ ACTIVE   │ FINE     │
 │ FIELD    │  (spans cols 2–4)                          │ LOAD     │ (SpringLoadedSelector) │
@@ -318,7 +319,7 @@ each its own OpenSpec change. Manual synchroscope artistry (hand-matching V/f/ph
 **deprioritised** — the breaker may close automatically once conditions are roughly met; the pedagogy
 moves to *staying in step* and *what happens when you don't*.
 
-#### Stage 3a — Rotor swing dynamics (`phase-3a-rotor-swing-dynamics`)
+#### Stage 3a — Rotor swing dynamics (`phase-3a-rotor-swing-dynamics`) ✓ complete
 **One concept: rotor inertia.** Replace the Phase 2 kinematic speed lag with the swing equation
 `2H·dω/dt = Pm − Pe`. The valve now commands **mechanical power in (Pm)**, not speed directly; speed
 *emerges* from the power balance. Adds shaft **run-up from rest** (0 → 1500 rpm) and the inertia
@@ -340,7 +341,7 @@ the chase.
 subtle on an islanded constant-power load (no oscillation to damp), but is prerequisite for parallel
 operation where the inter-machine coupling introduces oscillatory torque.
 
-#### Stage 3d — Cold-start load pickup
+#### Stage 3d — Cold-start load pickup ✓ complete
 **One concept: instantaneous load step onto an islanded machine.** Add a **load breaker** button that
 closes the ship load in a single step (no ramp). The machine must absorb the full Pe jump on inertia
 alone while the governor races to raise Pm. Too large a step = frequency collapse and stall.

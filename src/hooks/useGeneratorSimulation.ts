@@ -17,6 +17,7 @@ export type SimHook = {
   resetRelay27: () => void
   setValveCommand: (cmd: ValveCommand) => void
   setCoarseValveCommand: (cmd: ValveCommand) => void
+  setLoadBreaker: (closed: boolean) => void
 }
 
 export function useGeneratorSimulation(presetName?: string): SimHook {
@@ -112,5 +113,13 @@ export function useGeneratorSimulation(presetName?: string): SimHook {
     coarseValveCommandRef.current = cmd
   }, [])
 
-  return { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand, setCoarseValveCommand }
+  const setLoadBreaker = useCallback((closed: boolean) => {
+    setInputs((prev) => {
+      const next = { ...prev, loadBreaker: closed }
+      inputsRef.current = next
+      return next
+    })
+  }, [])
+
+  return { inputs, outputs, setInput, relay27Tripped, resetRelay27, setValveCommand, setCoarseValveCommand, setLoadBreaker }
 }
