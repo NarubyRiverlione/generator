@@ -62,10 +62,11 @@ Do not add multiple new physical effects in the same iteration. If something is 
 
 ## Tech Stack
 
-- React (functional components + hooks)
-- No UI library — plain CSS or Tailwind utility classes
-- No charting library for MVP — gauges are SVG arcs built inline
-- All simulation logic in a custom hook (`useGeneratorSimulation`)
+- Vite + React + TypeScript (functional components + hooks)
+- No UI library — plain CSS (`src/styles/*.css`)
+- No charting library — gauges and instruments are hand-rolled SVG
+- All physics in `src/core/` as pure functions (no React); `useGeneratorSimulation` orchestrates the time-stepping
+- pnpm package manager; Vitest for tests
 
 ---
 
@@ -82,11 +83,11 @@ Eₐ = Vₜ + Iₐ · (Rₐ + jXₛ)
 ```
 
 Where:
-- `Eₐ` — internal excitation voltage (driven by field voltage input)
+- `Eₐ` — internal excitation voltage. Since Phase 2 + saturation: `Eₐ = saturation(field_lagged) × speed_pu`, so it scales with both rotor speed and the non-linear field characteristic
 - `Vₜ` — terminal voltage (primary readout)
 - `Iₐ` — armature current (derived from load inputs)
-- `Rₐ` — stator resistance (fixed, small — can be near-zero for MVP)
-- `Xₛ` — synchronous reactance (fixed parameter)
+- `Rₐ` — stator resistance (fixed, 0.05 pu)
+- `Xₛ` — synchronous reactance (fixed, 0.8 pu)
 
 ### Derived outputs
 
@@ -97,13 +98,18 @@ Q = (3 · Vₜ · Eₐ / Xₛ) · cos(δ) − (3 · Vₜ² / Xₛ)
 
 ### Time dynamics
 
-Apply a first-order lag (exponential settling) to exciter field current:
+The field path now uses **two stacked first-order lags** (added in the saturation & AVR-tuning change),
+so the AVR step response can overshoot and ring: the exciter output eases toward the field command
+with `τ_exciter = 0.4 s`, then the field current eases toward the exciter output with `τ_field = 1.1 s`.
 
 ```
-Ifield(t) = Ifield_target · (1 − e^(−t / τ))
+exciter(t) → field command   with τ_exciter = 0.4 s
+Ifield(t)  → exciter(t)       with τ_field   = 1.1 s
 ```
 
-Default time constant `τ = 1.5s`. Drive the simulation with `requestAnimationFrame` or a `setInterval` at ~30ms.
+The simulation is driven at a fixed timestep (~30 ms). Rotor speed has its own dynamics (Phase 2
+kinematic lag, then the Phase 3a swing equation) and the intake valve has its own actuator lag
+(`τ_valve`).
 
 ### AVR (optional, toggle)
 
@@ -113,32 +119,74 @@ When AVR is enabled, a simple proportional-integral controller adjusts the field
 
 ## Fixed Parameters (not user-facing)
 
+Current values as implemented in `src/core/constants.ts` / `units.ts`. All simulation works in
+per-unit internally; display is converted to real units (V, Hz, kW, kVAR) only at readout time.
+
+**Machine & bases**
+
 | Parameter | Value | Notes |
 |---|---|---|
 | Rated voltage (Vₙ) | 400 V (line-to-line) | Base reference |
 | Rated frequency | 50 Hz | European standard |
-| Stator resistance (Rₐ) | 0.05 pu | Near-negligible |
-| Exciter time constant (τ) | 1.5 s | Controls settling speed |
 | Rated MVA | 1 MVA | Scales all power readouts |
+| Pole count | 4 | → 1500 rpm at 50 Hz |
+| Synchronous reactance (Xₛ) | 0.8 pu | Fixed machine property |
+| Stator resistance (Rₐ) | 0.05 pu | Near-negligible |
 
-All values work in per-unit internally. Display is converted to real units (V, Hz, kW, kVAR).
+**Excitation / AVR (voltage channel)**
+
+| Parameter | Value | Notes |
+|---|---|---|
+| Exciter lag (τ_exciter) | 0.4 s | First of two stacked field lags |
+| Field winding lag (τ_field) | 1.1 s | Second lag (`PARAMS.tau`) — together they let the AVR step response ring |
+| AVR Kp / Ki | 2.0 / 0.5 | PI gains; ship fixed by design — no UI knob (see note below) |
+| AVR voltage reference | 1.0 pu / 400 V | Fixed at rated |
+| AVR command clamp | 0.5 – 1.7 pu | Field command limits |
+| Saturation curve | (0,0) · (1.0,1.0) knee · (1.5,1.2) ceiling | Piecewise-linear open-circuit characteristic |
+| ANSI-27 under-voltage trip | 0.85 pu Vₜ | Under-voltage relay threshold |
+| AVR arming speed | 0.8 pu (~1200 rpm) | AVR inhibited below this (underspeed lockout) |
+
+**Rotor / governor (speed channel)**
+
+| Parameter | Value | Notes |
+|---|---|---|
+| Rated speed | 1500 rpm | Synchronous, 4-pole @ 50 Hz |
+| Valve speed at 100 % | 1600 rpm | Overspeed point (~107 % rated) |
+| Max mechanical power (Pm_max) | ≈ 1.067 pu | Anchored so Pm = 1.0 pu at the rated valve position (93.75 %) |
+| Inertia constant (H) | 4 s | Sets run-up time and frequency-drift rate |
+| Damper coefficient (D) | 0.05 pu | Viscous drag ∝ slip; zero at synchronous speed |
+| Governor Kp / Ki | 100 / 20 | Isochronous PI; fixed (PID sliders are a planned change) |
+| Governor rate limit | 10 %/s | Max valve slew under the governor |
+| Valve actuator lag (τ_valve) | 2.0 s | Mechanical lag of the intake valve (Stage 3d will revise to ~0.3 s) |
+| Fine jog rates | 0.5 / 5 rpm/s | Slow / fast stages of the fine speed-changer |
+| Coarse jog rates | 10 / 25 rpm/s | Slow / fast stages of the coarse speed-changer |
+
+> **Note on AVR Kp/Ki:** adjustable gains were implemented in the `avr-tuning-and-saturation` change,
+> but a deliberate design decision was made not to expose a Kp/Ki knob in the UI. The AVR gains
+> therefore ship fixed at 2.0 / 0.5.
 
 ---
 
 ## User Inputs
 
-All inputs are sliders with a numeric label showing the current value.
+Inputs are physical controls (`Knob`, `SelectorSwitch`, `SpringLoadedSelector`) — not sliders. Each
+shows its current value. Defaults below are the shipped **cold-dark** boot preset (machine fully at
+rest); the `?start=` URL parameter selects other presets (`spinning-dark`, `live-loaded`).
 
-| Input | Range | Default | Unit |
-|---|---|---|---|
-| Exciter field DC | 0.5 – 1.5 | 1.0 | pu |
-| Active load (P) | 0 – 100 | 50 | % of rated |
-| Power factor | 0.6 lag – 1.0 – 0.6 lead | 0.85 lag | — |
-| AVR enable | off / on | off | toggle |
+| Input | Control | Range | Default (cold-dark) | Notes |
+|---|---|---|---|---|
+| Exciter field DC | `Knob` | 0 – 1.7 pu | 0 | Read-only when AVR on (shows AVR command) |
+| Active load (P) | `Knob` | 0 – 120 % | 0 | Fraction of rated |
+| Power factor | `Knob` | 0.6 lag – 1.0 – 0.6 lead | 0.92 lag | Signed: lag (inductive) / lead (capacitive) |
+| AVR enable | `SelectorSwitch` | off / on | off | Inhibited below ~1200 rpm |
+| Governor enable | `SelectorSwitch` | off / on | off | Isochronous PI on speed error → valve |
+| Speed-changer (fine) | `SpringLoadedSelector` | ±1 slow / ±2 fast | 0 (spring-return) | Jogs the intake valve; read-only when governor on |
+| Speed-changer (coarse) | `SpringLoadedSelector` | ±1 slow / ±2 fast | 0 (spring-return) | Coarse valve jog; read-only when governor on |
 
-**Fixed (not user controls):** synchronous reactance Xₛ = 1.2 pu and armature resistance Rₐ = 0.05 pu
+**Fixed (not user controls):** synchronous reactance Xₛ = 0.8 pu and armature resistance Rₐ = 0.05 pu
 are machine properties; the AVR voltage reference is fixed at rated (1.0 pu / 400 V). Rotor speed is
-fixed at 50 Hz / 1500 RPM in Phase 1.
+**no longer fixed** — since Phase 2 it emerges from the valve position (Phase 2 kinematic, Phase 3a+
+from the swing equation).
 
 ---
 
@@ -165,6 +213,11 @@ All readouts update continuously as the simulation settles. Show current value a
 | Reactive power (Q) | kVAR | Numeric (+ / − with label) | Label as "supplying" / "absorbing" |
 | Load angle (δ) | degrees | Numeric | Warning when approaching 90° |
 | Power factor (calculated) | — | Numeric | |
+
+**Current state:** Vₜ and active power (P) are `Gauge` instruments; the remaining readouts (Q, δ, RPM,
+Hz, plus power balance ΔP, voltage stability margin VSM, and saturation SAT) live on the `StatusDisplay`
+LCD with a fault/warning screen and a toggleable legend. The valve position is shown on a
+`PositionIndicator` (slated for removal in Stage 3d — see roadmap).
 
 ### Gauge design
 
@@ -211,21 +264,17 @@ Six-column switchboard panel, three rows. Columns are fixed-width (138 px); resp
 - When load increases with AVR **on**: exciter field DC rises automatically, the entire chain (exciter AC → rectified DC → field current) moves to compensate, Vₜ stays near reference. User can watch the chain react.
 - Reactive power (Q) goes **negative** when load is capacitive (leading PF) — label this clearly as "absorbing" vs "supplying".
 - Load angle (δ) approaching 90° should show a warning — this is the stability limit.
-- Rotor speed and frequency are fixed at 50 Hz / 1500 RPM — no readout needed for MVP.
+- Rotor speed and frequency are **dynamic** (since Phase 2): the operator commands the intake valve, RPM and Hz emerge and are headline readouts. Voltage stability margin (VSM) and saturation (SAT) are also surfaced on the LCD.
 
 ---
 
-## Out of Scope (MVP)
+## Out of Scope (permanently)
 
-- Magnetic saturation curve ← **deferred to the Saturation & AVR-tuning change** (see roadmap)
-- Second field time constant (AVR ringing) ← **deferred to the Saturation & AVR-tuning change**
 - Transient / sub-transient reactances
 - Short circuit or fault simulation
-- Grid-connected (infinite bus) mode
-- Multiple generators in parallel
+- Grid-connected (infinite bus) mode *(infinite bus variant branches from `islanded-baseline`)*
 - Harmonics
 - Visual theming / polished design
-- RPM / frequency variation ← **deferred to Phase 2**
 
 ---
 
@@ -251,15 +300,14 @@ Phases build on each other — concepts from earlier phases are prerequisites fo
 - Key learning: frequency and voltage are independent — turbine controls P/frequency, exciter controls voltage/Q
 - This separation is the foundation needed before grid connection
 
-### Saturation & AVR tuning (standalone — unscheduled)
-**Prerequisite:** Phase 2 complete (saturation scales the same Eₐ that speed scales)
+### Saturation & AVR tuning (standalone) ✓ complete
 
 Originally drafted inside Phase 2, carved out as the `avr-tuning-and-saturation` change because it
-concerns the *voltage* channel, not rotor speed. Slot into the roadmap when desired.
+concerns the *voltage* channel, not rotor speed. See that archived change for the full design.
 
-- Magnetic saturation: Eₐ/field curve flattens above ~1.1 pu field; reveals AVR ceiling under heavy load and why over-excitation has diminishing returns
-- Second field time constant: stack τ_exciter + τ_field so the step response can overshoot and ring
-- Kp/Ki become user-adjustable so tuning against the now-second-order, saturating plant is meaningful
+- Magnetic saturation ✓ — Eₐ/field curve flattens above the knee; reveals AVR ceiling under heavy load and why over-excitation has diminishing returns
+- Second field time constant ✓ — τ_exciter + τ_field so the step response can overshoot and ring
+- Adjustable Kp/Ki ✓ — implemented in the core, but a deliberate design decision was made **not to expose a Kp/Ki knob** in the UI; the AVR gains ship fixed at 2.0 / 0.5
 
 ### Phase 3 — Synchronisation to grid
 **Prerequisite:** Phase 2 complete
@@ -379,34 +427,39 @@ automated. Key learning: the load management controller as the brain of the ship
 
 ---
 
-## Suggested File Structure
+## File Structure (actual)
 
 ```
 /src
+  /core                         ← all physics, pure functions, no React
+    simulation.ts               ← the step() solver
+    machine.ts  load.ts  complex.ts
+    avr.ts  governor.ts  saturation.ts
+    constants.ts  types.ts  units.ts  presets.ts
   /hooks
-    useGeneratorSimulation.ts   ← all physics + time stepping
+    useGeneratorSimulation.ts   ← orchestrates time-stepping over core
   /components
-    InputPanel.tsx
-    ExciterChain.tsx            ← new: shows AC out, rectified DC, field current
-    ReadoutPanel.tsx
-    Gauge.tsx
-    AvrControl.tsx
-  App.tsx
-  index.css
+    Gauge.tsx                   ← square single-needle instrument
+    PositionIndicator.tsx       ← circular twin-needle (valve setpoint vs actual)
+    Knob.tsx  SelectorSwitch.tsx  SpringLoadedSelector.tsx
+    ReadoutPanel.tsx  StatusDisplay.tsx  IndicatorLights.tsx
+  /styles                       ← plain CSS per concern
+  App.tsx                       ← switchboard grid layout
+  ExciterChain.tsx              ← AC out, rectified DC, field current gauges
 ```
 
 ---
 
-## Acceptance Criteria
+## Acceptance Criteria (Phase 1 — all met)
 
-- [ ] Changing exciter field DC slider causes the full chain to settle: exciter AC → rectified DC → field current → Vₜ, over ~1.5s
-- [ ] Increasing active load with AVR off causes Vₜ to drop
-- [ ] Increasing active load with AVR on causes exciter field DC to rise automatically, holding Vₜ near reference
-- [ ] All three exciter chain readouts move when exciter field DC changes
-- [ ] Leading power factor load causes Q to go negative, labelled "absorbing"
-- [ ] Load angle (δ) increases with increasing load, warning shown near 90°
-- [ ] All gauges update smoothly without jank
-- [ ] Works on mobile (stacked layout)
+- [x] Changing exciter field DC causes the full chain to settle: exciter AC → rectified DC → field current → Vₜ
+- [x] Increasing active load with AVR off causes Vₜ to drop
+- [x] Increasing active load with AVR on causes exciter field DC to rise automatically, holding Vₜ near reference
+- [x] All three exciter chain readouts move when exciter field DC changes
+- [x] Leading power factor load causes Q to go negative, labelled "absorbing"
+- [x] Load angle (δ) increases with increasing load, warning shown near 90°
+- [x] All gauges update smoothly without jank
+- [x] Responsive — the 6-column grid scales down at 960 / 820 / 540 px (note: it shrinks, it does not stack)
 
 ---
 
