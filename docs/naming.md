@@ -16,7 +16,8 @@ Canonical names for instrument and control components used in specs, docs, and c
 - **Shape**: Circular bezel
 - **Needles**: Two — one for setpoint (thin, red), one for actual (bold, black)
 - **Examples**: Intake valve position
-- **Component**: `PositionIndicator` *(to be developed; currently specced as `ValveDial`)*
+- **Component**: `PositionIndicator`
+- **Status**: Implemented; currently **not mounted on the panel** (removed in Stage 3d — TAU_VALVE 0.3 s makes the twin needles nearly coincident). Retained for future use (synchroscope, steam variant).
 
 ---
 
@@ -27,15 +28,20 @@ Canonical names for instrument and control components used in specs, docs, and c
 - **Examples**: Field excitation, load
 - **Component**: `Knob`
 
+### LoadBreaker
+- **Behaviour**: Latching toggle (open / closed). Styled as panel-mount switchgear — not a logic switch. Disabled below ~1425 rpm (0.95 pu arming interlock). Closing applies the pre-set active load as a single instantaneous step.
+- **Examples**: Ship load breaker (Stage 3d)
+- **Component**: `LoadBreaker`
+
 ### SelectorSwitch
 - **Behaviour**: Set to a position; stays there. Discrete positions only.
-- **Examples**: AVR on/off
-- **Component**: `SelectorSwitch` *(currently implemented inside `AvrControl`)*
+- **Examples**: AVR on/off, Governor on/off
+- **Component**: `SelectorSwitch`
 
 ### SpringLoadedSelector
 - **Behaviour**: Defaults to centre (0) when released. Hold to effect a change; release to return.
-- **Examples**: Governor speed-changer
-- **Component**: `SpringLoadedSelector` *(currently implemented as `GovernorSwitch`)*
+- **Examples**: Governor fine and coarse speed-changers
+- **Component**: `SpringLoadedSelector`
 
 ---
 
