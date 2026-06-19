@@ -1,4 +1,4 @@
-# PRD: Synchronous Generator Simulator
+# Synchronous Generator Simulator — Project Roadmap
 
 ## Overview
 
@@ -174,24 +174,33 @@ Simple SVG arc gauge — 270° sweep, coloured fill based on value relative to r
 
 ## Layout
 
-Single page, two-column on desktop, stacked on mobile. Readouts are ordered to follow the physical signal chain top to bottom.
+Six-column switchboard panel, three rows. Columns are fixed-width (138 px); responsive breakpoints scale them down at 960 / 820 / 540 px. No stacked mobile layout — the grid stays 6-wide and shrinks.
+
+**Title bar:** `SYNCHRONOUS GENERATOR · 400 V · 50 Hz · 1 MVA · ISLANDED`
+**Footer:** `PHASE 3B · 400 V · 50 Hz · 1 MVA · ISLANDED · AUTO GOVERNOR + AVR`
 
 ```
-┌─────────────────────────────────────────┐
-│  Header: "Generator Simulator"           │
-├──────────────────┬──────────────────────┤
-│  INPUTS          │  EXCITER CHAIN       │
-│                  │                      │
-│  Exciter field ──│── Exciter AC out     │
-│  DC (slider)     │── Rectified DC       │
-│                  │── Field current      │
-│  Active load   ──│                      │
-│  Power factor    │  GENERATOR OUTPUT    │
-│  AVR toggle    ──│── Vₜ gauge           │
-│                  │── P gauge            │
-│                  │── Q / δ / PF        │
-└──────────────────┴──────────────────────┘
+┌──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+│ AC OUT   │ RECT DC  │ MAIN FLD │ TERM. Vt │ ACTIVE P │ VALVE    │
+│ (Gauge)  │ (Gauge)  │ (Gauge)  │ (Gauge)  │ (Gauge)  │ (PositionIndicator) │
+├──────────┼──────────┴──────────┴──────────┼──────────┼──────────┤
+│ EXCITER  │  StatusDisplay / LCD                       │ ACTIVE   │ FINE     │
+│ FIELD    │  (spans cols 2–4)                          │ LOAD     │ (SpringLoadedSelector) │
+│ (Knob)   │                                            │ (Knob)   │          │
+├──────────┼──────────┬──────────┬──────────┼──────────┼──────────┤
+│ Indicator│ Indicator│ AVR      │ 27 RELAY │ POWER    │ COARSE   │
+│ Lights   │ Lights   │ (Selector│ reset    │ FACTOR   │ (SpringLoadedSelector) │
+│ (top 4)  │ (bot 4)  │  Switch) │ button   │ (Knob)   │ GOVERNOR │
+│          │          │          │          │          │ (SelectorSwitch) │
+└──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
 ```
+
+**Controls** are `Knob` components (not sliders): Exciter Field DC, Active Load, Power Factor.
+**Switches** are `SelectorSwitch` components: AVR on/off, Governor on/off.
+**Governor speed-changer** is a `SpringLoadedSelector` (fine and coarse, col 6).
+**Valve position** is a `PositionIndicator` (twin-needle: setpoint + actual).
+**StatusDisplay** is an LCD-style panel showing numeric readouts (Q, δ, PF, RPM, Hz, etc.).
+**IndicatorLights** shows armed/tripped/ceiling status for AVR, governor, and relays.
 
 ---
 
@@ -224,27 +233,23 @@ Single page, two-column on desktop, stacked on mobile. Readouts are ordered to f
 
 Phases build on each other — concepts from earlier phases are prerequisites for later ones. Do not skip ahead.
 
-### Phase 2 — RPM / Frequency control
+### Phase 2 — RPM / Frequency control ✓ complete
 **Prerequisite:** Phase 1 complete
-**Status:** Spec and design complete — implementation not yet started
 
-> **Design insight (post-PRD):** speed is not commanded as "Hz". The operator commands the **intake
+> **Design insight:** speed is not commanded as "Hz". The operator commands the **intake
 > valve** (0–100 %), and the shaft produces RPM; Hz is a derived readout. 0 % = closed = 0 rpm;
 > 100 % = 1600 rpm (overspeed trip). Rated speed (1500 rpm) sits at ~93.75 % valve — almost fully
 > open at rated load, which matches real plant operation. The sim starts at ~93.1 % valve (~1495 rpm,
 > slightly sub-synchronous). RPM is the headline readout; Hz sits beside it. Shaft run-up from rest
 > is deferred to Phase 3. See `phase-2-rpm-frequency-control` change (archived) for the full design.
 
-- Add a **turbine governor speed-changer** — a spring-return raise/lower switch (two-stage slow/fast)
+- Added **turbine governor speed-changer** — a spring-return raise/lower switch (two-stage slow/fast)
   that drives the intake valve (0–100 %, where 0 % = closed = 0 rpm, 100 % = 1600 rpm overspeed)
 - Rotor speed scales internal EMF (`Eₐ = field × speed_pu`), so a speed change moves both frequency and
   voltage; a kinematic spin-up lag (τ ≈ 2.5 s) makes the shaft ease to the new speed
-- Add **RPM** (headline) and **Hz** readouts, plus a valve-position readout; sim starts at ~1495 rpm
+- Added **RPM** (headline) and **Hz** readouts, plus a valve-position readout; sim starts at ~1495 rpm
 - Key learning: frequency and voltage are independent — turbine controls P/frequency, exciter controls voltage/Q
 - This separation is the foundation needed before grid connection
-
-> **Planned addition (branch `spec-twin-needle-valve-dial`):** a twin-needle dial gauge as the
-> primary readout for intake valve position — spec exists on that branch, not yet merged into main.
 
 ### Saturation & AVR tuning (standalone — unscheduled)
 **Prerequisite:** Phase 2 complete (saturation scales the same Eₐ that speed scales)
@@ -297,6 +302,11 @@ governor response speed matters more than steady-state accuracy.
 Correction from Phase 3 assumptions: `TAU_VALVE` will be revised from 2.0 s (steam plant) to ~0.3 s
 (diesel throttle) to reflect the tug generator reality.
 
+**UI changes bundled with Stage 3d** (LCD layout is being revised for this stage anyway):
+
+- **Throttle display revision**: remove `PositionIndicator` from the panel layout (keep the component — may serve synchroscope or steam variant). At TAU_VALVE ~0.3 s the twin needles are nearly coincident and the instrument loses its educational value. Add throttle % (`valveActual`) as an LCD tile instead — shows the operator where the governor is commanding the fuel rack.
+- **Damping torque LCD tile**: expose `dampingTorque = D · (ω − ωref)` on `Outputs` and add an LCD tile for it. Shows the learner that the damper produces zero torque at steady state and a spike proportional to slip during a load step — contrast with AVR/governor which are active loops.
+
 **Startup sequence and arming logic** (already implemented — surfaced as a teaching point here):
 The cold-start sequence makes the arming logic visceral and observable:
 
@@ -311,6 +321,9 @@ This mirrors real diesel generator startup procedure: the machine must reach idl
 electrical or control systems are permitted to operate. The arming thresholds are a safety feature,
 not a software convenience.
 
+#### Governor PID sliders (standalone — natural fit after Stage 3d)
+**One concept: plant constraints on controller tuning.** Expose `GOV_KP` and `GOV_KI` as adjustable inputs, mirroring the AVR pattern (ranges, defaults, labels). With TAU_VALVE ~0.3 s the learner can feel the tradeoff between recovery speed and overshoot, and see that the plant lag sets a hard ceiling on how aggressive the controller can be. Well-tuned starting defaults: `GOV_KP ≈ 20`, `GOV_KI ≈ 2` (current hard-coded values are aggressive and produce visible hunting). Teaching parallel: the derivative term does for control what the damper winding does mechanically — looks ahead and backs off before overshoot occurs.
+
 #### Stage 3e — Overvoltage protection and load shedding
 **One concept: protection responding to two failure modes.** Adds two relays:
 - **ANSI-59 (overvoltage)**: when the load breaker opens (load rejection), Pm suddenly exceeds Pe and
@@ -321,6 +334,16 @@ not a software convenience.
 
 Key learning: protection as a last line of defence; why load rejection is as dangerous as overload;
 why load hierarchy matters on a ship.
+
+#### Arming limits design (design work — before Phase 4)
+Before Phase 4 adds grid connection and synchronisation, the arming logic needs a review pass. Current state: single hard threshold `OMEGA_AVR_ENABLE = 0.8 pu`; no governor equivalent; no UI feedback when a regulator is toggled on but inhibited.
+
+Questions to resolve:
+- **Hysteresis**: arm AVR at 0.82 pu, disarm at 0.78 pu to prevent chattering at the boundary?
+- **Governor underspeed lockout**: without one, the governor integral winds up toward 100 % valve before the machine is spinning — add `OMEGA_GOV_ENABLE`?
+- **Inhibit indicator**: when AVR or governor is toggled on but blocked by underspeed, show "AVR INHIBITED" / "GOV INHIBITED" (distinct from "AVR ACTIVE") so the arming state is legible.
+- **Phase 4 interaction**: the AVR must be armed before a breaker closes onto a live grid — verify arming logic is compatible with sync scenarios.
+- **Volts-per-Hz (ANSI-24) over-speed excitation limit** — out of scope for Phase 3 but flag here for Phase 4 design.
 
 ### Phase 4 — Ship's parallel operation
 **Prerequisite:** Phase 3 complete

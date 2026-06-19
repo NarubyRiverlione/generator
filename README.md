@@ -22,6 +22,8 @@ Built with Vite + React + TypeScript. All physics in `src/core/` (pure functions
 
 See [`docs/naming.md`](docs/naming.md) for the canonical component names (`Gauge`, `PositionIndicator`, `Knob`, `SelectorSwitch`, `SpringLoadedSelector`) — these names must be used consistently in all new development, specs, and docs.
 
+See [`docs/roadmap.md`](docs/roadmap.md) for the full project roadmap, simulation model, layout, and implementation notes.
+
 ---
 
 ## Project Phases
@@ -35,7 +37,9 @@ See [`docs/naming.md`](docs/naming.md) for the canonical component names (`Gauge
 | 3b | Automatic governor — PI frequency regulation | done |
 | 3c | Damper windings — passive rotor stabilisation | done |
 | 3d | Cold-start load pickup — load breaker, instantaneous step | planned |
+| — | Governor PID sliders — expose GOV_KP/KI, mirror AVR pattern | planned |
 | 3e | Overvoltage & load shedding — ANSI-59, ANSI-81 | planned |
+| — | Arming limits design — hysteresis, inhibit indicators, Phase 4 prep | planned |
 | 4a | Second generator startup | planned |
 | 4b | Synchronisation between units — synchroscope, ANSI-25 | planned |
 | 4c | Droop, load sharing, reverse power — ANSI-32 | planned |
