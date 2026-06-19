@@ -20,6 +20,7 @@ import {
   TAU_EXCITER,
   TAU_VALVE,
   VALVE_RPM_MAX,
+  WINDAGE_K,
 } from './constants'
 import { saturation } from './saturation'
 import { computeLoad } from './load'
@@ -174,14 +175,15 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   // On collapse: Pe = 0 (load rejection — no power transfer, rotor runs free).
   const Pe = state.collapsed ? 0 : state.lastValidOutputs.p
 
-  // Swing equation with amortisseur damping:
-  //   dω/dt = (Pm − Pe − D·(ω − ωref)) / (2H)
+  // Swing equation with amortisseur damping and mechanical windage:
+  //   dω/dt = (Pm − Pe − D·(ω − ωref) − K_w·ω) / (2H)
   // Damper term only applies when the load breaker is closed — damper windings produce torque only
   // through electromagnetic interaction with armature currents; no load = no current = no damping.
-  // Without this gate, D·(ω − ωref) creates a phantom accelerating force from rest.
-  // Clamped to [0, OMEGA_MAX] (no reverse spin; overspeed ceiling).
+  // Windage (WINDAGE_K·ω) is always active: bearing friction + air drag regardless of load.
+  // This allows the shaft to coast to rest after fuel is cut. Clamped to [0, OMEGA_MAX].
   const dampingTerm = inputs.loadBreaker ? DAMPING_D * (state.omega - OMEGA_REF) : 0
-  const omegaRaw = state.omega + ((Pm - Pe - dampingTerm) / (2 * INERTIA_H)) * dt
+  const windageTerm = WINDAGE_K * state.omega
+  const omegaRaw = state.omega + ((Pm - Pe - dampingTerm - windageTerm) / (2 * INERTIA_H)) * dt
   const omega = Math.min(OMEGA_MAX, Math.max(0, omegaRaw))
 
   // Internal EMF scales with speed: Eₐ = saturation(field_lagged) × omega

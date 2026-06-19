@@ -72,6 +72,15 @@ export const GOV_RATE_LIMIT = 10
 /** Valve actuator lag time constant (s). Diesel fuel rack (~0.3 s); a steam intake valve would be ~2.0 s. */
 export const TAU_VALVE = 0.3
 
+/**
+ * Mechanical windage + bearing friction coefficient (pu).
+ * Always-active drag: dω/dt includes −WINDAGE_K·ω / (2H).
+ * At rated speed this dissipates WINDAGE_K pu of mechanical power; the governor
+ * compensates at normal loads. Sets the shaft coast-down time constant:
+ * τ_coast = 2H / WINDAGE_K = 8 / 0.05 = 160 s.
+ */
+export const WINDAGE_K = 0.05
+
 /** Pole count — 4-pole machine → 1500 rpm at 50 Hz. */
 export const POLES = 4
 
