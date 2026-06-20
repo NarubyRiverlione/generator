@@ -61,6 +61,17 @@ export const IDLE_VALVE_PCT = (IDLE_RPM / VALVE_RPM_MAX) * 100 // 87.5 %
  * 0.8 pu ≈ 1200 rpm (80 % of rated).
  */
 export const OMEGA_AVR_ENABLE = 0.8
+/** AVR disarm hysteresis threshold (pu). AVR stays armed until omega drops below this. */
+export const OMEGA_AVR_DISABLE = 0.77
+
+/**
+ * Minimum rotor speed (pu) before the governor PI is allowed to arm.
+ * Derived from IDLE_RPM so both stay in sync: governor becomes available exactly when START
+ * has finished its job (~1400 rpm / 0.933 pu). Prevents integral windup during run-up.
+ */
+export const OMEGA_GOV_ENABLE = IDLE_RPM / RPM_RATED // ≈ 0.9333
+/** Governor disarm hysteresis threshold (pu). Governor stays armed until omega drops below this. */
+export const OMEGA_GOV_DISABLE = 0.90
 
 /** Governor PI — isochronous, error in pu speed, command in valve %. */
 export const OMEGA_REF = 1.0

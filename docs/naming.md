@@ -33,10 +33,16 @@ Canonical names for instrument and control components used in specs, docs, and c
 - **Examples**: Ship load breaker (Stage 3d)
 - **Component**: `LoadBreaker`
 
+### IlluminatedButton
+- **Behaviour**: Latching push button with integrated backlight. Three states: amber (inhibited — speed below arm threshold), dark (available but off), green (active). Pressing while inhibited is a no-op. Used where the readiness state of a system matters as much as its on/off status.
+- **Examples**: AVR enable, Governor enable
+- **Component**: `IlluminatedButton`
+
 ### SelectorSwitch
 - **Behaviour**: Set to a position; stays there. Discrete positions only.
-- **Examples**: AVR on/off, Governor on/off
+- **Examples**: (Formerly AVR on/off, Governor on/off — now IlluminatedButton)
 - **Component**: `SelectorSwitch`
+- **Status**: Implemented; **AVR and Governor slots replaced by `IlluminatedButton`** (change `avr-governor-inhibit-buttons`). Retained for future use.
 
 ### SpringLoadedSelector
 - **Behaviour**: Defaults to centre (0) when released. Hold to effect a change; release to return.
