@@ -22,7 +22,9 @@ Coupling (shared bus, power exchange) is introduced in 4b/4c as a bridge between
 - **Tab bar**: GEN 1 / GEN 2 — switches which full current panel is rendered.
 - Both simulations run continuously regardless of which tab is active.
 
-*Open: exact status strip fields and layout — deferred.*
+**Fields:** RPM, Hz, Vₜ (V), P (kW), breaker state, AVR armed, governor armed.
+
+**Layout:** ~160 px wide. Two columns (Gen 1 | Gen 2) with a shared label column on the right. Read-only numeric values, indicator dots for breaker/AVR/governor state.
 
 ---
 
