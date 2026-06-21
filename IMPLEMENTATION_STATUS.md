@@ -31,6 +31,7 @@ delivers a single-step instantaneous load event. 108 tests passing; 0 TypeScript
 | 4b | Synchronisation — synchroscope, ANSI-25 | planned |
 | 4c | Droop, load sharing, reverse power — ANSI-32 | planned |
 | 4d | Consumer-triggered standby start | planned |
+| Phase 5 | Auxiliaries & starting system — lube oil, battery, charger | high-level design only (`docs/phase-5-auxiliaries.md`) |
 
 ---
 

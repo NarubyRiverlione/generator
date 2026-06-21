@@ -449,6 +449,30 @@ automated. Key learning: the load management controller as the brain of the ship
 
 ---
 
+### Phase 5 — Auxiliaries & starting system
+**Prerequisite:** Phase 4 complete
+
+Generators do not start themselves. Phase 5 makes the auxiliary systems that enable starting visible
+and mandatory — the operator must manage them, not just observe them. High-level design in
+`docs/phase-5-auxiliaries.md`; no spec yet.
+
+**The game loop:** the sim starts with batteries fully charged so Gen 1 starts without drama. Starting
+Gen 1 depletes the battery enough that Gen 2 is blocked until the battery charger (manually enabled)
+restores sufficient charge. Forgetting the charger, or trying Gen 2 too soon, is the instructive
+mistake.
+
+**Components:**
+- **Lube oil pre-pump** — DC-powered; must build oil pressure before the starter can engage
+- **DC battery bank** — shared starting battery; depleted by pre-lube and cranking; hard interlock
+  blocks start attempts below 70 % SoC
+- **Battery charger** — manually enabled after a generator is running; converts 400 V AC → DC to
+  restore the battery; `OFFLINE / CHARGING / FULL` status readout
+
+**Failure scenarios that become teachable:** forgot to enable the charger; Gen 1 trips before
+battery recovers → dead ship, no valid start attempt remaining → reset.
+
+---
+
 ## File Structure (actual)
 
 ```
