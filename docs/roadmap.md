@@ -401,8 +401,23 @@ A second generator joins the ship's internal grid. This is where synchronisation
 but to *another machine just like this one*, not to an abstract infinite bus.
 
 #### Stage 4a — Second generator startup
-Run a second unit up to speed and voltage alongside the first. The first generator is the reference —
-it owns the ship's frequency and voltage. The second must match before its breaker can close.
+**OpenSpec change:** `phase-4a-second-generator` — proposal, design, and tasks complete; not yet implemented.
+
+Run a second unit up to speed and voltage alongside the first. Both generators are symmetric — neither
+is permanently the reference. Key design decisions (see `openspec/changes/phase-4a-second-generator/`
+and `docs/phase-4a-decisions.md`):
+
+- **Two independent simulation instances** on a single shared rAF tick (`useGeneratorState` + one rAF
+  loop in App, replacing the per-hook loop). Shared tick keeps phase angles in lockstep for the 4b
+  synchroscope.
+- **Status strip + tabs**: a ~160 px read-only sidebar always shows RPM, Hz, Vₜ, P, breaker/AVR/GOV
+  state for both generators; GEN 1 / GEN 2 tabs switch the full interactive panel. Keyboard shortcuts
+  `1` / `2`.
+- **START → idle at 1400 rpm → manual nudge to 1500 rpm**: START button (already implemented via
+  `engine-start-stop` change) ramps to idle; operator trims the last 100 rpm with the fine
+  speed-changer before AVR and governor are both available.
+- **Gen 2 always boots cold-dark** regardless of the `?start=` URL preset.
+- **STOP force-trips the load breaker** before ramping valve to 0.
 
 #### Stage 4b — Synchronisation to the ship's grid
 **One concept: syncing to a live internal grid.** Add a synchroscope showing phase angle difference

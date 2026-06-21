@@ -1,6 +1,6 @@
 # Synchronous Generator Simulator — Implementation Status
 
-**Updated:** June 19, 2026  
+**Updated:** June 21, 2026  
 **Branch:** main
 
 ---
@@ -27,7 +27,7 @@ delivers a single-step instantaneous load event. 108 tests passing; 0 TypeScript
 | Governor PID sliders | Expose GOV_KP/KI as UI inputs | planned |
 | 3e | Overvoltage & load shedding — ANSI-59, ANSI-81 | planned |
 | Arming limits review | Hysteresis, GOV inhibit, inhibit indicators | planned |
-| 4a | Second generator startup | planned |
+| 4a | Second generator startup | spec ready — not implemented |
 | 4b | Synchronisation — synchroscope, ANSI-25 | planned |
 | 4c | Droop, load sharing, reverse power — ANSI-32 | planned |
 | 4d | Consumer-triggered standby start | planned |
