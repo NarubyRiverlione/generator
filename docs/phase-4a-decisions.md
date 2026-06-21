@@ -79,9 +79,23 @@ Governor arm threshold (~1500 rpm) and load breaker arm threshold (~1425 rpm) ar
 
 ---
 
-## Open Points (to discuss)
+## 6. Tab Bar
 
-- Status strip: exact fields, layout, width
-- Tab bar: visual treatment, keyboard switching
-- Preset for 4a: does Gen 2 start cold-dark by default, or is there a new two-gen preset?
-- Shutdown sequence: is there a STOP button, or is Phase 4a start-only?
+Click to switch GEN 1 / GEN 2. Keyboard shortcuts `1` / `2` included (trivial effort, single `keydown` listener).
+
+---
+
+## 7. Presets
+
+Gen 2 always boots in STOPPED regardless of which `?start=` preset Gen 1 uses. No new two-gen presets needed.
+
+---
+
+## 8. Shutdown
+
+**STOP button** included in Phase 4a. Behaviour:
+
+- Force-trips the load breaker if closed
+- Sets valve to 0 %
+- Machine coasts to 0 rpm via swing equation + windage
+- State returns to STOPPED
