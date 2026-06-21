@@ -144,7 +144,8 @@ per-unit internally; display is converted to real units (V, Hz, kW, kVAR) only a
 | AVR command clamp | 0.5 – 1.7 pu | Field command limits |
 | Saturation curve | (0,0) · (1.0,1.0) knee · (1.5,1.2) ceiling | Piecewise-linear open-circuit characteristic |
 | ANSI-27 under-voltage trip | 0.85 pu Vₜ | Under-voltage relay threshold |
-| AVR arming speed | 0.8 pu (~1200 rpm) | AVR inhibited below this (underspeed lockout) |
+| AVR arm threshold | 0.80 pu (~1200 rpm) | AVR inhibited below this; `IlluminatedButton` shows amber *(pending merge)* |
+| AVR disarm threshold | 0.77 pu (~1155 rpm) | Hysteresis — AVR stays armed until speed drops here *(pending merge)* |
 
 **Rotor / governor (speed channel)**
 
@@ -157,6 +158,8 @@ per-unit internally; display is converted to real units (V, Hz, kW, kVAR) only a
 | Damper coefficient (D) | 0.05 pu | Viscous drag ∝ slip; zero at synchronous speed |
 | Governor Kp / Ki | 100 / 20 | Isochronous PI; fixed (PID sliders are a planned change) |
 | Governor rate limit | 10 %/s | Max valve slew under the governor |
+| Governor arm threshold | 0.933 pu (~1400 rpm) | Governor inhibited below idle speed; `IlluminatedButton` shows amber *(pending merge)* |
+| Governor disarm threshold | 0.90 pu (~1350 rpm) | Hysteresis — governor stays armed until speed drops here *(pending merge)* |
 | Valve actuator lag (τ_valve) | 0.3 s | Diesel fuel rack (revised from 2.0 s steam-plant value in Stage 3d) |
 | Fine jog rates | 0.5 / 5 rpm/s | Slow / fast stages of the fine speed-changer |
 | Coarse jog rates | 10 / 25 rpm/s | Slow / fast stages of the coarse speed-changer |
@@ -384,8 +387,11 @@ not a software convenience.
 Key learning: protection as a last line of defence; why load rejection is as dangerous as overload;
 why load hierarchy matters on a ship.
 
-#### Arming limits design (design work — before Phase 4)
-Before Phase 4 adds grid connection and synchronisation, the arming logic needs a review pass. Current state: single hard threshold `OMEGA_AVR_ENABLE = 0.8 pu`; no governor equivalent; no UI feedback when a regulator is toggled on but inhibited.
+#### Arming limits design (`avr-governor-inhibit-buttons`) — implemented, not yet merged
+Developed on `claude/governor-throttle-terminology-xh67m7`. Code complete and all tests pass;
+awaiting end-to-end testing before merge. Replaces `SelectorSwitch` for both AVR and Governor with
+`IlluminatedButton` — amber = inhibited, dark = off, green = active. Governor underspeed lockout
+added at idle (0.933 pu). Hysteresis on both thresholds prevents boundary chatter.
 
 Questions to resolve:
 - **Hysteresis**: arm AVR at 0.82 pu, disarm at 0.78 pu to prevent chattering at the boundary?
