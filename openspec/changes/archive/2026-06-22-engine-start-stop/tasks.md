@@ -42,7 +42,7 @@
 
 ## 7. Docs update (on archive)
 
-- [ ] 7.1 In `docs/roadmap.md` User Inputs table: replace the coarse `SpringLoadedSelector` row with START and STOP button rows
-- [ ] 7.2 Update the layout diagram: col-6 row-3 shows `START / STOP / GOVERNOR` instead of `COARSE / GOVERNOR`
-- [ ] 7.3 Update the Fixed Parameters table: note `IDLE_RPM = 1400` and `IDLE_VALVE_PCT = 87.5 %` under Rotor / governor
-- [ ] 7.4 Add a note about `SpringLoadedSelector` (coarse) retained but unmounted — same policy as `PositionIndicator`
+- [x] 7.1 In `docs/roadmap.md` User Inputs table: replace the coarse `SpringLoadedSelector` row with START and STOP button rows
+- [x] 7.2 Update the layout diagram: col-6 row-3 shows `START / STOP / GOVERNOR` instead of `COARSE / GOVERNOR`
+- [x] 7.3 Update the Fixed Parameters table: note `IDLE_RPM = 1400` and `IDLE_VALVE_PCT = 87.5 %` under Rotor / governor
+- [x] 7.4 Add a note about `SpringLoadedSelector` (coarse) retained but unmounted — same policy as `PositionIndicator`
