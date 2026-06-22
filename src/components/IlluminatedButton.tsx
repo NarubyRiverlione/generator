@@ -16,6 +16,7 @@ export function IlluminatedButton({ label, active, inhibited, onToggle }: Props)
 
   return (
     <div className="illuminated-btn-wrap">
+      <span className="illuminated-btn-label">{label}</span>
       <button
         className={`illuminated-btn${inhibited ? ' illuminated-btn--inhibited' : ''}`}
         onClick={handleClick}
@@ -23,7 +24,6 @@ export function IlluminatedButton({ label, active, inhibited, onToggle }: Props)
       >
         <span className={`illuminated-btn-light ${lightClass}`} />
       </button>
-      <span className="illuminated-btn-label">{label}</span>
     </div>
   )
 }

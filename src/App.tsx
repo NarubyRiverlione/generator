@@ -143,9 +143,7 @@ export default function App() {
               onClick={relay27Tripped ? resetRelay27 : undefined}
               title={relay27Tripped ? '27 relay tripped — click to reset' : '27 relay normal'}
             />
-            <div className="card" style={{ marginTop: 4 }}>
-              RESET
-            </div>
+            <span className="relay27-reset-label">RESET</span>
           </div>
         </div>
 
