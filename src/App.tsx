@@ -6,7 +6,7 @@
  */
 
 import { LoadBreaker } from './components/LoadBreaker'
-import { SelectorSwitch } from './components/SelectorSwitch'
+import { IlluminatedButton } from './components/IlluminatedButton'
 import { ExciterChain } from './ExciterChain'
 import { SpringLoadedSelector } from './components/SpringLoadedSelector'
 import { IndicatorLights } from './components/IndicatorLights'
@@ -124,9 +124,14 @@ export default function App() {
           />
         </div>
 
-        {/* Row 3, col 3: AVR SelectorSwitch */}
+        {/* Row 3, col 3: AVR IlluminatedButton */}
         <div className="knob-cell" style={{ gridColumn: 3, gridRow: 3, alignSelf: 'start' }}>
-          <SelectorSwitch label="AVR" value={inputs.avrOn} onChange={(v) => setInput('avrOn', v)} />
+          <IlluminatedButton
+            label="AVR"
+            active={inputs.avrOn}
+            inhibited={!outputs.avrArmed}
+            onToggle={() => setInput('avrOn', !inputs.avrOn)}
+          />
         </div>
 
         {/* Row 3, col 4: 27 relay reset */}
@@ -138,9 +143,7 @@ export default function App() {
               onClick={relay27Tripped ? resetRelay27 : undefined}
               title={relay27Tripped ? '27 relay tripped — click to reset' : '27 relay normal'}
             />
-            <div className="card" style={{ marginTop: 4 }}>
-              RESET
-            </div>
+            <span className="relay27-reset-label">RESET</span>
           </div>
         </div>
 
@@ -185,10 +188,11 @@ export default function App() {
               </button>
             </div>
           </div>
-          <SelectorSwitch
+          <IlluminatedButton
             label="GOVERNOR"
-            value={inputs.governorOn}
-            onChange={(v) => setInput('governorOn', v)}
+            active={inputs.governorOn}
+            inhibited={!outputs.govArmed}
+            onToggle={() => setInput('governorOn', !inputs.governorOn)}
           />
         </div>
       </div>

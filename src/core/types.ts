@@ -42,6 +42,10 @@ export type SimState = {
   collapsed: boolean
   /** Last valid outputs — frozen on collapse. */
   lastValidOutputs: Outputs
+  /** AVR underspeed inhibit state with hysteresis. True when speed has reached OMEGA_AVR_ENABLE and not yet fallen below OMEGA_AVR_DISABLE. */
+  avrArmed: boolean
+  /** Governor underspeed inhibit state with hysteresis. True when speed has reached OMEGA_GOV_ENABLE and not yet fallen below OMEGA_GOV_DISABLE. */
+  govArmed: boolean
 }
 
 export type Outputs = {
@@ -88,6 +92,10 @@ export type Outputs = {
   pm: number
   /** Instantaneous damper-winding braking torque: D·(ω − ωref) (pu). Zero at synchronous speed; spikes transiently during load steps proportional to slip. */
   dampingTorque: number
+  /** True when AVR is armed (speed above OMEGA_AVR_ENABLE with hysteresis). Used by UI to show inhibit state. */
+  avrArmed: boolean
+  /** True when governor is armed (speed above OMEGA_GOV_ENABLE with hysteresis). Used by UI to show inhibit state. */
+  govArmed: boolean
 }
 
 export type Params = {

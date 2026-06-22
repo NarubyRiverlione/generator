@@ -42,3 +42,12 @@
 .relay27-dome.tripped:active {
   transform: scale(0.95);
 }
+
+.relay27-reset-label {
+  font-size: 11px;
+  font-family: monospace;
+  letter-spacing: 1px;
+  color: #000;
+  text-align: center;
+  margin-top: 4px;
+}

@@ -95,6 +95,17 @@ export function useGeneratorSimulation(presetName?: string): SimHook {
         }
         const result = step(stateRef.current, tickInputs, PARAMS, dt)
         stateRef.current = result.state
+
+        // Force-off on disarm: if a regulator lost its arm signal, clear the input too.
+        if (!result.outputs.avrArmed && inputsRef.current.avrOn) {
+          inputsRef.current = { ...inputsRef.current, avrOn: false }
+          setInputs((prev) => ({ ...prev, avrOn: false }))
+        }
+        if (!result.outputs.govArmed && inputsRef.current.governorOn) {
+          inputsRef.current = { ...inputsRef.current, governorOn: false }
+          setInputs((prev) => ({ ...prev, governorOn: false }))
+        }
+
         setOutputs(result.outputs)
 
         if (result.outputs.vt >= RELAY27_TRIP_VT) relay27ArmedRef.current = true

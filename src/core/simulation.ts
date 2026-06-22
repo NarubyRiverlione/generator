@@ -6,6 +6,9 @@ import {
   AVR_VREF,
   DEFAULT_INPUTS,
   OMEGA_AVR_ENABLE,
+  OMEGA_AVR_DISABLE,
+  OMEGA_GOV_ENABLE,
+  OMEGA_GOV_DISABLE,
   GOV_KI,
   GOV_KP,
   GOV_RATE_LIMIT,
@@ -62,6 +65,10 @@ export function initialState(inputs: Inputs = DEFAULT_INPUTS, seed?: Partial<Sim
   const frequencyHz = rpm / 30
   const saturationFactor = iField > 0 ? saturation(iField) / iField : 1
 
+  // Derive initial arm states from seed omega vs thresholds.
+  const avrArmed = seed?.avrArmed ?? (omega >= OMEGA_AVR_ENABLE)
+  const govArmed = seed?.govArmed ?? (omega >= OMEGA_GOV_ENABLE)
+
   const lastValidOutputs: Outputs = result.collapsed
     ? {
         vt: 0,
@@ -82,6 +89,8 @@ export function initialState(inputs: Inputs = DEFAULT_INPUTS, seed?: Partial<Sim
         saturationFactor,
         pm,
         dampingTorque: 0,
+        avrArmed,
+        govArmed,
       }
     : {
         ...result,
@@ -96,6 +105,8 @@ export function initialState(inputs: Inputs = DEFAULT_INPUTS, seed?: Partial<Sim
         saturationFactor,
         pm,
         dampingTorque: 0,
+        avrArmed,
+        govArmed,
       }
 
   return {
@@ -108,21 +119,33 @@ export function initialState(inputs: Inputs = DEFAULT_INPUTS, seed?: Partial<Sim
     omega,
     collapsed: false,
     lastValidOutputs,
+    avrArmed,
+    govArmed,
   }
 }
 
 export type StepResult = { state: SimState; outputs: Outputs }
 
 export function step(state: SimState, inputs: Inputs, params: Params, dt: number): StepResult {
+  // Hysteresis arm/disarm for AVR: arm when crossing OMEGA_AVR_ENABLE up; disarm below OMEGA_AVR_DISABLE.
+  const avrArmed = state.avrArmed
+    ? state.omega >= OMEGA_AVR_DISABLE   // stay armed unless below disarm threshold
+    : state.omega >= OMEGA_AVR_ENABLE    // arm when crossing arm threshold
+
+  // Hysteresis arm/disarm for governor: arm at idle speed; disarm below OMEGA_GOV_DISABLE.
+  const govArmed = state.govArmed
+    ? state.omega >= OMEGA_GOV_DISABLE
+    : state.omega >= OMEGA_GOV_ENABLE
+
   // AVR or manual field target
   let fieldTarget: number
   let avrCommand: number
   let avrIntegral: number
 
-  // AVR is inhibited below OMEGA_AVR_ENABLE (underspeed lockout — no standstill excitation).
-  const avrArmed = inputs.avrOn && state.omega >= OMEGA_AVR_ENABLE
+  // AVR is inhibited when not armed (underspeed lockout — no standstill excitation).
+  const avrActive = inputs.avrOn && avrArmed
 
-  if (avrArmed) {
+  if (avrActive) {
     const avr = stepAvr(AVR_VREF, state.lastValidOutputs.vt, state.avrIntegral, params.kp, params.ki, dt)
     fieldTarget = avr.command
     avrCommand = avr.command
@@ -139,12 +162,14 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
   const exciterLagged = state.exciterLagged + (fieldTarget - state.exciterLagged) * (1 - Math.exp(-dt / TAU_EXCITER))
   const iField = state.iField + (exciterLagged - state.iField) * (1 - Math.exp(-dt / params.tau))
 
-  // Valve setpoint: governor PI when on, else combined fine + coarse jog.
+  // Valve setpoint: governor PI when armed and on, else fine jog.
   let valvePct: number
   let governorCommand: number
   let governorIntegral: number
 
-  if (inputs.governorOn) {
+  const govActive = inputs.governorOn && govArmed
+
+  if (govActive) {
     const gov = stepGovernor(OMEGA_REF, state.omega, state.governorIntegral, GOV_KP, GOV_KI, dt)
     // Rate-limit the valve demand: max 10 %/s to prevent shaft-stressing slams.
     const maxStep = GOV_RATE_LIMIT * dt
@@ -220,6 +245,8 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
       saturationFactor,
       pm: Pm,
       dampingTorque,
+      avrArmed,
+      govArmed,
     }
   } else {
     outputs = {
@@ -235,6 +262,8 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
       saturationFactor,
       pm: Pm,
       dampingTorque,
+      avrArmed,
+      govArmed,
     }
   }
 
@@ -248,6 +277,8 @@ export function step(state: SimState, inputs: Inputs, params: Params, dt: number
     omega,
     collapsed: result.collapsed,
     lastValidOutputs: result.collapsed ? state.lastValidOutputs : outputs,
+    avrArmed,
+    govArmed,
   }
 
   return { state: nextState, outputs }

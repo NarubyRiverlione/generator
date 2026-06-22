@@ -144,8 +144,13 @@ per-unit internally; display is converted to real units (V, Hz, kW, kVAR) only a
 | AVR command clamp | 0.5 – 1.7 pu | Field command limits |
 | Saturation curve | (0,0) · (1.0,1.0) knee · (1.5,1.2) ceiling | Piecewise-linear open-circuit characteristic |
 | ANSI-27 under-voltage trip | 0.85 pu Vₜ | Under-voltage relay threshold |
+<<<<<<< HEAD
 | AVR arm threshold | 0.80 pu (~1200 rpm) | AVR inhibited below this; `IlluminatedButton` shows amber *(pending merge)* |
 | AVR disarm threshold | 0.77 pu (~1155 rpm) | Hysteresis — AVR stays armed until speed drops here *(pending merge)* |
+=======
+| AVR arm threshold | 0.80 pu (~1200 rpm) | AVR inhibited below this; `IlluminatedButton` shows amber |
+| AVR disarm threshold | 0.77 pu (~1155 rpm) | Hysteresis — AVR stays armed until speed drops here |
+>>>>>>> claude/governor-throttle-terminology-xh67m7
 
 **Rotor / governor (speed channel)**
 
@@ -158,8 +163,13 @@ per-unit internally; display is converted to real units (V, Hz, kW, kVAR) only a
 | Damper coefficient (D) | 0.05 pu | Viscous drag ∝ slip; zero at synchronous speed |
 | Governor Kp / Ki | 100 / 20 | Isochronous PI; fixed (PID sliders are a planned change) |
 | Governor rate limit | 10 %/s | Max valve slew under the governor |
+<<<<<<< HEAD
 | Governor arm threshold | 0.933 pu (~1400 rpm) | Governor inhibited below idle speed; `IlluminatedButton` shows amber *(pending merge)* |
 | Governor disarm threshold | 0.90 pu (~1350 rpm) | Hysteresis — governor stays armed until speed drops here *(pending merge)* |
+=======
+| Governor arm threshold | 0.933 pu (~1400 rpm) | Governor inhibited below idle speed; `IlluminatedButton` shows amber |
+| Governor disarm threshold | 0.90 pu (~1350 rpm) | Hysteresis — governor stays armed until speed drops here |
+>>>>>>> claude/governor-throttle-terminology-xh67m7
 | Valve actuator lag (τ_valve) | 0.3 s | Diesel fuel rack (revised from 2.0 s steam-plant value in Stage 3d) |
 | Fine jog rates | 0.5 / 5 rpm/s | Slow / fast stages of the fine speed-changer |
 | Coarse jog rates | 10 / 25 rpm/s | Slow / fast stages of the coarse speed-changer |
@@ -182,8 +192,8 @@ rest); the `?start=` URL parameter selects other presets (`spinning-dark`, `live
 | Exciter field DC | `Knob` | 0 – 1.7 pu | 0 | Read-only when AVR on (shows AVR command) |
 | Active load (P) | `Knob` | 0 – 120 % | 0 | Fraction of rated |
 | Power factor | `Knob` | 0.6 lag – 1.0 – 0.6 lead | 0.92 lag | Signed: lag (inductive) / lead (capacitive) |
-| AVR enable | `SelectorSwitch` | off / on | off | Inhibited below ~1200 rpm |
-| Governor enable | `SelectorSwitch` | off / on | off | Isochronous PI on speed error → valve |
+| AVR enable | `IlluminatedButton` | off / on | off | Amber below 0.80 pu (~1200 rpm); green when active |
+| Governor enable | `IlluminatedButton` | off / on | off | Amber below 0.933 pu (~1400 rpm / idle); green when active |
 | Speed-changer (fine) | `SpringLoadedSelector` | ±1 slow / ±2 fast | 0 (spring-return) | Jogs the intake valve; read-only when governor on |
 | Speed-changer (coarse) | `SpringLoadedSelector` | ±1 slow / ±2 fast | 0 (spring-return) | Coarse valve jog; read-only when governor on |
 
@@ -245,17 +255,18 @@ Six-column switchboard panel, three rows. Columns are fixed-width (138 px); resp
 │ FIELD    │  (spans cols 2–4)                          │ LOAD     │ (SpringLoadedSelector) │
 │ (Knob)   │                                            │ (Knob)   │          │
 ├──────────┼──────────┬──────────┬──────────┼──────────┼──────────┤
-│ Indicator│ Indicator│ AVR      │ 27 RELAY │ POWER    │ COARSE   │
-│ Lights   │ Lights   │ (Selector│ reset    │ FACTOR   │ (SpringLoadedSelector) │
-│ (top 4)  │ (bot 4)  │  Switch) │ button   │ (Knob)   │ GOVERNOR │
-│          │          │          │          │          │ (SelectorSwitch) │
+│ Indicator│ Indicator│ AVR      │ 27 RELAY │ POWER    │ ENGINE   │
+│ Lights   │ Lights   │ (Illum.  │ reset    │ FACTOR   │ START/STOP│
+│ (top 4)  │ (bot 4)  │  Button) │ button   │ (Knob)   │ GOVERNOR │
+│          │          │          │          │          │ (Illum.  │
+│          │          │          │          │          │  Button) │
 └──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
 ```
 
 **Controls** are `Knob` components (not sliders): Exciter Field DC, Active Load, Power Factor.
-**Switches** are `SelectorSwitch` components: AVR on/off, Governor on/off.
-**Governor speed-changer** is a `SpringLoadedSelector` (fine and coarse, col 6).
-**Valve position** is a `PositionIndicator` (twin-needle: setpoint + actual).
+**Regulators** are `IlluminatedButton` components: AVR (col 3, row 3) and Governor (col 6, row 3). Backlight: amber = inhibited, dark = available/off, green = active. `SelectorSwitch` is retained in the codebase but no longer mounted on the panel.
+**Governor speed-changer** is a `SpringLoadedSelector` (fine, col 6 row 2). Coarse speed-changer component retained but not mounted.
+**Valve position** is a `PositionIndicator` (twin-needle: setpoint + actual). Component retained but not mounted.
 **StatusDisplay** is an LCD-style panel showing numeric readouts (Q, δ, PF, RPM, Hz, etc.).
 **IndicatorLights** shows armed/tripped/ceiling status for AVR, governor, and relays.
 
@@ -387,16 +398,23 @@ not a software convenience.
 Key learning: protection as a last line of defence; why load rejection is as dangerous as overload;
 why load hierarchy matters on a ship.
 
+<<<<<<< HEAD
 #### Arming limits design (`avr-governor-inhibit-buttons`) — implemented, not yet merged
 Developed on `claude/governor-throttle-terminology-xh67m7`. Code complete and all tests pass;
 awaiting end-to-end testing before merge. Replaces `SelectorSwitch` for both AVR and Governor with
 `IlluminatedButton` — amber = inhibited, dark = off, green = active. Governor underspeed lockout
 added at idle (0.933 pu). Hysteresis on both thresholds prevents boundary chatter.
+=======
+#### Arming limits design ✓ complete (`avr-governor-inhibit-buttons`)
+Implemented: `IlluminatedButton` for AVR and Governor with three-state backlight (amber = inhibited, dark = available/off, green = active). Governor underspeed lockout added at idle speed (0.933 pu). Hysteresis on both thresholds prevents boundary chatter.
+>>>>>>> claude/governor-throttle-terminology-xh67m7
 
-Questions to resolve:
-- **Hysteresis**: arm AVR at 0.82 pu, disarm at 0.78 pu to prevent chattering at the boundary?
-- **Governor underspeed lockout**: without one, the governor integral winds up toward 100 % valve before the machine is spinning — add `OMEGA_GOV_ENABLE`?
-- **Inhibit indicator**: when AVR or governor is toggled on but blocked by underspeed, show "AVR INHIBITED" / "GOV INHIBITED" (distinct from "AVR ACTIVE") so the arming state is legible.
+| Regulator | Arm | Disarm |
+|-----------|-----|--------|
+| AVR | 0.80 pu / 1200 rpm | 0.77 pu / 1155 rpm |
+| Governor | 0.933 pu / 1400 rpm | 0.90 pu / 1350 rpm |
+
+Remaining for Phase 4 prep:
 - **Phase 4 interaction**: the AVR must be armed before a breaker closes onto a live grid — verify arming logic is compatible with sync scenarios.
 - **Volts-per-Hz (ANSI-24) over-speed excitation limit** — out of scope for Phase 3 but flag here for Phase 4 design.
 
