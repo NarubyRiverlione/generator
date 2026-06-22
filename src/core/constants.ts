@@ -112,6 +112,8 @@ export const IDLE_HOLD_RATE_DOWN = 100
 /** Load breaker arming: shaft must be within ±BREAKER_ARM_WINDOW rpm of rated speed. */
 export const BREAKER_ARM_RPM = RPM_RATED // 1500 rpm
 export const BREAKER_ARM_WINDOW = 10 // ± rpm
+/** Minimum terminal voltage (pu) required before the load breaker can be closed. */
+export const BREAKER_ARM_VT = 0.9 // 90 % of rated — voltage must be present and near nominal
 
 /** Pole count — 4-pole machine → 1500 rpm at 50 Hz. */
 export const POLES = 4

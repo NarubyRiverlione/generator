@@ -149,7 +149,7 @@ export default function App() {
 
         {/* Row 1, col 6: load breaker (replaces PositionIndicator; component retained in codebase) */}
         <div className="gauge-col" style={{ gridColumn: 6, gridRow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <LoadBreaker closed={inputs.loadBreaker} rpm={outputs.rpm} onToggle={setLoadBreaker} />
+          <LoadBreaker closed={inputs.loadBreaker} rpm={outputs.rpm} vt={outputs.vt} onToggle={setLoadBreaker} />
         </div>
 
         {/* Row 2, col 6: fine governor speed-changer */}

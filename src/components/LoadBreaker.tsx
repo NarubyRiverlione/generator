@@ -1,16 +1,17 @@
 /** Panel-mount load breaker — unified IlluminatedButton style. */
 
-import { BREAKER_ARM_RPM, BREAKER_ARM_WINDOW } from '../core/constants'
+import { BREAKER_ARM_RPM, BREAKER_ARM_VT, BREAKER_ARM_WINDOW } from '../core/constants'
 
 type Props = {
   closed: boolean
   rpm: number
+  vt: number // pu
   onToggle: (closed: boolean) => void
 }
 
-export function LoadBreaker({ closed, rpm, onToggle }: Props) {
+export function LoadBreaker({ closed, rpm, vt, onToggle }: Props) {
   // Arming only gates the open→close transition; a closed breaker can always be opened.
-  const canClose = Math.abs(rpm - BREAKER_ARM_RPM) <= BREAKER_ARM_WINDOW
+  const canClose = Math.abs(rpm - BREAKER_ARM_RPM) <= BREAKER_ARM_WINDOW && vt >= BREAKER_ARM_VT
   const interactive = closed || canClose
 
   const lightState = closed ? 'red' : canClose ? 'green' : 'amber'
@@ -21,7 +22,7 @@ export function LoadBreaker({ closed, rpm, onToggle }: Props) {
       <button
         className={`illuminated-btn${!interactive ? ' illuminated-btn--inhibited' : ''}`}
         onClick={() => interactive && onToggle(!closed)}
-        title={closed ? 'Breaker CLOSED — click to open' : canClose ? 'Breaker OPEN — click to close' : `Arms within ±${BREAKER_ARM_WINDOW} rpm of ${BREAKER_ARM_RPM} rpm`}
+        title={closed ? 'Breaker CLOSED — click to open' : canClose ? 'Breaker OPEN — click to close' : `Requires ±${BREAKER_ARM_WINDOW} rpm of ${BREAKER_ARM_RPM} rpm and Vt ≥ ${BREAKER_ARM_VT * 100} %`}
         aria-pressed={closed}
       >
         <span className={`illuminated-btn-light illuminated-btn-light--${lightState} breaker-light`}>
