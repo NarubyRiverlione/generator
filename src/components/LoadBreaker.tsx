@@ -1,8 +1,6 @@
 /** Panel-mount load breaker — gates the ship load as a single instantaneous step. */
 
-import { RPM_RATED } from '../core/constants'
-
-const ARM_RPM = 0.95 * RPM_RATED // ~1425 rpm
+import { BREAKER_ARM_RPM, BREAKER_ARM_WINDOW } from '../core/constants'
 
 type Props = {
   closed: boolean
@@ -11,7 +9,7 @@ type Props = {
 }
 
 export function LoadBreaker({ closed, rpm, onToggle }: Props) {
-  const armed = rpm >= ARM_RPM
+  const armed = Math.abs(rpm - BREAKER_ARM_RPM) <= BREAKER_ARM_WINDOW
 
   return (
     <div className="load-breaker">
@@ -20,7 +18,7 @@ export function LoadBreaker({ closed, rpm, onToggle }: Props) {
         className={`breaker-btn${closed ? ' breaker-closed' : ' breaker-open'}${!armed ? ' breaker-disabled' : ''}`}
         disabled={!armed}
         onClick={() => armed && onToggle(!closed)}
-        title={!armed ? `Arm at ≥ ${ARM_RPM.toFixed(0)} rpm` : closed ? 'Breaker CLOSED — click to open' : 'Breaker OPEN — click to close'}
+        title={!armed ? `Arms within ±${BREAKER_ARM_WINDOW} rpm of ${BREAKER_ARM_RPM} rpm` : closed ? 'Breaker CLOSED — click to open' : 'Breaker OPEN — click to close'}
       >
         <span className="breaker-state">{closed ? 'CLOSED' : 'OPEN'}</span>
       </button>

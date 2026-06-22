@@ -1,7 +1,16 @@
 /** rAF-driven simulation loop. All physics delegated to core.step; no circuit math here. */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { GOV_RATE_LIMIT, IDLE_VALVE_PCT, PARAMS, RELAY27_TRIP_VT } from '../core/constants'
+import {
+  GOV_RATE_LIMIT,
+  IDLE_HOLD_KP,
+  IDLE_HOLD_RATE_DOWN,
+  IDLE_VALVE_NOLOAD,
+  IDLE_VALVE_PCT,
+  OMEGA_GOV_ENABLE,
+  PARAMS,
+  RELAY27_TRIP_VT,
+} from '../core/constants'
 import { resolvePreset } from '../core/presets'
 import { initialState, step } from '../core/simulation'
 import type { Inputs, Outputs, SimState, ValveCommand } from '../core/types'
@@ -40,8 +49,12 @@ export function useGeneratorSimulation(presetName?: string): SimHook {
   // valveCommand held outside React state so press-and-hold bypasses batching
   const valveCommandRef = useRef<ValveCommand>(0)
 
-  // Auto-ramp target: null = idle, otherwise the target valve % (IDLE_VALVE_PCT or 0)
+  // Auto-ramp target: null = no ramp, otherwise the target valve % (IDLE_VALVE_PCT or 0)
   const autoRampTargetRef = useRef<number | null>(null)
+  // Set true when START is pressed; cleared when idle hold activates or STOP is pressed.
+  const startedRef = useRef<boolean>(false)
+  // Idle hold: P controller targeting IDLE_RPM, active from ramp-up hand-off until operator takes over
+  const idleHoldRef = useRef<boolean>(false)
 
   useEffect(() => {
     inputsRef.current = inputs
@@ -66,14 +79,27 @@ export function useGeneratorSimulation(presetName?: string): SimHook {
         const cmd = inputsRef.current.engineCommand
         if (cmd === 'start') {
           autoRampTargetRef.current = IDLE_VALVE_PCT
+          startedRef.current = true
+          idleHoldRef.current = false
           inputsRef.current = { ...inputsRef.current, engineCommand: null }
           setInputs((prev) => ({ ...prev, engineCommand: null }))
         } else if (cmd === 'stop') {
-          // Open breaker and disable governor immediately; then ramp throttle to 0
+          // Open breaker and disable governor/idle hold immediately; then ramp throttle to 0
           const stopped = { ...inputsRef.current, engineCommand: null, loadBreaker: false, governorOn: false }
           inputsRef.current = stopped
           setInputs(() => stopped)
           autoRampTargetRef.current = 0
+          startedRef.current = false
+          idleHoldRef.current = false
+        }
+
+        // Transition: once omega reaches idle speed after START, hand off to the idle hold controller.
+        // Checked independently of the ramp — the ramp may already have completed by the time
+        // the shaft catches up to idle speed.
+        if (startedRef.current && !idleHoldRef.current && stateRef.current.omega >= OMEGA_GOV_ENABLE) {
+          autoRampTargetRef.current = null
+          startedRef.current = false
+          idleHoldRef.current = true
         }
 
         // Auto-ramp: move valvePct toward target at GOV_RATE_LIMIT %/s before calling step()
@@ -85,6 +111,22 @@ export function useGeneratorSimulation(presetName?: string): SimHook {
           stateRef.current = { ...stateRef.current, valvePct: stateRef.current.valvePct + move }
           if (Math.abs(diff) <= maxStep) {
             autoRampTargetRef.current = null
+          }
+        }
+
+        // Idle hold: P controller with feedforward keeps the shaft at IDLE_RPM.
+        // Released by any jog input or when the main governor engages.
+        if (idleHoldRef.current) {
+          if (valveCommandRef.current !== 0 || inputsRef.current.governorOn) {
+            idleHoldRef.current = false
+          } else {
+            const error = OMEGA_GOV_ENABLE - stateRef.current.omega
+            const desired = Math.min(100, Math.max(0, IDLE_VALVE_NOLOAD + IDLE_HOLD_KP * error))
+            const rateLimit = desired < stateRef.current.valvePct ? IDLE_HOLD_RATE_DOWN : GOV_RATE_LIMIT
+            const maxStep = rateLimit * dt
+            const diff = desired - stateRef.current.valvePct
+            const move = Math.sign(diff) * Math.min(Math.abs(diff), maxStep)
+            stateRef.current = { ...stateRef.current, valvePct: stateRef.current.valvePct + move }
           }
         }
 

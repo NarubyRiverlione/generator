@@ -6,6 +6,19 @@ import type { Outputs } from '../core/types'
 
 const DEG = 180 / Math.PI
 
+// Thresholds replaced by a proper enum in Phase 4a.
+// IDLE: machine spinning but below operating speed.
+// RUNNING: at or near rated speed — load breaker available.
+type EngineStatus = 'STOPPED' | 'IDLE' | 'RUNNING'
+
+const RUNNING_RPM = 1450
+
+function deriveEngineStatus(rpm: number): EngineStatus {
+  if (rpm < 30) return 'STOPPED'
+  if (rpm >= RUNNING_RPM) return 'RUNNING'
+  return 'IDLE'
+}
+
 type FaultLevel = 'ok' | 'warn' | 'danger' | 'fault'
 
 function faultLevel(relay27Tripped: boolean, stabilityMargin: number): FaultLevel {
@@ -36,6 +49,7 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
   const freqDisplay = outputs.vt > 0.01 ? `${outputs.frequencyHz.toFixed(1)} Hz` : '---'
 
   const level = faultLevel(relay27Tripped, outputs.stabilityMargin)
+  const engineStatus = deriveEngineStatus(outputs.rpm)
 
   return (
     <div className="lcd-mod">
@@ -44,6 +58,10 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
         <div className="l1">
           <span>Vt {vtV.toFixed(0)} V</span>
           <span>{Math.round(outputs.rpm)} rpm</span>
+        </div>
+        <div className={`l1 engine-status engine-status--${engineStatus.toLowerCase()}`}>
+          <span>ENG</span>
+          <span>{engineStatus}</span>
         </div>
         <div className="l2">
           <span>δ {deltaDegs.toFixed(1)}°</span>
@@ -142,6 +160,10 @@ export function StatusDisplay({ outputs, relay27Tripped }: Props) {
             </div>
             <div className="sticky-line">
               <span className="sticky-key">VSM</span> Voltage stability margin — warn &lt;20%, danger &lt;8%
+            </div>
+            <div className="sticky-line">
+              <span className="sticky-key">ENG</span> Engine state — STOPPED (shaft at rest), IDLE (spinning, below 1450 rpm),
+              RUNNING (≥ 1450 rpm — load breaker available near 1500)
             </div>
             <div className="sticky-line">
               <span className="sticky-key">THR</span> Throttle / fuel rack position (%) — physical valve actual; governor

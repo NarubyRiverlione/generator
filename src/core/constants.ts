@@ -92,6 +92,21 @@ export const TAU_VALVE = 0.3
  */
 export const WINDAGE_K = 0.05
 
+/**
+ * No-load equilibrium valve position at idle speed.
+ * Only windage drag is present (load breaker open), so Pm must equal WINDAGE_K × ω_idle.
+ * The idle hold P controller uses this as its feedforward term.
+ */
+export const IDLE_VALVE_NOLOAD = (WINDAGE_K * (IDLE_RPM / RPM_RATED)) / PM_MAX * 100 // ≈ 4.4 %
+/** Proportional gain for the idle hold controller (valve % per pu speed error). */
+export const IDLE_HOLD_KP = 200
+/** Valve closure rate during idle hold (%/s). Higher than GOV_RATE_LIMIT to cut excess fuel quickly after ramp-up. */
+export const IDLE_HOLD_RATE_DOWN = 100
+
+/** Load breaker arming: shaft must be within ±BREAKER_ARM_WINDOW rpm of rated speed. */
+export const BREAKER_ARM_RPM = RPM_RATED // 1500 rpm
+export const BREAKER_ARM_WINDOW = 10 // ± rpm
+
 /** Pole count — 4-pole machine → 1500 rpm at 50 Hz. */
 export const POLES = 4
 
