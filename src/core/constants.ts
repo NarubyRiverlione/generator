@@ -72,6 +72,12 @@ export const OMEGA_AVR_DISABLE = 0.77
 export const OMEGA_GOV_ENABLE = IDLE_RPM / RPM_RATED // ≈ 0.9333
 /** Governor disarm hysteresis threshold (pu). Governor stays armed until omega drops below this. */
 export const OMEGA_GOV_DISABLE = 0.90
+/**
+ * Speed at which the idle hold P controller takes over from the start ramp (pu).
+ * Set below OMEGA_GOV_ENABLE so the valve has ~0.5 s of lead time (≈ 1.5 × τ_valve)
+ * to partially close before the shaft reaches idle speed, limiting overshoot.
+ */
+export const OMEGA_IDLE_PRECUT = 0.9 // ≈ 1350 rpm
 
 /** Governor PI — isochronous, error in pu speed, command in valve %. */
 export const OMEGA_REF = 1.0

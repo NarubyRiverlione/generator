@@ -8,6 +8,7 @@ import {
   IDLE_VALVE_NOLOAD,
   IDLE_VALVE_PCT,
   OMEGA_GOV_ENABLE,
+  OMEGA_IDLE_PRECUT,
   PARAMS,
   RELAY27_TRIP_VT,
 } from '../core/constants'
@@ -93,10 +94,11 @@ export function useGeneratorSimulation(presetName?: string): SimHook {
           idleHoldRef.current = false
         }
 
-        // Transition: once omega reaches idle speed after START, hand off to the idle hold controller.
-        // Checked independently of the ramp — the ramp may already have completed by the time
-        // the shaft catches up to idle speed.
-        if (startedRef.current && !idleHoldRef.current && stateRef.current.omega >= OMEGA_GOV_ENABLE) {
+        // Transition: hand off to the idle hold controller early (at OMEGA_IDLE_PRECUT, below idle speed)
+        // so the valve has lead time to close before the shaft reaches OMEGA_GOV_ENABLE.
+        // Without this, τ_valve lag means the physical valve is still 50% open at 1400 rpm and
+        // the machine overshoots past the RUNNING threshold.
+        if (startedRef.current && !idleHoldRef.current && stateRef.current.omega >= OMEGA_IDLE_PRECUT) {
           autoRampTargetRef.current = null
           startedRef.current = false
           idleHoldRef.current = true
