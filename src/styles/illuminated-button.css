@@ -51,6 +51,11 @@
   box-shadow: 0 0 6px 2px rgba(26, 138, 26, 0.7);
 }
 
+.illuminated-btn-light--red {
+  background: #8a1a1a;
+  box-shadow: 0 0 6px 2px rgba(138, 26, 26, 0.7);
+}
+
 .illuminated-btn-label {
   background: #fff;
   border: 1px solid #444;
