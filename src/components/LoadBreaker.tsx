@@ -9,16 +9,18 @@ type Props = {
 }
 
 export function LoadBreaker({ closed, rpm, onToggle }: Props) {
-  const armed = Math.abs(rpm - BREAKER_ARM_RPM) <= BREAKER_ARM_WINDOW
+  // Arming only gates the open→close transition; a closed breaker can always be opened.
+  const canClose = Math.abs(rpm - BREAKER_ARM_RPM) <= BREAKER_ARM_WINDOW
+  const interactive = closed || canClose
 
   return (
     <div className="load-breaker">
       <div className="card">LOAD BREAKER</div>
       <button
-        className={`breaker-btn${closed ? ' breaker-closed' : ' breaker-open'}${!armed ? ' breaker-disabled' : ''}`}
-        disabled={!armed}
-        onClick={() => armed && onToggle(!closed)}
-        title={!armed ? `Arms within ±${BREAKER_ARM_WINDOW} rpm of ${BREAKER_ARM_RPM} rpm` : closed ? 'Breaker CLOSED — click to open' : 'Breaker OPEN — click to close'}
+        className={`breaker-btn${closed ? ' breaker-closed' : ' breaker-open'}${!interactive ? ' breaker-disabled' : ''}`}
+        disabled={!interactive}
+        onClick={() => interactive && onToggle(!closed)}
+        title={closed ? 'Breaker CLOSED — click to open' : canClose ? 'Breaker OPEN — click to close' : `Arms within ±${BREAKER_ARM_WINDOW} rpm of ${BREAKER_ARM_RPM} rpm`}
       >
         <span className="breaker-state">{closed ? 'CLOSED' : 'OPEN'}</span>
       </button>
